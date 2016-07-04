@@ -1,0 +1,2 @@
+libdfu: library for implementing Direct Firmware Update for several target
+processors under several host environments.
