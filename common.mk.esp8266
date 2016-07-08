@@ -1,0 +1,18 @@
+
+SDK_BASE ?= $(shell pwd)/../../esp8266/esp_iot_sdk_v1.5.2/
+SDK_INCDIR := include include/json
+SDK_LIBDIR := lib
+SDK_LDDIR  := ld
+
+DYNAMIC_LIB := n
+LDFLAGS := -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static
+CROSS_COMPILE := xtensa-lx106-elf-
+LD_SCRIPT	= eagle.app.v6.ld
+LIBS		= c gcc hal pp phy net80211 lwip wpa main crypto dfu
+
+SDK_LIBDIR	:= $(addprefix $(SDK_BASE)/,$(SDK_LIBDIR))
+SDK_INCDIR	:= $(addprefix -I$(SDK_BASE)/,$(SDK_INCDIR))
+LD_SCRIPT	:= $(addprefix -T$(SDK_BASE)/$(SDK_LDDIR)/,$(LD_SCRIPT))
+LIBS		:= $(addprefix -l,$(LIBS))
+
+CFLAGS := -Os -g -O2 -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -fno-builtin-putc -nostdlib -mlongcalls -mtext-section-literals  -D__ets__ $(SDK_INCDIR)
