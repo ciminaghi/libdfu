@@ -1,0 +1,12 @@
+#!/bin/bash
+#set -x
+
+HOSTS="linux esp8266"
+
+[ "$V" = "1" ] && Q="" || Q="1>/dev/null"
+
+for h in $HOSTS ; do
+    echo -n "Building for host $h ... "
+    eval "(make clean 1>/dev/null && make HOST=$h $Q && echo OK) || \
+    	 { echo "Error building for host $h" ; exit 1; }"
+done
