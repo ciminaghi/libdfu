@@ -24,7 +24,8 @@ all: $(LIB)
 $(eval $(call install_cmds,$(LIB),$(EXECUTABLES),$(SCRIPTS)))
 
 clean:
-	rm -f *.o *~ $(LIB) $(EXECUTABLES)
+	find . -name \*.o -or -name \*~ | xargs rm -f
+	rm -f $(LIB) $(EXECUTABLES)
 
 
 libdfu.a: $(OBJS)
