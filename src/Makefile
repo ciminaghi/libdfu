@@ -29,7 +29,7 @@ clean:
 
 
 libdfu.a: $(OBJS)
-	$(AR) rcs $@ $^
+	$(AR) cru $@ $^
 
 libdfu.so: $(OBJS)
 	$(CC) -o $@ -shared -Wl,-soname,$@ $^
