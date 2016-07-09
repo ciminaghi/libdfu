@@ -19,7 +19,7 @@ $(EXE).o: $(EXE).c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(EXE).out: $(EXE).o
-	$(LD) -L$(SDK_LIBDIR) $(LD_SCRIPT) $(LDFLAGS) -Wl,--start-group $(LIBS) $(APP_AR) -Wl,--end-group -o $@ $+
+	$(LD) -L$(SDK_LIBDIR) $+ $(LD_SCRIPT) $(LDFLAGS) -Wl,--start-group $(LIBS) $(APP_AR) -Wl,--end-group -o $@
 
 
 images: $(EXE).out
