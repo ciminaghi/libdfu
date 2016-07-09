@@ -12,6 +12,7 @@ AR = $(CROSS_COMPILE)ar
 STRIP = $(CROSS_COMPILE)strip
 INSTALL ?= /usr/bin/install
 DEBUG ?= y
+ESPTOOL ?= /home/develop/yun/esp8266/esp-open-sdk/esptool/esptool.py
 
 # Internal libraries
 LIBDFU := -L$(BASE)/src -ldfu
