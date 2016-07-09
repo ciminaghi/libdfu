@@ -13,6 +13,10 @@ ifeq ($(HOST),linux)
 OBJS += host/linux.o interface/linux-serial.o
 endif
 
+ifeq ($(HOST),esp8266)
+OBJS += host/esp8266.o interface/esp8266-serial.o
+endif
+
 LIB := libdfu$(EXT)
 
 all: $(LIB)
