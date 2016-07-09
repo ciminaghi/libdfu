@@ -12,6 +12,12 @@ struct dfu_binary_file *dfu_new_binary_file(const void *buf,
 	return NULL;
 }
 
+struct dfu_binary_file *dfu_binary_file_start_rx(const char *method,
+						 struct dfu_data *dfu)
+{
+	return NULL;
+}
+
 int dfu_binary_file_append_buffer(struct dfu_binary_file *f,
 				  const void *buf,
 				  unsigned long buf_sz)

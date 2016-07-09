@@ -25,6 +25,10 @@ extern struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 				 const struct dfu_target_ops *tops,
 				 const struct dfu_host_ops *hops);
 
+
+extern struct dfu_binary_file *dfu_binary_file_start_rx(const char *method,
+							struct dfu_data *data);
+
 /*
  * If totsz == 0, total size is unknown
  * addr is the starting load address, not needed if file format is not
