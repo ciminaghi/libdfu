@@ -22,6 +22,8 @@ struct dfu_target_ops {
 			       const void *buf, unsigned long sz);
 	/* Reset and sync target */
 	int (*reset_and_sync)(struct dfu_target *);
+	/* Let target run */
+	int (*run)(struct dfu_target *);
 };
 
 struct dfu_binary_file_ops {
