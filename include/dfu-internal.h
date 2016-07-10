@@ -35,6 +35,7 @@ struct dfu_binary_file {
 };
 
 struct dfu_host_ops {
+	int (*init)(struct dfu_host *);
 	void (*udelay)(struct dfu_host *, unsigned long us);
 	int (*log)(struct dfu_host *, const char *);
 	void (*idle)(struct dfu_host *);
