@@ -12,8 +12,7 @@ struct dfu_interface_ops {
 };
 
 struct dfu_target_ops {
-	int (*init)(struct dfu_target *, struct dfu_interface *,
-		    const void *pars);
+	int (*init)(struct dfu_target *, struct dfu_interface *);
 	int (*probe)(struct dfu_target *);
 	/* Reset target and start bootloader */
 	int (*reset)(struct dfu_target *);
