@@ -3,11 +3,6 @@
 #include "dfu.h"
 #include "dfu-internal.h"
 
-struct dfu_interface {
-	const struct dfu_interface_ops *ops;
-	void *priv;
-};
-
 /* Just one interface is enough at the moment */
 static struct dfu_interface interface;
 

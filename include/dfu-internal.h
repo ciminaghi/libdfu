@@ -61,10 +61,26 @@ struct dfu_format_ops {
 };
 
 
+struct dfu_interface {
+	const struct dfu_interface_ops *ops;
+	void *priv;
+};
+
+struct dfu_target {
+	const struct dfu_target_ops *ops;
+	void *priv;
+};
+
+struct dfu_host {
+	const struct dfu_host_ops *ops;
+	void *priv;
+};
+
 struct dfu_data {
-	const struct dfu_interface *iface;
-	const struct dfu_target *target;
-	const struct dfu_host *host;
+	struct dfu_interface *interface;
+	struct dfu_target *target;
+	struct dfu_host *host;
+	int busy;
 };
 
 extern struct dfu_interface *
