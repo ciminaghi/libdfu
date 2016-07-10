@@ -73,6 +73,7 @@ struct dfu_interface {
 struct dfu_target {
 	struct dfu_interface *interface;
 	const struct dfu_target_ops *ops;
+	unsigned long entry_point;
 	void *priv;
 };
 
@@ -102,5 +103,11 @@ extern int dfu_udelay(struct dfu_data *data, unsigned long us);
 
 extern struct dfu_format_ops *dfu_find_format(const void *start_bfu,
 					      unsigned long buf_size);
+
+static inline void dfu_target_set_entry(struct dfu_data *dfu,
+					unsigned long addr)
+{
+	dfu->target->entry_point = addr;
+}
 
 #endif /* __DFU_INTERNAL_H__ */
