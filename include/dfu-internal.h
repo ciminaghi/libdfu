@@ -9,17 +9,19 @@ struct dfu_interface_ops {
 	int (*open)(struct dfu_interface *, const char *path, const void *pars);
 	int (*write)(struct dfu_interface *, const char *, unsigned long size);
 	int (*read)(struct dfu_interface *, char *, unsigned long size);
+	/* Do hw reset for target (maybe gpio ?) */
+	int (*target_reset)(struct dfu_interface *);
 };
 
 struct dfu_target_ops {
 	int (*init)(struct dfu_target *, struct dfu_interface *);
 	int (*probe)(struct dfu_target *);
-	/* Reset target and start bootloader */
-	int (*reset)(struct dfu_target *);
 	/* Chunk of binary data is available for writing */
 	int (*chunk_available)(struct dfu_target *,
 			       unsigned long address,
 			       const void *buf, unsigned long sz);
+	/* Reset and sync target */
+	int (*reset_and_sync)(struct dfu_target *);
 };
 
 struct dfu_binary_file_ops {
@@ -67,6 +69,7 @@ struct dfu_interface {
 };
 
 struct dfu_target {
+	struct dfu_interface *interface;
 	const struct dfu_target_ops *ops;
 	void *priv;
 };
