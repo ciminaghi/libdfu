@@ -48,7 +48,7 @@ struct dfu_host_ops {
 	void (*udelay)(struct dfu_host *, unsigned long us);
 	int (*log)(struct dfu_host *, const char *);
 	void (*idle)(struct dfu_host *);
-	void (*start_file_rx)(struct dfu_host *, const char *method);
+	int (*start_file_rx)(struct dfu_binary_file *, const char *method);
 };
 
 struct dfu_format_ops {
