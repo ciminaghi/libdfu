@@ -49,6 +49,7 @@ struct dfu_host_ops {
 	int (*log)(struct dfu_host *, const char *);
 	void (*idle)(struct dfu_host *);
 	int (*start_file_rx)(struct dfu_binary_file *, const char *method);
+	int (*file_flush_start)(struct dfu_binary_file *);
 };
 
 struct dfu_format_ops {
