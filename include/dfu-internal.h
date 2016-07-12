@@ -34,7 +34,12 @@ struct dfu_binary_file_ops {
 };
 
 struct dfu_binary_file {
+	struct dfu_data *dfu;
 	struct dfu_format_ops *format_ops;
+	void *buf;
+	int head;
+	int tail;
+	int written;
 	void *host_data;
 };
 
