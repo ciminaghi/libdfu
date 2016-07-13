@@ -3,6 +3,14 @@
 
 #include "dfu-host.h"
 
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
+#endif /* ARRAY_SIZE */
+
+#ifndef min
+#define min(a,b) ((a) < (b) ? (a) : (b))
+#endif /* min */
+
 struct dfu_format;
 
 typedef void (*dfu_interface_rx_cb)(struct dfu_interface *, int sz, void *priv);
