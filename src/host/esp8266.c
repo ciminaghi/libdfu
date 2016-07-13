@@ -5,5 +5,5 @@
 #include "dfu-internal.h"
 
 
-struct dfu_host_ops esp8266_dfu_host_ops = {
+const struct dfu_host_ops esp8266_dfu_host_ops = {
 };

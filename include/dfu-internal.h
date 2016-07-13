@@ -1,6 +1,8 @@
 #ifndef __DFU_INTERNAL_H__
 #define __DFU_INTERNAL_H__
 
+#include "dfu-host.h"
+
 struct dfu_format;
 
 typedef void (*dfu_interface_rx_cb)(struct dfu_interface *, int sz, void *priv);
