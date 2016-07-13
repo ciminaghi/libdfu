@@ -43,7 +43,7 @@ struct dfu_binary_file_ops {
 
 struct dfu_binary_file {
 	struct dfu_data *dfu;
-	struct dfu_format_ops *format_ops;
+	const struct dfu_format_ops *format_ops;
 	void *buf;
 	int head;
 	int tail;
