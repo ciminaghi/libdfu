@@ -41,7 +41,7 @@ static void _bf_init(struct dfu_binary_file *bf, char *b, struct dfu_data *dfu)
 	bf->buf = b;
 	bf->head = bf->tail = 0;
 	bf->written = 0;
-	bf->host_data = NULL;
+	bf->format_data = NULL;
 	bf->format_ops = NULL;
 	bf->dfu = dfu;
 }

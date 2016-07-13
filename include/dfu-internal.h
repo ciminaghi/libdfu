@@ -48,7 +48,7 @@ struct dfu_binary_file {
 	int head;
 	int tail;
 	int written;
-	void *host_data;
+	void *format_data;
 };
 
 struct dfu_host_ops {
