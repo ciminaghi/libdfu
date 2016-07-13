@@ -75,6 +75,16 @@ struct dfu_format_ops {
 			    unsigned long *addr, unsigned long *out_sz);
 };
 
+extern const struct dfu_format_ops registered_formats_start[],
+    registered_formats_end[];
+
+#define declare_dfu_format(n,p,d)					\
+    static const struct							\
+    dfu_format_ops format_ ## n						\
+    __attribute__((section(".binary-formats"), used)) = {		\
+	.probe = p,							\
+	.decode_chunk = d,						\
+    };
 
 struct dfu_interface {
 	const struct dfu_interface_ops *ops;
