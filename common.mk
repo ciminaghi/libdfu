@@ -30,7 +30,7 @@ INSTALL_DEFAULT_MODE :=
 
 
 # Common definitions for cflags and ldflags 
-CFLAGS += -O2 -Wall -Werror -I$(BASE)/include/ -I. \
+CFLAGS += -O2 -Wall -Werror -DHOST_$(HOST) -I$(BASE)/include/ -I. \
 	-DBASEDIR=\"$(BASE)\" -DPREFIX=\"$(prefix)/\" \
 	-DBINDIR=\"$(bindir)/\" -DLIBDIR=\"$(libdir)/\" \
 	-DDATADIR=\"$(datadir)/\" -DCONFDIR=\"$(confdir)/\"
