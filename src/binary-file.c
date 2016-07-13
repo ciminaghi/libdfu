@@ -75,6 +75,15 @@ static int _bf_append_data(struct dfu_binary_file *bf, const void *buf,
 
 static int _bf_find_format(struct dfu_binary_file *bf)
 {
+	const struct dfu_format_ops *ptr;
+
+	for (ptr = registered_formats_start;
+	     ptr != registered_formats_end; ptr++) {
+		if (!ptr->probe(bf)) {
+			bf->format_ops = ptr;
+			return 0;
+		}
+	}
 	return -1;
 }
 
