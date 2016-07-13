@@ -11,8 +11,6 @@
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #endif /* min */
 
-struct dfu_format;
-
 typedef void (*dfu_interface_rx_cb)(struct dfu_interface *, int sz, void *priv);
 
 struct dfu_interface_ops {
@@ -67,16 +65,13 @@ struct dfu_format_ops {
 	 * Returns zero if start_buf contains the beginning of a file encoded
 	 * with this format
 	 */
-	int (*probe)(struct dfu_format *, const void *start_buf,
-		     unsigned long buf_size);
+	int (*probe)(struct dfu_binary_file *);
 	/*
-	 * Decode file chunk. in_sz is a pointer because it is written
-	 * with the actual number of decoded input bytes
+	 * Decode file chunk starting from current tail and update tail
 	 * out_sz contains max output buffer length in input and is filled
 	 * with actual number of bytes in out_buf
 	 */
-	int (*decode_chunk)(struct dfu_format *, const void *in_buf,
-			    unsigned long *in_sz, void *out_buf,
+	int (*decode_chunk)(struct dfu_binary_file *, void *out_buf,
 			    unsigned long *addr, unsigned long *out_sz);
 };
 
