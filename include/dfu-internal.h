@@ -93,11 +93,12 @@ struct dfu_format_ops {
 	int (*probe)(struct dfu_binary_file *);
 	/*
 	 * Decode file chunk starting from current tail and update tail
-	 * out_sz contains max output buffer length in input and is filled
-	 * with actual number of bytes in out_buf
+	 * out_sz contains max output buffer length
+	 * *addr is filled with start address of current chunk
+	 * Returns number of bytes stored into out_buf
 	 */
 	int (*decode_chunk)(struct dfu_binary_file *, void *out_buf,
-			    unsigned long *addr, unsigned long *out_sz);
+			    unsigned long out_sz, unsigned long *addr);
 };
 
 extern const struct dfu_format_ops registered_formats_start[],

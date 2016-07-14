@@ -20,25 +20,22 @@ static int binary_probe(struct dfu_binary_file *f)
 
 /* Fix this */
 static int binary_decode_chunk(struct dfu_binary_file *bf, void *out_buf,
-			       unsigned long *addr, unsigned long *out_sz)
+			       unsigned long out_sz, unsigned long *addr)
 {
-	int sz = min(*out_sz, bf_count_to_end(bf)), tot = sz;
+	int sz = min(out_sz, bf_count_to_end(bf)), tot = sz;
 	struct binary_format_data *data = bf->format_data;
 	char *ptr = bf->buf, *dst = out_buf;
 
-	if (!sz) {
-		*out_sz = 0;
+	if (!sz)
 		return 0;
-	}
 	memcpy(dst, &ptr[bf->tail], sz);
 	bf->tail = (bf->tail + sz) & (bf->max_size - 1);
-	if (sz == *out_sz)
+	if (sz == out_sz)
 		return sz;
-	sz = min(*out_sz - tot, bf_count(bf));
+	sz = min(out_sz - tot, bf_count(bf));
 	memcpy(&dst[tot], &ptr[bf->tail], sz);
 	bf->tail = (bf->tail + sz) & (bf->max_size - 1);
 	tot += sz;
-	*out_sz = tot;
 	*addr = data->curr_addr;
 	data->curr_addr += tot;
 	return tot;
