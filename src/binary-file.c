@@ -12,30 +12,6 @@ static char bf_buf[CONFIG_BINARY_FILE_BUFSIZE];
 
 static struct dfu_binary_file bfile;
 
-static inline int _bf_count(struct dfu_binary_file *bf)
-{
-	return (bf->head - bf->tail) & ARRAY_SIZE(bf_buf);
-}
-
-static inline int _bf_space(struct dfu_binary_file *bf)
-{
-	return (bf->tail - (bf->head + 1)) & ARRAY_SIZE(bf_buf);
-}
-
-static inline int _bf_count_to_end(struct dfu_binary_file *bf)
-{
-	int end = ARRAY_SIZE(bf_buf) - bf->tail;
-	int n = (bf->head + end) & (ARRAY_SIZE(bf_buf) - 1);
-	return n < end ? n : end ;
-}
-
-static inline int _bf_space_to_end(struct dfu_binary_file *bf)
-{
-	int end = ARRAY_SIZE(bf_buf) - 1 - bf->head;
-	int n = (end + bf->tail) & (ARRAY_SIZE(bf_buf) - 1);
-	return n <= end ? n : end + 1;
-}
-
 static void _bf_init(struct dfu_binary_file *bf, char *b, struct dfu_data *dfu)
 {
 	bf->buf = b;
@@ -43,6 +19,7 @@ static void _bf_init(struct dfu_binary_file *bf, char *b, struct dfu_data *dfu)
 	bf->written = 0;
 	bf->format_data = NULL;
 	bf->format_ops = NULL;
+	bf->max_size = sizeof(bf_buf);
 	bf->dfu = dfu;
 }
 

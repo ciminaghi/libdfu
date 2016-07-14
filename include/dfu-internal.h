@@ -48,8 +48,34 @@ struct dfu_binary_file {
 	int head;
 	int tail;
 	int written;
+	int max_size;
 	void *format_data;
 };
+
+static inline int _bf_count(struct dfu_binary_file *bf)
+{
+	return (bf->head - bf->tail) & (bf->max_size - 1);
+}
+
+static inline int _bf_space(struct dfu_binary_file *bf)
+{
+	return (bf->tail - (bf->head + 1)) & (bf->max_size - 1);
+}
+
+static inline int _bf_count_to_end(struct dfu_binary_file *bf)
+{
+	int end = bf->max_size - bf->tail;
+	int n = (bf->head + end) & (bf->max_size - 1);
+	return n < end ? n : end ;
+}
+
+static inline int _bf_space_to_end(struct dfu_binary_file *bf)
+{
+	int end = bf->max_size - 1 - bf->head;
+	int n = (end + bf->tail) & (bf->max_size - 1);
+	return n <= end ? n : end + 1;
+}
+
 
 struct dfu_host_ops {
 	int (*init)(struct dfu_host *);
