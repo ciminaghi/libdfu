@@ -8,6 +8,8 @@
  * Author Davide Ciminaghi 2016
  */
 
+#include "dfu-host.h"
+
 struct dfu_interface;
 struct dfu_target;
 struct dfu_host;
@@ -53,6 +55,20 @@ extern int dfu_target_reset(struct dfu_data *dfu);
 extern int dfu_target_go(struct dfu_data *dfu);
 
 extern void dfu_idle(struct dfu_data *dfu);
+
+#ifndef dfu_log
+#error HOST MUST DEFINE A dfu_log MACRO
+#endif
+
+#ifndef dfu_err
+#error HOST MUST DEFINE A dfu_err MACRO
+#endif
+
+#ifndef DEBUG
+#define dfu_dbg(a,args...)
+#else
+#define dfu_dbg(a,args...) dfu_log(a, ##args)
+#endif
 
 
 #endif /* __DFU_H__ */

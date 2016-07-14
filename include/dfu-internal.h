@@ -54,7 +54,6 @@ struct dfu_binary_file {
 struct dfu_host_ops {
 	int (*init)(struct dfu_host *);
 	void (*udelay)(struct dfu_host *, unsigned long us);
-	int (*log)(struct dfu_host *, const char *);
 	void (*idle)(struct dfu_host *);
 	int (*start_file_rx)(struct dfu_binary_file *, const char *method);
 	int (*file_flush_start)(struct dfu_binary_file *);
@@ -119,7 +118,6 @@ extern int dfu_interface_open(struct dfu_interface *, const char *name,
 extern struct dfu_target *
 dfu_target_init(const struct dfu_target_ops *ops);
 
-extern int dfu_log(struct dfu_data *data, const char *, ...);
 extern int dfu_udelay(struct dfu_data *data, unsigned long us);
 
 extern struct dfu_format_ops *dfu_find_format(const void *start_bfu,

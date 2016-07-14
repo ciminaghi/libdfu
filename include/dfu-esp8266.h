@@ -4,6 +4,9 @@
 extern const struct dfu_interface_ops esp8266_serial_interface_ops;
 extern const struct dfu_host_ops esp8266_dfu_host_ops;
 
+#define dfu_log(a,args...) os_printf("DFU:" a, ##args)
+#define dfu_err(a,args...) os_printf("DFU ERROR: " a, ##args)
+
 #include <osapi.h>
 #include "espmissingincludes.h"
 
