@@ -34,7 +34,7 @@ static int _bf_append_data(struct dfu_binary_file *bf, const void *buf,
 	int sz, tot;
 	char *ptr = bf->buf;
 
-	sz = min(_bf_space_to_end(bf), buf_sz);
+	sz = min(bf_space_to_end(bf), buf_sz);
 	if (sz <= 0)
 		return sz;
 	memcpy(&ptr[bf->head], buf, sz);
@@ -43,7 +43,7 @@ static int _bf_append_data(struct dfu_binary_file *bf, const void *buf,
 	if (!buf_sz)
 		return sz;
 	tot = sz;
-	sz = min(_bf_space_to_end(bf), buf_sz);
+	sz = min(bf_space_to_end(bf), buf_sz);
 	tot += sz;
 	memcpy(&ptr[bf->head], buf, sz);
 	bf->head = (bf->head + sz) & (ARRAY_SIZE(bf_buf) - 1);
@@ -110,11 +110,11 @@ int dfu_binary_file_append_buffer(struct dfu_binary_file *f,
 {
 	int cnt, stat, prev_cnt;
 
-	prev_cnt = _bf_count(f);
+	prev_cnt = bf_count(f);
 	cnt = _bf_append_data(f, buf, buf_sz);
 	if (cnt < 0)
 		return cnt;
-	if (!prev_cnt && _bf_count(f)) {
+	if (!prev_cnt && bf_count(f)) {
 		stat = _bf_find_format(&bfile);
 		if (stat < 0)
 			return stat;
