@@ -1,6 +1,7 @@
 #ifndef __DFU_LINUX_H__
 #define __DFU_LINUX_H__
 
+#include <stdint.h>
 #include <stdio.h>
 
 extern const struct dfu_interface_ops linux_serial_interface_ops;
