@@ -11,6 +11,9 @@
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #endif /* min */
 
+/* 32 bits targets supported */
+typedef uint32_t phys_addr_t;
+
 typedef void (*dfu_interface_rx_cb)(struct dfu_interface *, int sz, void *priv);
 
 struct dfu_interface_ops {
@@ -26,7 +29,7 @@ struct dfu_target_ops {
 	int (*probe)(struct dfu_target *);
 	/* Chunk of binary data is available for writing */
 	int (*chunk_available)(struct dfu_target *,
-			       unsigned long address,
+			       phys_addr_t address,
 			       const void *buf, unsigned long sz);
 	/* Reset and sync target */
 	int (*reset_and_sync)(struct dfu_target *);
@@ -98,7 +101,7 @@ struct dfu_format_ops {
 	 * Returns number of bytes stored into out_buf
 	 */
 	int (*decode_chunk)(struct dfu_binary_file *, void *out_buf,
-			    unsigned long out_sz, unsigned long *addr);
+			    unsigned long out_sz, phys_addr_t *addr);
 };
 
 extern const struct dfu_format_ops registered_formats_start[],
