@@ -37,13 +37,6 @@ struct dfu_target_ops {
 	int (*run)(struct dfu_target *);
 };
 
-struct dfu_binary_file_ops {
-	int (*init)(struct dfu_binary_file *, unsigned long tot_size);
-	int (*append_buf)(struct dfu_binary_file *, const void *,
-			  unsigned long);
-	int (*flush)(struct dfu_binary_file *);
-};
-
 struct dfu_binary_file {
 	struct dfu_data *dfu;
 	const struct dfu_format_ops *format_ops;
