@@ -39,6 +39,11 @@ struct dfu_interface_ops {
 	int (*read)(struct dfu_interface *, char *, unsigned long size);
 	/* Do hw reset for target (maybe gpio ?) */
 	int (*target_reset)(struct dfu_interface *);
+	/*
+	 * Poll function, to be implemented in case interface event
+	 * is missing. Returns DFU_INTERFACE_EVENT in case interface is ready
+	 */
+	int (*poll_idle)(struct dfu_interface *);
 };
 
 struct dfu_target_ops {
