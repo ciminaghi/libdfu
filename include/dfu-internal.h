@@ -46,6 +46,7 @@ struct dfu_binary_file {
 	int written;
 	int max_size;
 	int rx_done;
+	int flushing;
 	void *format_data;
 };
 

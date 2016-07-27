@@ -8,7 +8,12 @@
 #define CONFIG_BINARY_FILE_BUFSIZE 1024
 #endif
 
+#ifndef CONFIG_DECODED_BINARY_FILE_BUFSIZE
+#define CONFIG_DECODED_BINARY_FILE_BUFSIZE 1024
+#endif
+
 static char bf_buf[CONFIG_BINARY_FILE_BUFSIZE];
+static char bf_decoded_buf[CONFIG_DECODED_BINARY_FILE_BUFSIZE];
 
 static struct dfu_binary_file bfile;
 
@@ -62,6 +67,25 @@ static int _bf_find_format(struct dfu_binary_file *bf)
 		}
 	}
 	return -1;
+}
+
+/*
+ * Decode chunk and start writing it
+ * Assumes interface can write to target
+ */
+static int _bf_do_flush(struct dfu_binary_file *bf)
+{
+	const struct dfu_target_ops *tops = bf->dfu->target->ops;
+	int stat;
+	phys_addr_t addr;
+
+	stat = bf->format_ops->decode_chunk(bf, bf_decoded_buf,
+					    sizeof(bf_decoded_buf), &addr);
+	if (stat < 0)
+		return -1;
+	stat = tops->chunk_available(bf->dfu->target, addr,
+				     bf_decoded_buf, stat);
+	return stat < 0 ? stat : 0;
 }
 
 struct dfu_binary_file *dfu_new_binary_file(const void *buf,
@@ -122,10 +146,13 @@ int dfu_binary_file_append_buffer(struct dfu_binary_file *f,
 	return cnt;
 }
 
-int dfu_binary_file_flush_start(struct dfu_binary_file *f)
+int dfu_binary_file_flush_start(struct dfu_binary_file *bf)
 {
-	return f->dfu->host->ops->file_flush_start ?
-		f->dfu->host->ops->file_flush_start(f) : -1;
+	bf->flushing = 1;
+	if (!bf->format_ops)
+		if (_bf_find_format(bf) < 0)
+			return -1;
+	return _bf_do_flush(bf);
 }
 
 int dfu_binary_file_written(struct dfu_binary_file *f)
