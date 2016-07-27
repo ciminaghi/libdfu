@@ -80,7 +80,6 @@ struct dfu_host_ops {
 	void (*udelay)(struct dfu_host *, unsigned long us);
 	void (*idle)(struct dfu_host *);
 	int (*start_file_rx)(struct dfu_binary_file *, const char *method);
-	int (*file_flush_start)(struct dfu_binary_file *);
 };
 
 struct dfu_format_ops {
