@@ -20,6 +20,18 @@ struct dfu_target_ops;
 struct dfu_interface_ops;
 struct dfu_host_ops;
 
+struct dfu_binary_file_ops {
+	/*
+	 * Invoked on idle if host has no idle operation.
+	 * Must return DFU_FILE_EVENT in case an event has occurred for the
+	 * file
+	 */
+	int (*poll_idle)(struct dfu_binary_file *);
+	/*
+	 * This is invoked when an event has been detected on the file
+	 */
+	int (*on_event)(struct dfu_binary_file *);
+};
 
 extern struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 				 const char *interface_path,
@@ -36,11 +48,14 @@ extern struct dfu_binary_file *dfu_binary_file_start_rx(const char *method,
  * addr is the starting load address, not needed if file format is not
  * binary (so load addr is encoded in the file itself).
  */
-extern struct dfu_binary_file *dfu_new_binary_file(const void *buf,
-						   unsigned long buf_sz,
-						   unsigned long totsz,
-						   struct dfu_data *dfu,
-						   unsigned long addr);
+extern struct dfu_binary_file *
+dfu_new_binary_file(const void *buf,
+		    unsigned long buf_sz,
+		    unsigned long totsz,
+		    struct dfu_data *dfu,
+		    unsigned long addr,
+		    const struct dfu_binary_file_ops *,
+		    void *priv);
 
 extern int dfu_binary_file_append_buffer(struct dfu_binary_file *,
 					 const void *buf,

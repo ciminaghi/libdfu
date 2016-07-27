@@ -64,6 +64,7 @@ struct dfu_target_ops {
 struct dfu_binary_file {
 	struct dfu_data *dfu;
 	const struct dfu_format_ops *format_ops;
+	const struct dfu_binary_file_ops *ops;
 	void *buf;
 	int head;
 	int tail;
@@ -72,6 +73,7 @@ struct dfu_binary_file {
 	int rx_done;
 	int flushing;
 	void *format_data;
+	void *priv;
 };
 
 static inline int bf_count(struct dfu_binary_file *bf)

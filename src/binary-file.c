@@ -88,11 +88,14 @@ static int _bf_do_flush(struct dfu_binary_file *bf)
 	return stat < 0 ? stat : 0;
 }
 
-struct dfu_binary_file *dfu_new_binary_file(const void *buf,
-					    unsigned long buf_sz,
-					    unsigned long totsz,
-					    struct dfu_data *dfu,
-					    unsigned long addr)
+struct dfu_binary_file *
+dfu_new_binary_file(const void *buf,
+		    unsigned long buf_sz,
+		    unsigned long totsz,
+		    struct dfu_data *dfu,
+		    unsigned long addr,
+		    const struct dfu_binary_file_ops *ops,
+		    void *priv)
 {
 	if (bfile.buf)
 		/* Busy, one bfile at a time allowed at present */
@@ -108,6 +111,8 @@ struct dfu_binary_file *dfu_new_binary_file(const void *buf,
 		_bf_fini(&bfile, dfu);
 		return NULL;
 	}
+	bfile.ops = ops;
+	bfile.priv = priv;
 	return &bfile;
 }
 
@@ -118,7 +123,7 @@ struct dfu_binary_file *dfu_binary_file_start_rx(const char *method,
 
 	if (!dfu->host->ops->start_file_rx)
 		return out;
-	out = dfu_new_binary_file(NULL, 0, 0, dfu, 0);
+	out = dfu_new_binary_file(NULL, 0, 0, dfu, 0, NULL, NULL);
 	if (!out)
 		return out;
 	if (dfu->host->ops->start_file_rx(out, method) < 0) {

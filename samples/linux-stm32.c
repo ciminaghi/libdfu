@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 		exit(127);
 	}
 	ptr = map_file(fpath, s.st_size);
-	f = dfu_new_binary_file(ptr, s.st_size, s.st_size, dfu, 0);
+	f = dfu_new_binary_file(ptr, s.st_size, s.st_size, dfu, 0, NULL, NULL);
 	if (!f) {
 		fprintf(stderr, "Error setting up binary file struct\n");
 		exit(127);
