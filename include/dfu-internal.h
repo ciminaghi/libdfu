@@ -11,6 +11,23 @@
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #endif /* min */
 
+/* The following ones come from the kernel, but simplified */
+#ifndef time_after
+#define time_after(a,b)         \
+        ((long)(b) - (long)(a) < 0)
+#endif
+#define time_before(a,b)        time_after(b,a)
+#ifndef time_after_eq
+#define time_after_eq(a,b)      \
+         ((long)(a) - (long)(b) >= 0)
+#endif
+#define time_before_eq(a,b)     time_after_eq(b,a)
+
+#define time_in_range(a,b,c) \
+        (time_after_eq(a,b) && \
+         time_before_eq(a,c))
+
+
 /* 32 bits targets supported */
 typedef uint32_t phys_addr_t;
 
