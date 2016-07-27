@@ -161,4 +161,15 @@ static inline void dfu_target_set_entry(struct dfu_data *dfu,
 	dfu->target->entry_point = addr;
 }
 
+struct dfu_timeout {
+	int timeout;
+	void (*cb)(struct dfu_data *, const void *);
+	const void *priv;
+};
+
+extern int dfu_set_timeout(struct dfu_data *dfu, struct dfu_timeout *);
+
+extern int dfu_cancel_timeout(struct dfu_timeout *);
+
+
 #endif /* __DFU_INTERNAL_H__ */
