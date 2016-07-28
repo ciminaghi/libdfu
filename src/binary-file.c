@@ -26,6 +26,7 @@ static void _bf_init(struct dfu_binary_file *bf, char *b, struct dfu_data *dfu)
 	bf->format_ops = NULL;
 	bf->max_size = sizeof(bf_buf);
 	bf->dfu = dfu;
+	dfu->bf = bf;
 }
 
 static void _bf_fini(struct dfu_binary_file *bf, struct dfu_data *dfu)

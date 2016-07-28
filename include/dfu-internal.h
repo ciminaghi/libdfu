@@ -162,6 +162,7 @@ struct dfu_data {
 	struct dfu_interface *interface;
 	struct dfu_target *target;
 	struct dfu_host *host;
+	struct dfu_binary_file *bf;
 	int busy;
 };
 
