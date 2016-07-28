@@ -112,6 +112,7 @@ struct dfu_host_ops {
 	int (*set_interface_event)(struct dfu_host *, void *);
 	int (*set_binary_file_event)(struct dfu_host *, void *);
 	int (*start_file_rx)(struct dfu_binary_file *, const char *method);
+	unsigned long (*get_current_time)(struct dfu_host *);
 };
 
 struct dfu_format_ops {
@@ -196,5 +197,6 @@ extern int dfu_set_timeout(struct dfu_data *dfu, struct dfu_timeout *);
 
 extern int dfu_cancel_timeout(struct dfu_timeout *);
 
+extern unsigned long dfu_get_current_time(struct dfu_data *dfu);
 
 #endif /* __DFU_INTERNAL_H__ */

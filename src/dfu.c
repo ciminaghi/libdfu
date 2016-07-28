@@ -56,3 +56,11 @@ void dfu_idle(struct dfu_data *dfu)
 	if (dfu->host->ops->idle)
 		dfu->host->ops->idle(dfu->host);
 }
+
+unsigned long dfu_get_current_time(struct dfu_data *dfu)
+{
+	if (dfu->host->ops->get_current_time)
+		return dfu->host->ops->get_current_time(dfu->host);
+	return 0xffffffffUL;
+}
+
