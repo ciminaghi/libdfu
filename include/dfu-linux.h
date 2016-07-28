@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include <stdio.h>
 
+
+struct linux_event_data {
+	int fd;
+	int events;
+};
+
 extern const struct dfu_interface_ops linux_serial_interface_ops;
 extern const struct dfu_host_ops linux_dfu_host_ops;
 
