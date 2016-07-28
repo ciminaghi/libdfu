@@ -64,3 +64,16 @@ unsigned long dfu_get_current_time(struct dfu_data *dfu)
 	return 0xffffffffUL;
 }
 
+int dfu_set_binary_file_event(struct dfu_data *dfu, void *event_data)
+{
+	if (!dfu->host->ops->set_binary_file_event)
+		return -1;
+	return dfu->host->ops->set_binary_file_event(dfu->host, event_data);
+}
+
+int dfu_set_interface_event(struct dfu_data *dfu, void *event_data)
+{
+	if (!dfu->host->ops->set_interface_event)
+		return -1;
+	return dfu->host->ops->set_interface_event(dfu->host, event_data);
+}
