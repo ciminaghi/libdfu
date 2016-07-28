@@ -2,10 +2,16 @@
 #include "dfu.h"
 #include "dfu-internal.h"
 
+#ifndef CONFIG_DFU_MAX_TIMEOUTS
+#define CONFIG_DFU_MAX_TIMEOUTS 4
+#endif
+
 static struct dfu_data dfu;
 static struct dfu_interface interface;
 static struct dfu_target target;
 static struct dfu_host host;
+
+static struct dfu_timeout *timeouts[CONFIG_DFU_MAX_TIMEOUTS];
 
 /*
  * We just support one dfu instance at a time for the moment, that should
@@ -51,10 +57,153 @@ error:
 	return NULL;
 }
 
+static int _insert_timeout(struct dfu_data *dfu, struct dfu_timeout *to)
+{
+	int i, j;
+	struct dfu_timeout *ptr;
+	unsigned long now = dfu_get_current_time(dfu);
+
+	for (i = 0, to->timeout += now; i < ARRAY_SIZE(timeouts); i++) {
+		ptr = timeouts[i];
+		if (!ptr) {
+			/* Last element */
+			timeouts[i] = to;
+			return 0;
+		}
+		if (time_after(to->timeout, ptr->timeout)) {
+			to->timeout -= ptr->timeout;
+			continue;
+		}
+		/*
+		 * Shift everything right by one and make slot available for
+		 * new timeout
+		 */
+		if (timeouts[ARRAY_SIZE(timeouts) - 1])
+			/* No space */
+			return -1;
+		for (j = ARRAY_SIZE(timeouts) - 1; j >= i; j--)
+			timeouts[j] = timeouts[j - 1];
+		timeouts[i] = to;
+		timeouts[i+1]->timeout -= to->timeout;
+		return 0;
+	}
+	/* No space */
+	return -1;
+}
+
+static int _remove_timeout(struct dfu_timeout *to)
+{
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(timeouts) && timeouts[i] != to; i++);
+	if (i == ARRAY_SIZE(timeouts))
+		return -1;
+	/* Timeout found, shift everything left  */
+	for ( ; i < (ARRAY_SIZE(timeouts) - 1); i++)
+		timeouts[i] = timeouts[i+1];
+	/* Make sure unused slots always contain a NULL pointer */
+	/* Note that i should be = ARRAY_SIZE(timeouts) - 1 */
+	timeouts[i] = NULL;
+	return 0;
+}
+
+int dfu_set_timeout(struct dfu_data *dfu, struct dfu_timeout *to)
+{
+	return _insert_timeout(dfu, to);
+}
+
+int dfu_cancel_timeout(struct dfu_timeout *to)
+{
+	return _remove_timeout(to);
+}
+
+static int _trigger_timeout(struct dfu_data *dfu, struct dfu_timeout *to)
+{
+	timeouts[0]->cb(dfu, timeouts[0]->priv);
+	return _remove_timeout(to);
+}
+
+static void _trigger_interface_event(struct dfu_data *dfu)
+{
+	if (dfu->target->ops->on_interface_event)
+		dfu->target->ops->on_interface_event(dfu->target);
+}
+
+static void _trigger_file_event(struct dfu_data *dfu)
+{
+	if (!dfu->bf || !dfu->bf->ops || !dfu->bf->ops->on_event)
+		return;
+	dfu->bf->ops->on_event(dfu->bf);
+}
+
+static void _poll_interface(struct dfu_data *dfu)
+{
+	switch(dfu->interface->ops->poll_idle(dfu->interface)) {
+	case DFU_INTERFACE_EVENT:
+		_trigger_interface_event(dfu);
+		break;
+	default:
+		dfu_log("%s: unexpected retval from interface poll_idle()\n",
+			__func__);
+		break;
+	}
+}
+
+static void _poll_file(struct dfu_data *dfu)
+{
+	switch(dfu->bf->ops->poll_idle(dfu->bf)) {
+	case DFU_FILE_EVENT:
+		_trigger_file_event(dfu);
+		break;
+	default:
+		dfu_log("%s: unexpected retval from file poll_idle()\n",
+			__func__);
+		break;
+	}
+}
+
+static void _poll_idle(struct dfu_data *dfu)
+{
+	unsigned long now = dfu_get_current_time(dfu);
+
+	if (timeouts[0] && time_after(now, timeouts[0]->timeout))
+		if (_trigger_timeout(dfu, timeouts[0]) < 0)
+			dfu_err("removing timeout");
+	if (dfu->interface->ops->poll_idle)
+		_poll_interface(dfu);
+	if (dfu->bf && dfu->bf->ops && dfu->bf->ops->poll_idle)
+		_poll_file(dfu);
+}
+
+/*
+ * Idle loop: either rely on host's idle operation or poll everything to
+ * check whether some event has happened
+ */
 void dfu_idle(struct dfu_data *dfu)
 {
-	if (dfu->host->ops->idle)
-		dfu->host->ops->idle(dfu->host);
+	unsigned long now = dfu_get_current_time(dfu);
+	int next_timeout, stat;
+
+	if (!dfu->host->ops->idle) {
+		/*
+		 * If a host has no idle operation, poll_idle methods
+		 * should be present for polling interface and file for
+		 * activity
+		 */
+		_poll_idle(dfu);
+		return;
+	}
+
+	next_timeout = !timeouts[0] ? -1 : timeouts[0]->timeout - now;
+
+	stat = dfu->host->ops->idle(dfu->host, next_timeout);
+	if (stat & DFU_TIMEOUT)
+		if (_trigger_timeout(dfu, timeouts[0]) < 0)
+			dfu_err("removing timeout");
+	if (stat & DFU_FILE_EVENT)
+		_trigger_file_event(dfu);
+	if (stat & DFU_INTERFACE_EVENT)
+		_trigger_interface_event(dfu);
 }
 
 unsigned long dfu_get_current_time(struct dfu_data *dfu)
