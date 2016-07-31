@@ -25,6 +25,7 @@ static void _bf_init(struct dfu_binary_file *bf, char *b, struct dfu_data *dfu)
 	bf->format_data = NULL;
 	bf->format_ops = NULL;
 	bf->max_size = sizeof(bf_buf);
+	bf->tot_appended = 0;
 	bf->dfu = dfu;
 	dfu->bf = bf;
 }
@@ -165,3 +166,9 @@ int dfu_binary_file_written(struct dfu_binary_file *f)
 {
 	return f->written;
 }
+
+int dfu_binary_file_get_tot_appended(struct dfu_binary_file *f)
+{
+	return f->tot_appended;
+}
+
