@@ -60,14 +60,16 @@ static int binary_file_on_event(struct dfu_binary_file *f)
 		dfu_err("NO PRIVATE DATA FOR BINARY FILE");
 		return -1;
 	}
-	if (tot == priv->file_size) {
-		dfu_log("nothing more to append\n");
-		return 0;
-	}
 	dfu_log("tot = %d, appending %d\n", tot, priv->file_size - tot);
 	stat = dfu_binary_file_append_buffer(f, &((char *)priv->ptr)[tot],
 					     priv->file_size - tot);
 	dfu_log("appended %d bytes\n", stat);
+	tot = dfu_binary_file_get_tot_appended(f);
+	if (tot == priv->file_size) {
+		dfu_log("nothing more to append\n");
+		dfu_binary_file_append_buffer(f, NULL, 0);
+		return 0;
+	}
 	return 0;
 }
 
