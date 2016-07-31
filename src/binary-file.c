@@ -35,26 +35,61 @@ static void _bf_fini(struct dfu_binary_file *bf, struct dfu_data *dfu)
 	_bf_init(bf, NULL, dfu);
 }
 
+/*
+ * Decode chunk and start writing it
+ * Assumes interface can write to target
+ */
+static int _bf_do_flush(struct dfu_binary_file *bf)
+{
+	const struct dfu_target_ops *tops = bf->dfu->target->ops;
+	int stat;
+	phys_addr_t addr;
+
+	stat = bf->format_ops->decode_chunk(bf, bf_decoded_buf,
+					    sizeof(bf_decoded_buf), &addr);
+	if (stat < 0) {
+		dfu_err("%s: error in decode_chunk\n", __func__);
+		return -1;
+	}
+	if (stat)
+		stat = tops->chunk_available(bf->dfu->target, addr,
+					     bf_decoded_buf, stat);
+	return stat < 0 ? stat : 0;
+}
+
 static int _bf_append_data(struct dfu_binary_file *bf, const void *buf,
 			   unsigned long buf_sz)
 {
-	int sz, tot;
+	int sz, tot = 0, ret;
 	char *ptr = bf->buf;
 
 	sz = min(bf_space_to_end(bf), buf_sz);
-	if (sz <= 0)
-		return sz;
+	if (sz <= 0) {
+		ret = sz;
+		goto end;
+	}
 	memcpy(&ptr[bf->head], buf, sz);
 	bf->head = (bf->head + sz) & (ARRAY_SIZE(bf_buf) - 1);
 	buf_sz -= sz;
-	if (!buf_sz)
-		return sz;
 	tot = sz;
-	sz = min(bf_space_to_end(bf), buf_sz);
+	ret = tot;
+	goto end;
+	if (!buf_sz) {
+		ret = sz;
+		goto end;
+	}
+	sz = min(bf_space(bf), buf_sz);
 	tot += sz;
 	memcpy(&ptr[bf->head], buf, sz);
 	bf->head = (bf->head + sz) & (ARRAY_SIZE(bf_buf) - 1);
-	return tot;
+	ret = tot;
+end:
+	bf->tot_appended += tot;
+	dfu_dbg("%s: flushing = %d, appended = %d, tot_appended = %d\n",
+		__func__, bf->flushing, tot, bf->tot_appended);
+	if (bf->flushing)
+		_bf_do_flush(bf);
+	return ret;
 }
 
 static int _bf_find_format(struct dfu_binary_file *bf)
@@ -69,25 +104,6 @@ static int _bf_find_format(struct dfu_binary_file *bf)
 		}
 	}
 	return -1;
-}
-
-/*
- * Decode chunk and start writing it
- * Assumes interface can write to target
- */
-static int _bf_do_flush(struct dfu_binary_file *bf)
-{
-	const struct dfu_target_ops *tops = bf->dfu->target->ops;
-	int stat;
-	phys_addr_t addr;
-
-	stat = bf->format_ops->decode_chunk(bf, bf_decoded_buf,
-					    sizeof(bf_decoded_buf), &addr);
-	if (stat < 0)
-		return -1;
-	stat = tops->chunk_available(bf->dfu->target, addr,
-				     bf_decoded_buf, stat);
-	return stat < 0 ? stat : 0;
 }
 
 struct dfu_binary_file *
