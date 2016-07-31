@@ -31,13 +31,28 @@ static struct dfu_binary_file *bfile;
 static void ICACHE_FLASH_ATTR
 loop(os_event_t *events)
 {
+	int stat;
+
 	if (dfu_binary_file_written(bfile)) {
 		/* File was written, start target and die */
 		dfu_target_go(dfu);
 		return;
 	}
-	dfu_idle(dfu);
-	system_os_post(USER_PRIO, 0, 0 );
+	stat = dfu_idle(dfu);
+	switch(stat) {
+	case DFU_CONTINUE:
+		system_os_post(USER_PRIO, 0, 0 );
+		break;
+	case DFU_ERROR:
+		os_printf("Error programming\n");
+		break;
+	case DFU_ALL_DONE:
+		os_printf("Programming done\n");
+		break;
+	default:
+		os_printf("Invalid return value %d from dfu_idle\n", stat);
+		break;
+	}
 }
 
 /* Init function */

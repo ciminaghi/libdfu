@@ -86,8 +86,23 @@ int main(int argc, char *argv[])
 		exit(127);
 	}
 	/* Loop around waiting for events */
-	while (!dfu_binary_file_written(f))
-		dfu_idle(dfu);
+	do {
+		ret = dfu_idle(dfu);
+		switch (ret) {
+		case DFU_ERROR:
+			fprintf(stderr, "Error programming file\n");
+			break;
+		case DFU_ALL_DONE:
+			fprintf(stderr, "Programming DONE\n");
+			break;
+		case DFU_CONTINUE:
+			break;
+		default:
+			fprintf(stderr,
+				"Invalid ret value %d from dfu_idle()\n", ret);
+			break;
+		}
+	} while(ret == DFU_CONTINUE);
 	/* Let target run */
 	exit(dfu_target_go(dfu));
 }

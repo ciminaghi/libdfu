@@ -179,7 +179,7 @@ static void _poll_idle(struct dfu_data *dfu)
  * Idle loop: either rely on host's idle operation or poll everything to
  * check whether some event has happened
  */
-void dfu_idle(struct dfu_data *dfu)
+int dfu_idle(struct dfu_data *dfu)
 {
 	unsigned long now = dfu_get_current_time(dfu);
 	int next_timeout, stat;
@@ -191,19 +191,30 @@ void dfu_idle(struct dfu_data *dfu)
 		 * activity
 		 */
 		_poll_idle(dfu);
-		return;
+		goto end;
 	}
 
 	next_timeout = !timeouts[0] ? -1 : timeouts[0]->timeout - now;
 
+	if (dfu->interface->ops->poll_idle)
+		_poll_interface(dfu);
+	if (dfu->bf && dfu->bf->ops && dfu->bf->ops->poll_idle)
+		_poll_file(dfu);
 	stat = dfu->host->ops->idle(dfu->host, next_timeout);
 	if (stat & DFU_TIMEOUT)
-		if (_trigger_timeout(dfu, timeouts[0]) < 0)
+		if (_trigger_timeout(dfu, timeouts[0]) < 0) {
 			dfu_err("removing timeout");
+			return DFU_ERROR;
+		}
 	if (stat & DFU_FILE_EVENT)
 		_trigger_file_event(dfu);
 	if (stat & DFU_INTERFACE_EVENT)
 		_trigger_interface_event(dfu);
+
+end:
+	if (dfu_binary_file_written(dfu->bf))
+		return DFU_ALL_DONE;
+	return DFU_CONTINUE;
 }
 
 unsigned long dfu_get_current_time(struct dfu_data *dfu)
