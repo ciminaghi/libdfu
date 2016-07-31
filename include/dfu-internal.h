@@ -100,10 +100,6 @@ static inline int bf_space_to_end(struct dfu_binary_file *bf)
 	return n <= end ? n : end + 1;
 }
 
-#define DFU_INTERFACE_EVENT	1
-#define DFU_FILE_EVENT		2
-#define DFU_TIMEOUT		4
-
 struct dfu_host_ops {
 	int (*init)(struct dfu_host *);
 	void (*udelay)(struct dfu_host *, unsigned long us);

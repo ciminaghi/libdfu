@@ -20,6 +20,10 @@ struct dfu_target_ops;
 struct dfu_interface_ops;
 struct dfu_host_ops;
 
+#define DFU_INTERFACE_EVENT	1
+#define DFU_FILE_EVENT		2
+#define DFU_TIMEOUT		4
+
 struct dfu_binary_file_ops {
 	/*
 	 * Invoked on idle if host has no idle operation.
