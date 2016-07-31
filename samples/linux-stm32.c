@@ -14,6 +14,11 @@
 #include <dfu-linux.h>
 #include <dfu-stm32.h>
 
+struct private_data {
+	void *ptr;
+	int file_size;
+};
+
 static void help(int argc, char *argv[])
 {
 	fprintf(stderr, "Use %s <fname> <serial_port>\n", argv[0]);
@@ -37,6 +42,40 @@ static void *map_file(const char *path, size_t len)
 	return out;
 }
 
+static int binary_file_poll_idle(struct dfu_binary_file *f)
+{
+	struct private_data *priv = dfu_binary_file_get_priv(f);
+	int tot = dfu_binary_file_get_tot_appended(f);
+
+	/* Always ready */
+	return tot < priv->file_size ? DFU_FILE_EVENT : 0;
+}
+
+static int binary_file_on_event(struct dfu_binary_file *f)
+{
+	struct private_data *priv = dfu_binary_file_get_priv(f);
+	int tot = dfu_binary_file_get_tot_appended(f), stat;
+
+	if (!priv) {
+		dfu_err("NO PRIVATE DATA FOR BINARY FILE");
+		return -1;
+	}
+	if (tot == priv->file_size) {
+		dfu_log("nothing more to append\n");
+		return 0;
+	}
+	dfu_log("tot = %d, appending %d\n", tot, priv->file_size - tot);
+	stat = dfu_binary_file_append_buffer(f, &((char *)priv->ptr)[tot],
+					     priv->file_size - tot);
+	dfu_log("appended %d bytes\n", stat);
+	return 0;
+}
+
+static struct dfu_binary_file_ops binary_file_ops = {
+	.poll_idle = binary_file_poll_idle,
+	.on_event = binary_file_on_event,
+};
+
 int main(int argc, char *argv[])
 {
 	const char *fpath;
@@ -46,6 +85,7 @@ int main(int argc, char *argv[])
 	struct dfu_data *dfu;
 	struct dfu_binary_file *f;
 	void *ptr;
+	struct private_data priv;
 	
 
 	if (argc < 3) {
@@ -71,7 +111,10 @@ int main(int argc, char *argv[])
 		exit(127);
 	}
 	ptr = map_file(fpath, s.st_size);
-	f = dfu_new_binary_file(ptr, s.st_size, s.st_size, dfu, 0, NULL, NULL);
+	priv.ptr = ptr;
+	priv.file_size = s.st_size;
+	f = dfu_new_binary_file(ptr, s.st_size, s.st_size, dfu, 0,
+				&binary_file_ops, &priv);
 	if (!f) {
 		fprintf(stderr, "Error setting up binary file struct\n");
 		exit(127);
