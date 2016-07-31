@@ -139,6 +139,9 @@ static void _trigger_file_event(struct dfu_data *dfu)
 static void _poll_interface(struct dfu_data *dfu)
 {
 	switch(dfu->interface->ops->poll_idle(dfu->interface)) {
+	case 0:
+		/* No event */
+		break;
 	case DFU_INTERFACE_EVENT:
 		_trigger_interface_event(dfu);
 		break;
@@ -152,6 +155,9 @@ static void _poll_interface(struct dfu_data *dfu)
 static void _poll_file(struct dfu_data *dfu)
 {
 	switch(dfu->bf->ops->poll_idle(dfu->bf)) {
+	case 0:
+		/* No event */
+		break;
 	case DFU_FILE_EVENT:
 		_trigger_file_event(dfu);
 		break;
