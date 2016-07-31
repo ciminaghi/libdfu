@@ -172,3 +172,7 @@ int dfu_binary_file_get_tot_appended(struct dfu_binary_file *f)
 	return f->tot_appended;
 }
 
+void *dfu_binary_file_get_priv(struct dfu_binary_file *f)
+{
+	return f->priv;
+}
