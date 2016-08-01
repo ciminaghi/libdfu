@@ -63,6 +63,11 @@ static int _bf_append_data(struct dfu_binary_file *bf, const void *buf,
 	int sz, tot = 0, ret;
 	char *ptr = bf->buf;
 
+	if (!buf_sz) {
+		/* size is 0, file written */
+		bf->written = 1;
+		return 0;
+	}
 	sz = min(bf_space_to_end(bf), buf_sz);
 	if (sz <= 0) {
 		ret = sz;
