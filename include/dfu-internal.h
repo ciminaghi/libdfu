@@ -53,6 +53,8 @@ struct dfu_target_ops {
 	int (*chunk_available)(struct dfu_target *,
 			       phys_addr_t address,
 			       const void *buf, unsigned long sz);
+	/* Erase all memory */
+	int (*erase_all)(struct dfu_target *);
 	/* Reset and sync target */
 	int (*reset_and_sync)(struct dfu_target *);
 	/* Let target run */

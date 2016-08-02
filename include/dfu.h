@@ -83,6 +83,8 @@ extern int dfu_target_probe(struct dfu_data *dfu);
 
 extern int dfu_target_go(struct dfu_data *dfu);
 
+extern int dfu_target_erase_all(struct dfu_data *dfu);
+
 #define DFU_ALL_DONE 1
 #define DFU_CONTINUE 2
 #define DFU_ERROR   -1
