@@ -9,5 +9,22 @@
 #error "HOST is not defined"
 #endif
 
+static inline uint32_t cpu_to_be32(uint32_t v)
+{
+#if BYTE_ORDER == BIG_ENDIAN
+	return v;
+#elif BYTE_ORDER == LITTLE_ENDIAN
+	return __builtin_bswap32 (v);
+#else
+#error "BYTE ORDER is NOT DEFINED !"
+#endif
+}
+
+static inline uint16_t be32_to_cpu(uint32_t v)
+{
+	return cpu_to_be32(v);
+}
+
+
 #endif /* __DFU_HOST_H__ */
 

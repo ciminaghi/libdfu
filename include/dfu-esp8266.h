@@ -1,6 +1,9 @@
 #ifndef __DFU_ESP8266_H__
 #define __DFU_ESP8266_H__
 
+#include <c_types.h>
+#include <machine/endian.h>
+
 extern const struct dfu_interface_ops esp8266_serial_interface_ops;
 extern const struct dfu_host_ops esp8266_dfu_host_ops;
 
