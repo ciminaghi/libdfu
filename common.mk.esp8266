@@ -12,7 +12,7 @@ LIBS		= c gcc hal pp phy net80211 lwip wpa main crypto dfu
 
 SDK_LIBDIR	:= $(addprefix $(SDK_BASE)/,$(SDK_LIBDIR))
 SDK_INCDIR	:= $(addprefix -I$(SDK_BASE)/,$(SDK_INCDIR))
-LD_SCRIPT	:= $(addprefix -T$(SDK_BASE)/$(SDK_LDDIR)/,$(LD_SCRIPT))
+LD_SCRIPT	:= $(addprefix -T$(BASE)/samples/,$(LD_SCRIPT))
 LIBS		:= $(addprefix -l,$(LIBS))
 
 CFLAGS := -Os -g -O2 -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -fno-builtin-putc -nostdlib -mlongcalls -mtext-section-literals  -D__ets__ $(SDK_INCDIR)
