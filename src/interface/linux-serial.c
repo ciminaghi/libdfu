@@ -69,7 +69,7 @@ int linux_serial_read(struct dfu_interface *iface, char *buf,
 	int stat;
 
 	/* FIXME: make timeout configurable at runtime */
-	stat = poll(&pfd, 1, 1000);
+	stat = poll(&pfd, 1, 30000);
 	if (stat < 0) {
 		dfu_err("%s: %s\n", __func__, strerror(errno));
 		return -1;
