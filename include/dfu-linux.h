@@ -13,8 +13,9 @@ struct linux_event_data {
 extern const struct dfu_interface_ops linux_serial_interface_ops;
 extern const struct dfu_host_ops linux_dfu_host_ops;
 
-#define dfu_log(a,args...) fprintf(stderr, "DFU:" a, ##args)
+#define dfu_log(a,args...) fprintf(stderr, "DFU: " a, ##args)
 #define dfu_err(a,args...) fprintf(stderr, "DFU ERROR: " a, ##args)
+#define dfu_log_noprefix(a,args...) fprintf(stderr, a, ##args)
 
 #include <string.h>
 
