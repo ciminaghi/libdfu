@@ -271,6 +271,36 @@ int stm32_usart_chunk_available(struct dfu_target *target,
 	return 0;
 }
 
+static int stm32_usart_target_erase_all(struct dfu_target *target)
+{
+	int stat;
+	static const uint8_t cmdb[] = { 0x44, 0xbb, };
+	static const uint8_t se[] = { 0xff, 0xff, };
+	static struct stm32_usart_cmdbuf cmds[] = {
+		{
+			.dir = OUT,
+			.buf.out = cmdb,
+			.len = sizeof(cmdb),
+		},
+		{
+			.dir = OUT,
+			.buf.out = se,
+			.flags = START_CHECKSUM|SEND_CHECKSUM,
+			.len = sizeof(se),
+		},
+	};
+	static struct stm32_usart_cmdescr descr = {
+		.cmdbufs = cmds,
+		.ncmdbufs = ARRAY_SIZE(cmds),
+	};
+	dfu_log("Erasing memory\n");
+	stat = send_cmd(target, &descr);
+	if (stat < 0)
+		return stat;
+	dfu_log("Memory erased\n");
+	return stat;
+}
+
 /* Reset and sync target */
 static int stm32_usart_reset_and_sync(struct dfu_target *target)
 {
@@ -318,6 +348,7 @@ struct dfu_target_ops stm32_dfu_target_ops = {
 	.probe  = stm32_usart_probe,
 	.chunk_available = stm32_usart_chunk_available,
 	.reset_and_sync = stm32_usart_reset_and_sync,
+	.erase_all = stm32_usart_target_erase_all,
 	.run = stm32_usart_run,
 	.on_interface_event = stm32_usart_on_interface_event,
 };
