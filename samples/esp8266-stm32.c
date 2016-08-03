@@ -78,6 +78,10 @@ user_init()
 		os_printf("Error probing target\n");
 		return;
 	}
+	if (dfu_target_erase_all(dfu) < 0) {
+		os_printf("Error erasing target memory\n");
+		return;
+	}
 	bfile = dfu_binary_file_start_rx("http_post", dfu, NULL);
 	if (!bfile) {
 		os_printf("Error starting file rx\n");

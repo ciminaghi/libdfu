@@ -132,6 +132,10 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Error probing target\n");
 		exit(127);
 	}
+	if (dfu_target_erase_all(dfu) < 0) {
+		fprintf(stderr, "Error erasing target memory\n");
+		exit(127);
+	}
 	/* Start programming data */
 	if (dfu_binary_file_flush_start(f) < 0) {
 		fprintf(stderr, "Error programming file\n");
