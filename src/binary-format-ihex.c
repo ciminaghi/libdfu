@@ -219,7 +219,7 @@ static int _decode_data_line(struct dfu_binary_file *bf,
 {
 	int index, stat, ret = 0;
 
-	dfu_log("%s: space = %lu, ld->byte_count = %d\n", __func__, space,
+	dfu_dbg("%s: space = %lu, ld->byte_count = %d\n", __func__, space,
 		ld->byte_count);
 	if (space < ld->byte_count)
 		/* Not enough bytes in output buffer, do nothing */
@@ -230,20 +230,20 @@ static int _decode_data_line(struct dfu_binary_file *bf,
 	}
 	index = bf->tail;
 	stat = _decode_hex_buf(bf, &index, dst, ld->byte_count * 2);
-	dfu_log("%s: decoded %d bytes\n", __func__, stat);
+	dfu_dbg("%s: decoded %d bytes\n", __func__, stat);
 	if (stat <= 0)
 		return stat;
 	ret += stat;
 	bf->tail = _go_on(bf, bf->tail, stat);
-	dfu_log("%s: new tail is %d\n", __func__, bf->tail);
+	dfu_dbg("%s: new tail is %d\n", __func__, bf->tail);
 	/* Check line (checksum) */
 	stat = _check_line(bf, ld);
-	dfu_log("%s: _check_line() returns %d\n", __func__, stat);
+	dfu_dbg("%s: _check_line() returns %d\n", __func__, stat);
 	if (stat < 0)
 		return stat;
 	ret += stat;
 	bf->tail = _go_on(bf, bf->tail, stat);
-	dfu_log("%s: final tail = %d\n", __func__, bf->tail);
+	dfu_dbg("%s: final tail = %d\n", __func__, bf->tail);
 	return ret;
 }
 
