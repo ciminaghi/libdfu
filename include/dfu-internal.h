@@ -111,7 +111,6 @@ struct dfu_host_ops {
 	int (*idle)(struct dfu_host *, int next_timeout);
 	int (*set_interface_event)(struct dfu_host *, void *);
 	int (*set_binary_file_event)(struct dfu_host *, void *);
-	int (*start_file_rx)(struct dfu_binary_file *, const char *method);
 	unsigned long (*get_current_time)(struct dfu_host *);
 };
 

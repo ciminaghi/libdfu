@@ -108,12 +108,6 @@ int linux_set_binary_file_event(struct dfu_host *host, void *linux_evt_info)
 	return 0;
 }
 
-int linux_start_file_rx(struct dfu_binary_file *bf, const char *method)
-{
-	/* No methods implemented at present */
-	return -1;
-}
-
 unsigned long linux_get_current_time(struct dfu_host *host)
 {
 	int stat;
@@ -131,6 +125,5 @@ const struct dfu_host_ops linux_dfu_host_ops = {
 	.idle = linux_idle,
 	.set_interface_event = linux_set_interface_event,
 	.set_binary_file_event = linux_set_binary_file_event,
-	.start_file_rx = linux_start_file_rx,
 	.get_current_time = linux_get_current_time,
 };
