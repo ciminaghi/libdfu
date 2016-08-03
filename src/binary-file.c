@@ -24,6 +24,7 @@ static void _bf_init(struct dfu_binary_file *bf, char *b, struct dfu_data *dfu)
 	bf->written = 0;
 	bf->format_data = NULL;
 	bf->format_ops = NULL;
+	bf->rx_method = NULL;
 	bf->max_size = sizeof(bf_buf);
 	bf->tot_appended = 0;
 	bf->dfu = dfu;
@@ -139,18 +140,34 @@ dfu_new_binary_file(const void *buf,
 	return &bfile;
 }
 
+static int _bf_find_rx_method(struct dfu_binary_file *bf, const char *name,
+			      void *arg)
+{
+	const struct dfu_file_rx_method *ptr;
+
+	for (ptr = registered_rx_methods_start;
+	     ptr != registered_rx_methods_end; ptr++) {
+		if (strcmp(ptr->name, name))
+			continue;
+		if (ptr->ops && ptr->ops->init(bf, arg) < 0)
+			return -1;
+		bf->rx_method = ptr;
+		return 0;
+	}
+	return -1;
+}
+
 struct dfu_binary_file *dfu_binary_file_start_rx(const char *method,
-						 struct dfu_data *dfu)
+						 struct dfu_data *dfu,
+						 void *arg)
 {
 	struct dfu_binary_file *out = NULL;
 
-	if (!dfu->host->ops->start_file_rx)
-		return out;
 	out = dfu_new_binary_file(NULL, 0, 0, dfu, 0, NULL, NULL);
 	if (!out)
 		return out;
-	if (dfu->host->ops->start_file_rx(out, method) < 0) {
-		_bf_fini(out);
+	if (_bf_find_rx_method(out, method, arg) < 0) {
+		_bf_fini(out, dfu);
 		return NULL;
 	}
 	return out;

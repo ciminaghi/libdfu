@@ -152,9 +152,21 @@ static void _poll_interface(struct dfu_data *dfu)
 	}
 }
 
+static inline int _bf_is_pollable(struct dfu_binary_file *bf)
+{
+	return (bf->ops && bf->ops->poll_idle) ||
+		(bf->rx_method && bf->rx_method->ops &&
+		 bf->rx_method->ops->poll_idle);
+}
+
 static void _poll_file(struct dfu_data *dfu)
 {
-	switch(dfu->bf->ops->poll_idle(dfu->bf)) {
+	int (*p)(struct dfu_binary_file *);
+	struct dfu_binary_file *bf = dfu->bf;
+
+	p = bf->ops && bf->ops->poll_idle ? bf->ops->poll_idle :
+		bf->rx_method->ops->poll_idle;
+	switch(p(bf)) {
 	case 0:
 		/* No event */
 		break;
@@ -204,7 +216,7 @@ int dfu_idle(struct dfu_data *dfu)
 
 	if (dfu->interface->ops->poll_idle)
 		_poll_interface(dfu);
-	if (dfu->bf && dfu->bf->ops && dfu->bf->ops->poll_idle)
+	if (_bf_is_pollable(dfu->bf))
 		_poll_file(dfu);
 	stat = dfu->host->ops->idle(dfu->host, next_timeout);
 	if (stat & DFU_TIMEOUT)

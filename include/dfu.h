@@ -45,7 +45,8 @@ extern struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 
 
 extern struct dfu_binary_file *dfu_binary_file_start_rx(const char *method,
-							struct dfu_data *data);
+							struct dfu_data *data,
+							void *method_arg);
 
 /*
  * If totsz == 0, total size is unknown

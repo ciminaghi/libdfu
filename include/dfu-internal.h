@@ -67,6 +67,7 @@ struct dfu_binary_file {
 	struct dfu_data *dfu;
 	const struct dfu_format_ops *format_ops;
 	const struct dfu_binary_file_ops *ops;
+	const struct dfu_file_rx_method *rx_method;
 	void *buf;
 	int head;
 	int tail;
@@ -129,6 +130,27 @@ struct dfu_format_ops {
 	int (*decode_chunk)(struct dfu_binary_file *, void *out_buf,
 			    unsigned long out_sz, phys_addr_t *addr);
 };
+
+struct dfu_file_rx_method_ops {
+	int (*init)(struct dfu_binary_file *, void *arg);
+	int (*poll_idle)(struct dfu_binary_file *);
+};
+
+struct dfu_file_rx_method {
+	const struct dfu_file_rx_method_ops *ops;
+	const char *name;
+	void *priv;
+};
+
+extern const struct dfu_file_rx_method registered_rx_methods_start[],
+	registered_rx_methods_end[];
+
+#define declare_file_rx_method(n,o)				\
+	static struct dfu_file_rx_method rx_method_ ## n	\
+	__attribute__((section(".rx-methods"), used)) = {	\
+		.name = #n,					\
+		.ops = o,					\
+	}
 
 extern const struct dfu_format_ops registered_formats_start[],
     registered_formats_end[];

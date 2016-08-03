@@ -6,6 +6,9 @@ OBJS := interface.o target.o binary-file.o dfu.o target/stm32-usart.o
 FORMAT_OBJS := $(subst binary-format-bin.o,,$(patsubst %.c,%.o,$(wildcard binary-format-*.c))) binary-format-bin.o
 FORMAT_OBJ := binary-formats.o
 
+RX_METHOD_OBJS := $(patsubst %.c,%.o,$(wildcard rx-method-*.c))
+RX_METHOD_OBJ := rx-methods.o
+
 ifeq ($(DYNAMIC_LIB),y)
 CFLAGS += -fpic -fPIC
 EXT := .so
@@ -21,7 +24,7 @@ ifeq ($(HOST),esp8266)
 OBJS += host/esp8266.o interface/esp8266-serial.o
 endif
 
-OBJS += $(FORMAT_OBJ)
+OBJS += $(FORMAT_OBJ) $(RX_METHOD_OBJ)
 
 LIB := libdfu$(EXT)
 
@@ -42,5 +45,9 @@ libdfu.so: $(OBJS)
 
 $(FORMAT_OBJ): $(FORMAT_OBJS)
 	$(LD) -nostartfiles -nodefaultlibs -r -T formats.ld $+ -o $@
+
+$(RX_METHOD_OBJ): $(RX_METHOD_OBJS)
+	$(LD) -nostartfiles -nodefaultlibs -r -T rx-methods.ld $+ -o $@
+
 
 .PHONY: install all clean
