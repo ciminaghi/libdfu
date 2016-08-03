@@ -15,4 +15,4 @@ SDK_INCDIR	:= $(addprefix -I$(SDK_BASE)/,$(SDK_INCDIR))
 LD_SCRIPT	:= $(addprefix -T$(BASE)/samples/,$(LD_SCRIPT))
 LIBS		:= $(addprefix -l,$(LIBS))
 
-CFLAGS := -Os -g -O2 -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -fno-builtin-putc -nostdlib -mlongcalls -mtext-section-literals  -D__ets__ $(SDK_INCDIR)
+CFLAGS := -Os -g -O2 -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -fno-builtin-putc -nostdlib -mlongcalls -mtext-section-literals  -D__ets__ $(SDK_INCDIR) -DHAVE_LWIP

@@ -1,5 +1,7 @@
 /* This rx method uses tftp and lwip raw (no sockets) */
 
+#ifdef HAVE_LWIP
+
 #include "dfu.h"
 #include "dfu-internal.h"
 
@@ -19,3 +21,5 @@ static const struct dfu_file_rx_method_ops tftp_rx_ops = {
 };
 
 declare_file_rx_method(tftp, &tftp_rx_ops);
+
+#endif /* HAVE_LWIP */
