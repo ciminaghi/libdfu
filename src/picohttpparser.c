@@ -54,52 +54,56 @@
 
 #define IS_PRINTABLE_ASCII(c) ((unsigned char)(c)-040u < 0137u)
 
-#define CHECK_EOF()                                                                                                                \
-    if (buf == buf_end) {                                                                                                          \
-        *ret = -2;                                                                                                                 \
-        return NULL;                                                                                                               \
-    }
+#define CHECK_EOF()							\
+	if (buf == buf_end) {						\
+		*ret = -2;						\
+	        return NULL;						\
+	}
 
-#define EXPECT_CHAR(ch)                                                                                                            \
-    CHECK_EOF();                                                                                                                   \
-    if (*buf++ != ch) {                                                                                                            \
-        *ret = -1;                                                                                                                 \
-        return NULL;                                                                                                               \
-    }
 
-#define ADVANCE_TOKEN(tok, toklen)                                                                                                 \
-    do {                                                                                                                           \
-        const char *tok_start = buf;                                                                                               \
-        static const char ALIGNED(16) ranges2[] = "\000\040\177\177";                                                              \
-        int found2;                                                                                                                \
-        buf = findchar_fast(buf, buf_end, ranges2, sizeof(ranges2) - 1, &found2);                                                  \
-        if (!found2) {                                                                                                             \
-            CHECK_EOF();                                                                                                           \
-        }                                                                                                                          \
-        while (1) {                                                                                                                \
-            if (*buf == ' ') {                                                                                                     \
-                break;                                                                                                             \
-            } else if (unlikely(!IS_PRINTABLE_ASCII(*buf))) {                                                                      \
-                if ((unsigned char)*buf < '\040' || *buf == '\177') {                                                              \
-                    *ret = -1;                                                                                                     \
-                    return NULL;                                                                                                   \
-                }                                                                                                                  \
-            }                                                                                                                      \
-            ++buf;                                                                                                                 \
-            CHECK_EOF();                                                                                                           \
-        }                                                                                                                          \
-        tok = tok_start;                                                                                                           \
-        toklen = buf - tok_start;                                                                                                  \
-    } while (0)
+#define IS_PRINTABLE_ASCII(c) ((unsigned char)(c)-040u < 0137u)
 
-static const char *token_char_map = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                                    "\0\1\1\1\1\1\1\1\0\0\1\1\0\1\1\0\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\0"
-                                    "\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\1\1"
-                                    "\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\1\0\1\0"
-                                    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                                    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                                    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
-                                    "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+#define EXPECT_CHAR(ch)							\
+	CHECK_EOF();							\
+	if (*buf++ != ch) {						\
+		*ret = -1;						\
+		return NULL;						\
+	}
+
+#define ADVANCE_TOKEN(tok, toklen)					\
+	do {								\
+		const char *tok_start = buf;				\
+		static const char ALIGNED(16) ranges2[] = "\000\040\177\177"; \
+		int found2;						\
+		buf = findchar_fast(buf, buf_end, ranges2, sizeof(ranges2) - 1, &found2); \
+		if (!found2) {						\
+			CHECK_EOF();					\
+		}							\
+		while (1) {						\
+			if (*buf == ' ') {				\
+				break;					\
+			} else if (unlikely(!IS_PRINTABLE_ASCII(*buf))) { \
+				if ((unsigned char)*buf < '\040' || *buf == '\177') { \
+					*ret = -1;			\
+					return NULL;			\
+				}					\
+			}						\
+			++buf;						\
+			CHECK_EOF();					\
+		}							\
+		tok = tok_start;					\
+		toklen = buf - tok_start;				\
+	} while (0)
+
+static const char *token_char_map =
+	"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+	"\0\1\1\1\1\1\1\1\0\0\1\1\0\1\1\0\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\0"
+	"\0\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\0\0\1\1"
+	"\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\1\0\1\0\1\0"
+	"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+	"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+	"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+	"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
 
 static const char *findchar_fast(const char *buf, const char *buf_end, const char *ranges, size_t ranges_size, int *found)
 {
