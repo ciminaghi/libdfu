@@ -52,23 +52,25 @@
 #define ALIGNED(n) __attribute__((aligned(n)))
 #endif
 
-#define IS_PRINTABLE_ASCII(c) ((unsigned char)(c)-040u < 0137u)
-
-#define CHECK_EOF()							\
-	if (buf == buf_end) {						\
-		*ret = -2;						\
-	        return NULL;						\
-	}
-
+static inline const void *check_eof(const void *buf, const void *end, int *ret)
+{
+	if (likely((buf != end)))
+		return buf;
+	*ret = -2;
+	return NULL;
+}
 
 #define IS_PRINTABLE_ASCII(c) ((unsigned char)(c)-040u < 0137u)
 
 #define EXPECT_CHAR(ch)							\
-	CHECK_EOF();							\
-	if (*buf++ != ch) {						\
-		*ret = -1;						\
-		return NULL;						\
-	}
+	do {								\
+	       if (!check_eof(buf, buf_end, ret))			\
+		        return NULL;					\
+	       if (*buf++ != ch) {					\
+		       *ret = -1;					\
+		       return NULL;					\
+	       }							\
+	} while(0)
 
 #define ADVANCE_TOKEN(tok, toklen)					\
 	do {								\
@@ -77,7 +79,8 @@
 		int found2;						\
 		buf = findchar_fast(buf, buf_end, ranges2, sizeof(ranges2) - 1, &found2); \
 		if (!found2) {						\
-			CHECK_EOF();					\
+			if (!check_eof(buf, buf_end, ret))		\
+				return NULL;				\
 		}							\
 		while (1) {						\
 			if (*buf == ' ') {				\
@@ -89,7 +92,8 @@
 				}					\
 			}						\
 			++buf;						\
-			CHECK_EOF();					\
+			if (!check_eof(buf, buf_end, ret))		\
+				return NULL;				\
 		}							\
 		tok = tok_start;					\
 		toklen = buf - tok_start;				\
@@ -177,7 +181,8 @@ static const char *get_token_to_eol(const char *buf, const char *buf_end, const 
     }
 #endif
     for (;; ++buf) {
-        CHECK_EOF();
+	    if (!check_eof(buf, buf_end, ret))
+		    return NULL;
         if (unlikely(!IS_PRINTABLE_ASCII(*buf))) {
             if ((likely((unsigned char)*buf < '\040') && likely(*buf != '\011')) || unlikely(*buf == '\177')) {
                 goto FOUND_CTL;
@@ -207,10 +212,12 @@ static const char *is_complete(const char *buf, const char *buf_end, size_t last
     buf = last_len < 3 ? buf : buf + last_len - 3;
 
     while (1) {
-        CHECK_EOF();
+	    if (!check_eof(buf, buf_end, ret))
+		    return NULL;
         if (*buf == '\015') {
             ++buf;
-            CHECK_EOF();
+	    if (!check_eof(buf, buf_end, ret))
+		    return NULL;
             EXPECT_CHAR('\012');
             ++ret_cnt;
         } else if (*buf == '\012') {
@@ -233,14 +240,16 @@ static const char *is_complete(const char *buf, const char *buf_end, size_t last
 static const char *parse_int(const char *buf, const char *buf_end, int *value, int *ret)
 {
     int v;
-    CHECK_EOF();
+    if (!check_eof(buf, buf_end, ret))
+	    return NULL;
     if (!('0' <= *buf && *buf <= '9')) {
         *ret = -1;
         return NULL;
     }
     v = 0;
     for (;; ++buf) {
-        CHECK_EOF();
+	    if (!check_eof(buf, buf_end, ret))
+		    return NULL;
         if ('0' <= *buf && *buf <= '9') {
             v = v * 10 + *buf - '0';
         } else {
@@ -269,7 +278,8 @@ static const char *parse_headers(const char *buf, const char *buf_end, struct ph
                                  size_t max_headers, int *ret)
 {
     for (;; ++*num_headers) {
-        CHECK_EOF();
+ if (!check_eof(buf, buf_end, ret))
+	 return NULL;
         if (*buf == '\015') {
             ++buf;
             EXPECT_CHAR('\012');
@@ -294,7 +304,8 @@ static const char *parse_headers(const char *buf, const char *buf_end, struct ph
             headers[*num_headers].name = buf;
             buf = findchar_fast(buf, buf_end, ranges1, sizeof(ranges1) - 1, &found);
             if (!found) {
-                CHECK_EOF();
+		    if (!check_eof(buf, buf_end, ret))
+			    return NULL;
             }
             while (1) {
                 if (*buf == ':') {
@@ -304,12 +315,14 @@ static const char *parse_headers(const char *buf, const char *buf_end, struct ph
                     return NULL;
                 }
                 ++buf;
-                CHECK_EOF();
+                if (!check_eof(buf, buf_end, ret))
+			return NULL;
             }
             headers[*num_headers].name_len = buf - headers[*num_headers].name;
             ++buf;
             for (;; ++buf) {
-                CHECK_EOF();
+		    if (!check_eof(buf, buf_end, ret))
+			    return NULL;
                 if (!(*buf == ' ' || *buf == '\t')) {
                     break;
                 }
@@ -330,7 +343,8 @@ static const char *parse_request(const char *buf, const char *buf_end, const cha
                                  size_t max_headers, int *ret)
 {
     /* skip first empty line (some clients add CRLF after POST content) */
-    CHECK_EOF();
+    if (!check_eof(buf, buf_end, ret))
+	    return NULL;
     if (*buf == '\015') {
         ++buf;
         EXPECT_CHAR('\012');
@@ -600,6 +614,5 @@ Exit:
     return ret;
 }
 
-#undef CHECK_EOF
 #undef EXPECT_CHAR
 #undef ADVANCE_TOKEN
