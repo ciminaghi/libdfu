@@ -60,17 +60,21 @@ static inline const void *check_eof(const void *buf, const void *end, int *ret)
 	return NULL;
 }
 
-#define IS_PRINTABLE_ASCII(c) ((unsigned char)(c)-040u < 0137u)
+static inline const void *expect_char(char ch, const void *buf, const void *end,
+				      int *ret)
+{
+	const char *ptr = buf;
 
-#define EXPECT_CHAR(ch)							\
-	do {								\
-	       if (!check_eof(buf, buf_end, ret))			\
-		        return NULL;					\
-	       if (*buf++ != ch) {					\
-		       *ret = -1;					\
-		       return NULL;					\
-	       }							\
-	} while(0)
+	if (!check_eof(buf, end, ret))
+		return NULL;
+	if (*ptr++ != ch) {
+		*ret = -1;
+		return NULL;
+	}
+	return ptr;
+}
+
+#define IS_PRINTABLE_ASCII(c) ((unsigned char)(c)-040u < 0137u)
 
 #define ADVANCE_TOKEN(tok, toklen)					\
 	do {								\
@@ -192,7 +196,8 @@ static const char *get_token_to_eol(const char *buf, const char *buf_end, const 
 FOUND_CTL:
     if (likely(*buf == '\015')) {
         ++buf;
-        EXPECT_CHAR('\012');
+        if (!expect_char('\012', buf, buf_end, ret))
+		return NULL;
         *token_len = buf - 2 - token_start;
     } else if (*buf == '\012') {
         *token_len = buf - token_start;
@@ -218,8 +223,9 @@ static const char *is_complete(const char *buf, const char *buf_end, size_t last
             ++buf;
 	    if (!check_eof(buf, buf_end, ret))
 		    return NULL;
-            EXPECT_CHAR('\012');
-            ++ret_cnt;
+            if (!expect_char('\012', buf, buf_end, ret))
+		    return NULL;
+	    ++ret_cnt;
         } else if (*buf == '\012') {
             ++buf;
             ++ret_cnt;
@@ -264,13 +270,12 @@ static const char *parse_int(const char *buf, const char *buf_end, int *value, i
 /* returned pointer is always within [buf, buf_end), or null */
 static const char *parse_http_version(const char *buf, const char *buf_end, int *minor_version, int *ret)
 {
-    EXPECT_CHAR('H');
-    EXPECT_CHAR('T');
-    EXPECT_CHAR('T');
-    EXPECT_CHAR('P');
-    EXPECT_CHAR('/');
-    EXPECT_CHAR('1');
-    EXPECT_CHAR('.');
+	char str[] = { 'H', 'T', 'T', 'P', '/', '1', '.', };
+	int i;
+
+	for (i = 0; i < sizeof(str); i++)
+		if (!expect_char(str[i], buf, buf_end, ret))
+			return NULL;
     return parse_int(buf, buf_end, minor_version, ret);
 }
 
@@ -282,7 +287,8 @@ static const char *parse_headers(const char *buf, const char *buf_end, struct ph
 	 return NULL;
         if (*buf == '\015') {
             ++buf;
-            EXPECT_CHAR('\012');
+            if (!expect_char('\012', buf, buf_end, ret))
+		    return NULL;
             break;
         } else if (*buf == '\012') {
             ++buf;
@@ -347,7 +353,8 @@ static const char *parse_request(const char *buf, const char *buf_end, const cha
 	    return NULL;
     if (*buf == '\015') {
         ++buf;
-        EXPECT_CHAR('\012');
+	if (!expect_char('\012', buf, buf_end, ret))
+		return NULL;
     } else if (*buf == '\012') {
         ++buf;
     }
@@ -362,7 +369,8 @@ static const char *parse_request(const char *buf, const char *buf_end, const cha
     }
     if (*buf == '\015') {
         ++buf;
-        EXPECT_CHAR('\012');
+	if (!expect_char('\012', buf, buf_end, ret))
+		return NULL;
     } else if (*buf == '\012') {
         ++buf;
     } else {
@@ -614,5 +622,4 @@ Exit:
     return ret;
 }
 
-#undef EXPECT_CHAR
 #undef ADVANCE_TOKEN
