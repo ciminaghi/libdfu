@@ -281,7 +281,8 @@ static const char *parse_int(const char *buf, const char *buf_end,
 }
 
 /* returned pointer is always within [buf, buf_end), or null */
-static const char *parse_http_version(const char *buf, const char *buf_end, int *minor_version, int *ret)
+static const char *parse_http_version(const char *buf, const char *buf_end,
+				      int *minor_version, int *ret)
 {
 	char str[] = { 'H', 'T', 'T', 'P', '/', '1', '.', };
 	int i;
@@ -289,7 +290,7 @@ static const char *parse_http_version(const char *buf, const char *buf_end, int 
 	for (i = 0; i < sizeof(str); i++)
 		if (!expect_char(str[i], buf, buf_end, ret))
 			return NULL;
-    return parse_int(buf, buf_end, minor_version, ret);
+	return parse_int(buf, buf_end, minor_version, ret);
 }
 
 static const char *parse_headers(const char *buf, const char *buf_end, struct phr_header *headers, size_t *num_headers,
