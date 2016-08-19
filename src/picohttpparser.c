@@ -537,15 +537,13 @@ enum {
 
 static int decode_hex(int ch)
 {
-    if ('0' <= ch && ch <= '9') {
-        return ch - '0';
-    } else if ('A' <= ch && ch <= 'F') {
-        return ch - 'A' + 0xa;
-    } else if ('a' <= ch && ch <= 'f') {
-        return ch - 'a' + 0xa;
-    } else {
-        return -1;
-    }
+	if ('0' <= ch && ch <= '9')
+		return ch - '0';
+	if ('A' <= ch && ch <= 'F')
+		return ch - 'A' + 0xa;
+	if ('a' <= ch && ch <= 'f')
+		return ch - 'a' + 0xa;
+	return -1;
 }
 
 ssize_t phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf, size_t *_bufsz)
