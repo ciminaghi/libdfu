@@ -293,110 +293,121 @@ static const char *parse_http_version(const char *buf, const char *buf_end,
 	return parse_int(buf, buf_end, minor_version, ret);
 }
 
-static const char *parse_headers(const char *buf, const char *buf_end, struct phr_header *headers, size_t *num_headers,
-                                 size_t max_headers, int *ret)
+static const char *parse_headers(const char *buf, const char *buf_end,
+				 struct phr_header *headers,
+				 size_t *num_headers, size_t max_headers,
+				 int *ret)
 {
-    for (;; ++*num_headers) {
- if (!check_eof(buf, buf_end, ret))
-	 return NULL;
-        if (*buf == '\015') {
-            ++buf;
-            if (!expect_char('\012', buf, buf_end, ret))
-		    return NULL;
-            break;
-        } else if (*buf == '\012') {
-            ++buf;
-            break;
-        }
-        if (*num_headers == max_headers) {
-            *ret = -1;
-            return NULL;
-        }
-        if (!(*num_headers != 0 && (*buf == ' ' || *buf == '\t'))) {
-            static const char ALIGNED(16) ranges1[] = "::\x00\037";
-            int found;
-            if (!token_char_map[(unsigned char)*buf]) {
-                *ret = -1;
-                return NULL;
-            }
-            /* parsing name, but do not discard SP before colon, see
-             * http://www.mozilla.org/security/announce/2006/mfsa2006-33.html */
-            headers[*num_headers].name = buf;
-            buf = findchar_fast(buf, buf_end, ranges1, sizeof(ranges1) - 1, &found);
-            if (!found) {
-		    if (!check_eof(buf, buf_end, ret))
-			    return NULL;
-            }
-            while (1) {
-                if (*buf == ':') {
-                    break;
-                } else if (*buf < ' ') {
-                    *ret = -1;
-                    return NULL;
-                }
-                ++buf;
-                if (!check_eof(buf, buf_end, ret))
+	for (;; ++*num_headers) {
+		if (!check_eof(buf, buf_end, ret))
 			return NULL;
-            }
-            headers[*num_headers].name_len = buf - headers[*num_headers].name;
-            ++buf;
-            for (;; ++buf) {
-		    if (!check_eof(buf, buf_end, ret))
-			    return NULL;
-                if (!(*buf == ' ' || *buf == '\t')) {
-                    break;
-                }
-            }
-        } else {
-            headers[*num_headers].name = NULL;
-            headers[*num_headers].name_len = 0;
-        }
-        if ((buf = get_token_to_eol(buf, buf_end, &headers[*num_headers].value, &headers[*num_headers].value_len, ret)) == NULL) {
-            return NULL;
-        }
-    }
-    return buf;
+		if (*buf == '\015') {
+			++buf;
+			if (!expect_char('\012', buf, buf_end, ret))
+				return NULL;
+			break;
+		} else if (*buf == '\012') {
+			++buf;
+			break;
+		}
+		if (*num_headers == max_headers) {
+			*ret = -1;
+			return NULL;
+		}
+		if (!(*num_headers != 0 && (*buf == ' ' || *buf == '\t'))) {
+			static const char ALIGNED(16) ranges1[] = "::\x00\037";
+			int found;
+			if (!token_char_map[(unsigned char)*buf]) {
+				*ret = -1;
+				return NULL;
+			}
+			/* parsing name, but do not discard SP before colon, see
+			 * http://www.mozilla.org/security/announce/2006/mfsa2006-33.html */
+			headers[*num_headers].name = buf;
+			buf = findchar_fast(buf, buf_end, ranges1,
+					    sizeof(ranges1) - 1, &found);
+			if (!found) {
+				if (!check_eof(buf, buf_end, ret))
+					return NULL;
+			}
+			while (1) {
+				if (*buf == ':') {
+					break;
+				} else if (*buf < ' ') {
+					*ret = -1;
+					return NULL;
+				}
+				++buf;
+				if (!check_eof(buf, buf_end, ret))
+					return NULL;
+			}
+			headers[*num_headers].name_len =
+				buf - headers[*num_headers].name;
+			++buf;
+			for (;; ++buf) {
+				if (!check_eof(buf, buf_end, ret))
+					return NULL;
+				if (!(*buf == ' ' || *buf == '\t')) {
+					break;
+				}
+			}
+		} else {
+			headers[*num_headers].name = NULL;
+			headers[*num_headers].name_len = 0;
+		}
+		if ((buf = get_token_to_eol(buf, buf_end,
+					    &headers[*num_headers].value,
+					    &headers[*num_headers].value_len,
+					    ret)) == NULL) {
+			return NULL;
+		}
+	}
+	return buf;
 }
 
-static const char *parse_request(const char *buf, const char *buf_end, const char **method, size_t *method_len, const char **path,
-                                 size_t *path_len, int *minor_version, struct phr_header *headers, size_t *num_headers,
-                                 size_t max_headers, int *ret)
+static const char *parse_request(const char *buf, const char *buf_end,
+				 const char **method, size_t *method_len,
+				 const char **path,
+				 size_t *path_len, int *minor_version,
+				 struct phr_header *headers,
+				 size_t *num_headers,
+				 size_t max_headers, int *ret)
 {
-    /* skip first empty line (some clients add CRLF after POST content) */
-    if (!check_eof(buf, buf_end, ret))
-	    return NULL;
-    if (*buf == '\015') {
-        ++buf;
-	if (!expect_char('\012', buf, buf_end, ret))
+	/* skip first empty line (some clients add CRLF after POST content) */
+	if (!check_eof(buf, buf_end, ret))
 		return NULL;
-    } else if (*buf == '\012') {
-        ++buf;
-    }
+	if (*buf == '\015') {
+		++buf;
+		if (!expect_char('\012', buf, buf_end, ret))
+			return NULL;
+	} else if (*buf == '\012') {
+		++buf;
+	}
 
-    /* parse request line */
-    buf = advance_token(method, method_len, buf, buf_end, ret);
-    if (!buf)
-	    return buf;
-    ++buf;
-    buf = advance_token(path, path_len, buf, buf_end, ret);
-    if (!buf)
-	    return buf;
-    ++buf;
-    if ((buf = parse_http_version(buf, buf_end, minor_version, ret)) == NULL) {
-        return NULL;
-    }
-    if (*buf == '\015') {
-        ++buf;
-	if (!expect_char('\012', buf, buf_end, ret))
+	/* parse request line */
+	buf = advance_token(method, method_len, buf, buf_end, ret);
+	if (!buf)
+		return buf;
+	++buf;
+	buf = advance_token(path, path_len, buf, buf_end, ret);
+	if (!buf)
+		return buf;
+	++buf;
+	if (!(buf = parse_http_version(buf, buf_end, minor_version, ret))) {
 		return NULL;
-    } else if (*buf == '\012') {
-        ++buf;
-    } else {
-        *ret = -1;
-        return NULL;
-    }
-
-    return parse_headers(buf, buf_end, headers, num_headers, max_headers, ret);
+	}
+	if (*buf == '\015') {
+		++buf;
+		if (!expect_char('\012', buf, buf_end, ret))
+			return NULL;
+	} else if (*buf == '\012') {
+		++buf;
+	} else {
+		*ret = -1;
+		return NULL;
+	}
+	return parse_headers(buf, buf_end, headers, num_headers, max_headers,
+			     ret);
 }
 
 int phr_parse_request(const char *buf_start, size_t len, const char **method, size_t *method_len, const char **path,
