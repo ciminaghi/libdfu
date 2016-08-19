@@ -442,33 +442,34 @@ int phr_parse_request(const char *buf_start, size_t len, const char **method,
 	return (int)(buf - buf_start);
 }
 
-static const char *parse_response(const char *buf, const char *buf_end, int *minor_version, int *status, const char **msg,
-                                  size_t *msg_len, struct phr_header *headers, size_t *num_headers, size_t max_headers, int *ret)
+static const char *parse_response(const char *buf, const char *buf_end,
+				  int *minor_version, int *status,
+				  const char **msg,
+				  size_t *msg_len, struct phr_header *headers,
+				  size_t *num_headers, size_t max_headers,
+				  int *ret)
 {
-    /* parse "HTTP/1.x" */
-    if ((buf = parse_http_version(buf, buf_end, minor_version, ret)) == NULL) {
-        return NULL;
-    }
-    /* skip space */
-    if (*buf++ != ' ') {
-        *ret = -1;
-        return NULL;
-    }
-    /* parse status code */
-    if ((buf = parse_int(buf, buf_end, status, ret)) == NULL) {
-        return NULL;
-    }
-    /* skip space */
-    if (*buf++ != ' ') {
-        *ret = -1;
-        return NULL;
-    }
-    /* get message */
-    if ((buf = get_token_to_eol(buf, buf_end, msg, msg_len, ret)) == NULL) {
-        return NULL;
-    }
-
-    return parse_headers(buf, buf_end, headers, num_headers, max_headers, ret);
+	/* parse "HTTP/1.x" */
+	if (!(buf = parse_http_version(buf, buf_end, minor_version, ret)))
+		return NULL;
+	/* skip space */
+	if (*buf++ != ' ') {
+		*ret = -1;
+		return NULL;
+	}
+	/* parse status code */
+	if ((buf = parse_int(buf, buf_end, status, ret)) == NULL)
+		return NULL;
+	/* skip space */
+	if (*buf++ != ' ') {
+		*ret = -1;
+		return NULL;
+	}
+	/* get message */
+	if (!(buf = get_token_to_eol(buf, buf_end, msg, msg_len, ret)))
+		return NULL;
+	return parse_headers(buf, buf_end, headers, num_headers, max_headers,
+			     ret);
 }
 
 int phr_parse_response(const char *buf_start, size_t len, int *minor_version, int *status, const char **msg, size_t *msg_len,
