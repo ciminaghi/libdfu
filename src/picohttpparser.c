@@ -76,33 +76,6 @@ static inline const void *expect_char(char ch, const void *buf, const void *end,
 
 #define IS_PRINTABLE_ASCII(c) ((unsigned char)(c)-040u < 0137u)
 
-#define ADVANCE_TOKEN(tok, toklen)					\
-	do {								\
-		const char *tok_start = buf;				\
-		static const char ALIGNED(16) ranges2[] = "\000\040\177\177"; \
-		int found2;						\
-		buf = findchar_fast(buf, buf_end, ranges2, sizeof(ranges2) - 1, &found2); \
-		if (!found2) {						\
-			if (!check_eof(buf, buf_end, ret))		\
-				return NULL;				\
-		}							\
-		while (1) {						\
-			if (*buf == ' ') {				\
-				break;					\
-			} else if (unlikely(!IS_PRINTABLE_ASCII(*buf))) { \
-				if ((unsigned char)*buf < '\040' || *buf == '\177') { \
-					*ret = -1;			\
-					return NULL;			\
-				}					\
-			}						\
-			++buf;						\
-			if (!check_eof(buf, buf_end, ret))		\
-				return NULL;				\
-		}							\
-		tok = tok_start;					\
-		toklen = buf - tok_start;				\
-	} while (0)
-
 static const char *token_char_map =
 	"\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
 	"\0\1\1\1\1\1\1\1\0\0\1\1\0\1\1\0\1\1\1\1\1\1\1\1\1\1\0\0\0\0\0\0"
@@ -141,6 +114,38 @@ static const char *findchar_fast(const char *buf, const char *buf_end, const cha
 #endif
     return buf;
 }
+
+static inline const void *advance_token(const char **tok, size_t *toklen,
+					const char *buf, const void *end,
+					int *ret)
+{
+	const char *tok_start = buf;
+	static const char ALIGNED(16) ranges2[] = "\000\040\177\177";
+	int found;
+
+	buf = findchar_fast(buf, end, ranges2, sizeof(ranges2) - 1, &found);
+	if (!found) {
+		if (!check_eof(buf, end, ret))
+			return NULL;
+	}
+	while (1) {
+		if (*buf == ' ') {
+			break;
+		} else if (unlikely(!IS_PRINTABLE_ASCII(*buf))) {
+			if ((unsigned char)*buf < '\040' || *buf == '\177') {
+				*ret = -1;
+				return NULL;
+			}
+		}
+		++buf;
+		if (!check_eof(buf, end, ret))
+			return NULL;
+	}
+	*tok = tok_start;
+	*toklen = buf - tok_start;
+	return buf;
+}
+
 
 static const char *get_token_to_eol(const char *buf, const char *buf_end, const char **token, size_t *token_len, int *ret)
 {
@@ -360,9 +365,13 @@ static const char *parse_request(const char *buf, const char *buf_end, const cha
     }
 
     /* parse request line */
-    ADVANCE_TOKEN(*method, *method_len);
+    buf = advance_token(method, method_len, buf, buf_end, ret);
+    if (!buf)
+	    return buf;
     ++buf;
-    ADVANCE_TOKEN(*path, *path_len);
+    buf = advance_token(path, path_len, buf, buf_end, ret);
+    if (!buf)
+	    return buf;
     ++buf;
     if ((buf = parse_http_version(buf, buf_end, minor_version, ret)) == NULL) {
         return NULL;
@@ -621,5 +630,3 @@ Exit:
     *_bufsz = dst;
     return ret;
 }
-
-#undef ADVANCE_TOKEN
