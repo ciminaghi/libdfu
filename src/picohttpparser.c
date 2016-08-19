@@ -255,28 +255,29 @@ static const char *is_complete(const char *buf, const char *buf_end,
 }
 
 /* *_buf is always within [buf, buf_end) upon success */
-static const char *parse_int(const char *buf, const char *buf_end, int *value, int *ret)
+static const char *parse_int(const char *buf, const char *buf_end,
+			     int *value, int *ret)
 {
-    int v;
-    if (!check_eof(buf, buf_end, ret))
-	    return NULL;
-    if (!('0' <= *buf && *buf <= '9')) {
-        *ret = -1;
-        return NULL;
-    }
-    v = 0;
-    for (;; ++buf) {
-	    if (!check_eof(buf, buf_end, ret))
-		    return NULL;
-        if ('0' <= *buf && *buf <= '9') {
-            v = v * 10 + *buf - '0';
-        } else {
-            break;
-        }
-    }
+	int v;
+	if (!check_eof(buf, buf_end, ret))
+		return NULL;
+	if (!('0' <= *buf && *buf <= '9')) {
+		*ret = -1;
+		return NULL;
+	}
+	v = 0;
+	for (;; ++buf) {
+		if (!check_eof(buf, buf_end, ret))
+			return NULL;
+		if ('0' <= *buf && *buf <= '9') {
+			v = v * 10 + *buf - '0';
+		} else {
+			break;
+		}
+	}
 
-    *value = v;
-    return buf;
+	*value = v;
+	return buf;
 }
 
 /* returned pointer is always within [buf, buf_end), or null */
