@@ -223,35 +223,35 @@ FOUND_CTL:
 	return buf;
 }
 
-static const char *is_complete(const char *buf, const char *buf_end, size_t last_len, int *ret)
+static const char *is_complete(const char *buf, const char *buf_end,
+			       size_t last_len, int *ret)
 {
-    int ret_cnt = 0;
-    buf = last_len < 3 ? buf : buf + last_len - 3;
+	int ret_cnt = 0;
+	buf = last_len < 3 ? buf : buf + last_len - 3;
 
-    while (1) {
-	    if (!check_eof(buf, buf_end, ret))
-		    return NULL;
-        if (*buf == '\015') {
-            ++buf;
-	    if (!check_eof(buf, buf_end, ret))
-		    return NULL;
-            if (!expect_char('\012', buf, buf_end, ret))
-		    return NULL;
-	    ++ret_cnt;
-        } else if (*buf == '\012') {
-            ++buf;
-            ++ret_cnt;
-        } else {
-            ++buf;
-            ret_cnt = 0;
-        }
-        if (ret_cnt == 2) {
-            return buf;
-        }
-    }
-
-    *ret = -2;
-    return NULL;
+	while (1) {
+		if (!check_eof(buf, buf_end, ret))
+			return NULL;
+		if (*buf == '\015') {
+			++buf;
+			if (!check_eof(buf, buf_end, ret))
+				return NULL;
+			if (!expect_char('\012', buf, buf_end, ret))
+				return NULL;
+			++ret_cnt;
+		} else if (*buf == '\012') {
+			++buf;
+			++ret_cnt;
+		} else {
+			++buf;
+			ret_cnt = 0;
+		}
+		if (ret_cnt == 2) {
+			return buf;
+		}
+	}
+	*ret = -2;
+	return NULL;
 }
 
 /* *_buf is always within [buf, buf_end) upon success */
