@@ -2,6 +2,8 @@
  * Copyright (c) 2009-2014 Kazuho Oku, Tokuhiro Matsuno, Daisuke Murase,
  *                         Shigeo Mitsunari
  *
+ * Patched by Davide Ciminaghi for better readability and adapt code to esp8266.
+ *
  * The software is licensed under either the MIT License (below) or the Perl
  * license.
  *
