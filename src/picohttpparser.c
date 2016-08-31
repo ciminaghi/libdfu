@@ -209,7 +209,7 @@ static const char *get_token_to_eol(const char *buf, const char *buf_end,
 FOUND_CTL:
 	if (likely(*buf == '\015')) {
 		++buf;
-		if (!expect_char('\012', buf, buf_end, ret))
+		if (!(buf = expect_char('\012', buf, buf_end, ret)))
 			return NULL;
 		*token_len = buf - 2 - token_start;
 	} else if (*buf == '\012') {
@@ -236,7 +236,7 @@ static const char *is_complete(const char *buf, const char *buf_end,
 			++buf;
 			if (!check_eof(buf, buf_end, ret))
 				return NULL;
-			if (!expect_char('\012', buf, buf_end, ret))
+			if (!(buf = expect_char('\012', buf, buf_end, ret)))
 				return NULL;
 			++ret_cnt;
 		} else if (*buf == '\012') {
@@ -288,7 +288,7 @@ static const char *parse_http_version(const char *buf, const char *buf_end,
 	int i;
 
 	for (i = 0; i < sizeof(str); i++)
-		if (!expect_char(str[i], buf, buf_end, ret))
+		if (!(buf = expect_char(str[i], buf, buf_end, ret)))
 			return NULL;
 	return parse_int(buf, buf_end, minor_version, ret);
 }
@@ -303,7 +303,7 @@ static const char *parse_headers(const char *buf, const char *buf_end,
 			return NULL;
 		if (*buf == '\015') {
 			++buf;
-			if (!expect_char('\012', buf, buf_end, ret))
+			if (!(buf = expect_char('\012', buf, buf_end, ret)))
 				return NULL;
 			break;
 		} else if (*buf == '\012') {
@@ -378,7 +378,7 @@ static const char *parse_request(const char *buf, const char *buf_end,
 		return NULL;
 	if (*buf == '\015') {
 		++buf;
-		if (!expect_char('\012', buf, buf_end, ret))
+		if (!(buf = expect_char('\012', buf, buf_end, ret)))
 			return NULL;
 	} else if (*buf == '\012') {
 		++buf;
@@ -398,7 +398,7 @@ static const char *parse_request(const char *buf, const char *buf_end,
 	}
 	if (*buf == '\015') {
 		++buf;
-		if (!expect_char('\012', buf, buf_end, ret))
+		if (!(buf = expect_char('\012', buf, buf_end, ret)))
 			return NULL;
 	} else if (*buf == '\012') {
 		++buf;
