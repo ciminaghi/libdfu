@@ -37,6 +37,7 @@
 #endif
 #endif
 #include "picohttpparser.h"
+#include "dfu.h"
 
 /* $Id: 8e21379070e9a13462ee692b40548e5fd59a547c $ */
 
@@ -657,7 +658,7 @@ ssize_t phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 			decoder->_state = CHUNKED_IN_TRAILERS_LINE_HEAD;
 			break;
 		default:
-			assert(!"decoder is corrupt");
+			dfu_err("decoder internal error\n");
 		}
 	}
 Complete:
