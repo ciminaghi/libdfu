@@ -8,7 +8,7 @@ DYNAMIC_LIB := n
 LDFLAGS := -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static
 CROSS_COMPILE := xtensa-lx106-elf-
 LD_SCRIPT	= eagle.app.v6.ld
-LIBS		= c gcc hal pp phy net80211 lwip wpa main crypto dfu
+LIBS		= gcc hal pp phy net80211 lwip wpa main crypto dfu
 
 SDK_LIBDIR	:= $(addprefix $(SDK_BASE)/,$(SDK_LIBDIR))
 SDK_INCDIR	:= $(addprefix -I$(SDK_BASE)/,$(SDK_INCDIR))
