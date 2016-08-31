@@ -24,6 +24,10 @@ ifeq ($(HOST),esp8266)
 OBJS += host/esp8266.o interface/esp8266-serial.o
 endif
 
+ifeq ($(HAVE_LWIP),y)
+CFLAGS += -DHAVE_LWIP
+endif
+
 OBJS += $(FORMAT_OBJ) $(RX_METHOD_OBJ)
 
 LIB := libdfu$(EXT)

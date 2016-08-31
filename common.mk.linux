@@ -1,3 +1,4 @@
 
 DYNAMIC_LIB := y
 LDFLAGS := -rdynamic
+HAVE_LWIP := n
