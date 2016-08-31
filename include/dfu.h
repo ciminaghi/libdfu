@@ -106,6 +106,16 @@ extern int dfu_idle(struct dfu_data *dfu);
 #define dfu_dbg(a,args...) dfu_log(a, ##args)
 #endif
 
+/*
+ * Rx methods private data structures
+ */
+struct netif;
+
+struct rx_method_http_lwip_data {
+	void (*netif_idle_fun)(struct netif *);
+	struct netif *netif;
+};
+
 
 #endif /* __DFU_H__ */
 
