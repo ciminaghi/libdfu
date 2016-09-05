@@ -3,6 +3,11 @@ include $(BASE)/common.mk
 
 ifeq ($(HOST),linux)
 EXE := linux-stm32
+
+ifeq ($(HAVE_LWIP),y)
+EXE += linux-http-lwip-stm32
+endif
+
 else ifeq ($(HOST),esp8266)
 EXE := esp8266-stm32
 endif

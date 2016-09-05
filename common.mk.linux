@@ -2,3 +2,20 @@
 DYNAMIC_LIB := y
 LDFLAGS := -rdynamic
 HAVE_LWIP := n
+
+ifeq ($(HAVE_LWIP),y)
+ifeq ($(LWIP_SRC_DIR),)
+$(error "Please provide a non empty LWIP_SRC_DIR variable")
+endif
+
+ifeq ($(LWIP_CONTRIB_DIR),)
+$(error "Please provide a non empty LWIP_PORT_DIR variable")
+endif
+
+CFLAGS += -I$(LWIP_CONTRIB_DIR)/ports/unix/include \
+-I$(LWIP_SRC_DIR)/src/include -I$(LWIP_SRC_DIR)/src/include/ipv4 \
+-I$(BASE)/samples -pthread
+
+LDFLAGS += -L$(LWIP_CONTRIB_DIR)/ports/unix/proj/lib -llwip -pthread
+
+endif
