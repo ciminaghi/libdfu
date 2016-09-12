@@ -9,6 +9,7 @@ HOSTLD ?= ld
 CC = $(CROSS_COMPILE)gcc
 LD = $(CROSS_COMPILE)gcc
 AR = $(CROSS_COMPILE)ar
+OBJCOPY = $(CROSS_COMPILE)objcopy
 STRIP = $(CROSS_COMPILE)strip
 INSTALL ?= /usr/bin/install
 DEBUG ?= y

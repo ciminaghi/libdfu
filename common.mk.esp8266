@@ -17,3 +17,6 @@ LD_SCRIPT	:= $(addprefix -T$(BASE)/samples/,$(LD_SCRIPT))
 LIBS		:= $(addprefix -l,$(LIBS))
 
 CFLAGS := -Os -g -O2 -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -fno-builtin-putc -nostdlib -mlongcalls -mtext-section-literals  -D__ets__ $(SDK_INCDIR) -DLWIP_OPEN_SRC
+
+OBJ_FORMAT := elf32-xtensa-le
+BINARY_ARCHITECTURE := xtensa

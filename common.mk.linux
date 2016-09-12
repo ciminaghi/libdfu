@@ -19,3 +19,7 @@ CFLAGS += -I$(LWIP_CONTRIB_DIR)/ports/unix/include \
 LDFLAGS += -L$(LWIP_CONTRIB_DIR)/ports/unix/proj/lib -llwip -pthread
 
 endif
+
+# fixme
+OBJ_FORMAT := elf64-x86-64
+BINARY_ARCHITECTURE := i386
