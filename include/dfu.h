@@ -79,6 +79,8 @@ extern int dfu_set_interface_event(struct dfu_data *, void *event_data);
 
 extern int dfu_target_reset(struct dfu_data *dfu);
 
+extern int dfu_target_probe(struct dfu_data *dfu);
+
 extern int dfu_target_go(struct dfu_data *dfu);
 
 #define DFU_ALL_DONE 1

@@ -69,8 +69,13 @@ user_init()
 		os_printf("Error setting up dfu\n");
 		return;
 	}
+	/* Reset and probe target */
 	if (dfu_target_reset(dfu) < 0) {
 		os_printf("Error resetting target\n");
+		return;
+	}
+	if (dfu_target_probe(dfu) < 0) {
+		os_printf("Error probing target\n");
 		return;
 	}
 	bfile = dfu_binary_file_start_rx("http_post", dfu, NULL);

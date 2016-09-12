@@ -10,6 +10,13 @@ int dfu_target_reset(struct dfu_data *dfu)
 	return 0;
 }
 
+int dfu_target_probe(struct dfu_data *dfu)
+{
+	if (dfu->target->ops->probe)
+		return dfu->target->ops->probe(dfu->target);
+	return 0;
+}
+
 int dfu_target_go(struct dfu_data *dfu)
 {
 	if (dfu->target->ops->run)

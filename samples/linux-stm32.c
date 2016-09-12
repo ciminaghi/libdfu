@@ -121,8 +121,13 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Error setting up binary file struct\n");
 		exit(127);
 	}
+	/* Reset and probe target */
 	if (dfu_target_reset(dfu) < 0) {
 		fprintf(stderr, "Error resetting target\n");
+		exit(127);
+	}
+	if (dfu_target_probe(dfu) < 0) {
+		fprintf(stderr, "Error probing target\n");
 		exit(127);
 	}
 	/* Start programming data */
