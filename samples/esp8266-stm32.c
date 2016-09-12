@@ -58,7 +58,7 @@ user_init()
 		os_printf("Error resetting target\n");
 		return;
 	}
-	bfile = dfu_binary_file_start_rx("http_post", dfu);
+	bfile = dfu_binary_file_start_rx("http_post", dfu, NULL);
 	if (!bfile) {
 		os_printf("Error starting file rx\n");
 		return;
