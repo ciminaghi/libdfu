@@ -14,6 +14,9 @@ endif
 
 ifeq ($(HOST),linux)
 all: $(EXE)
+
+linux-http-lwip-stm32: % : %.o mintapif.o timer.o
+	$(CC) $(LDFLAGS) -o $@ $+
 endif
 
 ifeq ($(HOST),esp8266)
