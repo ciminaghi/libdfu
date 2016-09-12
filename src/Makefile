@@ -12,6 +12,9 @@ RX_METHOD_OBJ := rx-methods.o
 HTTP_URLS_OBJS := $(patsubst %.c,%.o,$(wildcard http-url-*.c))
 HTTP_URLS_OBJ := http-urls.o
 
+HTMLS := $(patsubst %.html, %.html.o, $(wildcard http-files/*.html))
+
+
 ifeq ($(DYNAMIC_LIB),y)
 CFLAGS += -fpic -fPIC
 EXT := .so
@@ -29,7 +32,7 @@ endif
 
 ifeq ($(HAVE_LWIP),y)
 CFLAGS += -DHAVE_LWIP
-OBJS += picohttpparser.o $(HTTP_URLS_OBJ) tcp-conn-lwip-raw.o
+OBJS += picohttpparser.o $(HTTP_URLS_OBJ) $(HTMLS) tcp-conn-lwip-raw.o
 endif
 
 OBJS += $(FORMAT_OBJ) $(RX_METHOD_OBJ)
@@ -51,10 +54,17 @@ libdfu.a: $(OBJS)
 libdfu.so: $(OBJS)
 	$(CC) -o $@ -shared -Wl,-soname,$@ $^
 
+$(HTMLS): %.html.o: %.html
+	$(OBJCOPY) -B $(BINARY_ARCHITECTURE) -I binary -O $(OBJ_FORMAT) $< $@
+
+url-tab.c: $(HTMLS)
+	./gen_url_tab $@ $+
+
+
 $(FORMAT_OBJ): $(FORMAT_OBJS)
 	$(LD) -nostartfiles -nodefaultlibs -r -T formats.ld $+ -o $@
 
-$(HTTP_URLS_OBJ): $(HTTP_URLS_OBJS)
+$(HTTP_URLS_OBJ): $(HTTP_URLS_OBJS) url-tab.o
 	$(LD) -nostartfiles -nodefaultlibs -r -T http-urls.ld $+ -o $@
 
 $(RX_METHOD_OBJ): $(RX_METHOD_OBJS)
