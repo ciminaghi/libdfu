@@ -46,6 +46,7 @@ $(eval $(call install_cmds,$(LIB),$(EXECUTABLES),$(SCRIPTS)))
 clean:
 	find . -name \*.o -or -name \*~ | xargs rm -f
 	rm -f $(LIB) $(EXECUTABLES)
+	rm -f url-tab.c
 
 
 libdfu.a: $(OBJS)
