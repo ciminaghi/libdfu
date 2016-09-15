@@ -248,7 +248,9 @@ int http_request_error(struct http_connection *c, enum http_status s)
 {
 	http_send_status(c->cd, s);
 	c->can_close = 1;
-	return tcp_server_socket_lwip_raw_close(c->cd);
+	if (!tcp_server_socket_lwip_raw_close(c->cd))
+		free_connection(c);
+	return 0;
 }
 
 static int simple_atoi(const char *s)

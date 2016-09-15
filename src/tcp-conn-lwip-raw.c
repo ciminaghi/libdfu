@@ -264,8 +264,7 @@ int tcp_server_socket_lwip_raw_send(struct tcp_conn_data *es,
 
 int tcp_server_socket_lwip_raw_close(struct tcp_conn_data *es)
 {
-	tcp_close(es->pcb);
-	return 0;
+	return tcp_close(es->pcb);
 }
 
 
