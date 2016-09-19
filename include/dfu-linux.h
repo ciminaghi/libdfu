@@ -1,6 +1,10 @@
 #ifndef __DFU_LINUX_H__
 #define __DFU_LINUX_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdio.h>
 
@@ -19,6 +23,9 @@ extern const struct dfu_host_ops linux_dfu_host_ops;
 
 #include <string.h>
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __DFU_LINUX_H__ */
 

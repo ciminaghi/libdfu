@@ -1,6 +1,10 @@
 #ifndef __DFU_HOST_H__
 #define __DFU_HOST_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef HOST_esp8266
 #include "dfu-esp8266.h"
 #elif defined HOST_linux
@@ -25,6 +29,9 @@ static inline uint16_t be32_to_cpu(uint32_t v)
 	return cpu_to_be32(v);
 }
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __DFU_HOST_H__ */
 

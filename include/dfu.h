@@ -10,6 +10,10 @@
 
 #include "dfu-host.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct dfu_interface;
 struct dfu_target;
 struct dfu_host;
@@ -116,6 +120,9 @@ struct rx_method_http_lwip_data {
 	struct netif *netif;
 };
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __DFU_H__ */
 
