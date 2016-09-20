@@ -19,6 +19,15 @@ static int linux_serial_stm32_target_reset(struct dfu_interface *iface)
 	struct linux_serial_data *priv = iface->priv;
 	int v, stat;
 
+	/*
+	 * BOOT0  ----+        +--------
+	 *            |        |
+	 *            +--------+
+	 *
+	 * RST    ----+            +----
+	 *            |            |
+	 *            +------------+
+	 */
 	/* RTS -> BOOT0 */
 	/* DTR -> RST */
 	/* Set RST to 0 (active) */
