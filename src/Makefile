@@ -29,7 +29,8 @@ target/dummy-linux.o
 endif
 
 ifeq ($(HOST),esp8266)
-OBJS += host/esp8266.o interface/esp8266-serial.o
+OBJS += host/esp8266.o interface/esp8266-serial.o \
+interface/esp8266-serial-star8.o
 endif
 
 ifeq ($(HAVE_LWIP),y)

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "dfu.h"
 #include "dfu-internal.h"
+#include "esp8266-serial.h"
 
 /* Registers' offset */
 #define UART_FIFO	0x00
@@ -68,8 +69,8 @@ end:
 /*
  * FIXME: currently ignores path and works with serial0 only
  */
-static int esp8266_serial_open(struct dfu_interface *iface,
-			       const char *path, const void *pars)
+int esp8266_serial_open(struct dfu_interface *iface,
+			const char *path, const void *pars)
 {
 	uint32_t v;
 
@@ -125,18 +126,4 @@ int esp8266_serial_read(struct dfu_interface *iface, char *buf,
 	memcpy(buf, (void *)(base + UART_FIFO), min(available, copied));
 	return copied;
 }
-
-
-int esp8266_serial_target_reset(struct dfu_interface *iface)
-{
-	return -1;
-}
-
-
-const struct dfu_interface_ops esp8266_serial_interface_ops = {
-	.open = esp8266_serial_open,
-	.write = esp8266_serial_write,
-	.read = esp8266_serial_read,
-	.target_reset = esp8266_serial_target_reset,
-};
 
