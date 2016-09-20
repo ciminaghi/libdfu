@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
 		perror("stat");
 		exit(127);
 	}
-	dfu = dfu_init(&linux_serial_interface_ops,
+	dfu = dfu_init(&linux_serial_stm32_interface_ops,
 		       port,
 		       NULL,
 		       &stm32_dfu_target_ops,

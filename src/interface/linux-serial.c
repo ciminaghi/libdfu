@@ -9,19 +9,13 @@
 #include <termios.h>
 #include "dfu.h"
 #include "dfu-internal.h"
-
-/*
- * Linux serial interface private data
- */
-struct linux_serial_data {
-	int fd;
-};
+#include "linux-serial.h"
 
 /* Just one instance */
 static struct linux_serial_data sdata;
 
-static int linux_serial_open(struct dfu_interface *iface,
-			     const char *path, const void *pars)
+int linux_serial_open(struct dfu_interface *iface,
+		      const char *path, const void *pars)
 {
 	struct termios config;
 
@@ -84,44 +78,4 @@ int linux_serial_read(struct dfu_interface *iface, char *buf,
 	}
 	return read(priv->fd, buf, size);
 }
-
-/* FIXME: THIS IS STM32 SPECIFIC, IMPLEMENT AN STM32 SPECIFIC INTERFACE */
-int linux_serial_target_reset(struct dfu_interface *iface)
-{
-	struct linux_serial_data *priv = iface->priv;
-	int v, stat;
-
-	/* RTS -> BOOT0 */
-	/* DTR -> RST */
-	/* Set RST to 0 (active) */
-	v = TIOCM_RTS;
-	stat = ioctl(priv->fd, TIOCMBIS, &v);
-	if (stat < 0) {
-		dfu_err("error resetting target (%s)\n", strerror(errno));
-		return stat;
-	}
-	v = TIOCM_RTS;
-	stat = ioctl(priv->fd, TIOCMBIC, &v);
-	if (stat < 0) {
-		dfu_err("error resetting target (%s)\n", strerror(errno));
-		return stat;
-	}
-	v = TIOCM_DTR;
-	stat = ioctl(priv->fd, TIOCMBIC, &v);
-	if (stat < 0) {
-		dfu_err("error resetting target (%s)\n", strerror(errno));
-		return stat;
-	}
-	/* Wait 50ms */
-	poll(NULL, 0, 200);
-	return 0;
-}
-
-
-const struct dfu_interface_ops linux_serial_interface_ops = {
-	.open = linux_serial_open,
-	.write = linux_serial_write,
-	.read = linux_serial_read,
-	.target_reset = linux_serial_target_reset,
-};
 
