@@ -24,7 +24,7 @@ static inline uint32_t cpu_to_be32(uint32_t v)
 #endif
 }
 
-static inline uint16_t be32_to_cpu(uint32_t v)
+static inline uint32_t be32_to_cpu(uint32_t v)
 {
 	return cpu_to_be32(v);
 }
