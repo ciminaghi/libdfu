@@ -13,6 +13,17 @@ extern "C" {
 #error "HOST is not defined"
 #endif
 
+static inline uint16_t cpu_to_be16(uint16_t v)
+{
+#if BYTE_ORDER == BIG_ENDIAN
+	return v;
+#elif BYTE_ORDER == LITTLE_ENDIAN
+	return __builtin_bswap16 (v);
+#else
+#error "BYTE ORDER is NOT DEFINED !"
+#endif
+}
+
 static inline uint32_t cpu_to_be32(uint32_t v)
 {
 #if BYTE_ORDER == BIG_ENDIAN
@@ -27,6 +38,11 @@ static inline uint32_t cpu_to_be32(uint32_t v)
 static inline uint32_t be32_to_cpu(uint32_t v)
 {
 	return cpu_to_be32(v);
+}
+
+static inline uint16_t be16_to_cpu(uint32_t v)
+{
+	return cpu_to_be16(v);
 }
 
 #ifdef __cplusplus
