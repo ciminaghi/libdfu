@@ -11,6 +11,10 @@
 #define min(a,b) ((a) < (b) ? (a) : (b))
 #endif /* min */
 
+#ifndef BIT
+#define BIT(a) (1 << (a))
+#endif
+
 /* The following ones come from the kernel, but simplified */
 #ifndef time_after
 #define time_after(a,b)         \
