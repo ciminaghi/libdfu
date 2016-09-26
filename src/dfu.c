@@ -34,7 +34,9 @@ struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 	dfu.interface = &interface;
 	dfu.target = &target;
 	dfu.host = &host;
+	interface.dfu = &dfu;
 	interface.ops = iops;
+	target.dfu = &dfu;
 	target.ops = tops;
 	host.ops = hops;
 	if (hops->init) {

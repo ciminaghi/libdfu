@@ -167,11 +167,13 @@ extern const struct dfu_format_ops registered_formats_start[],
     };
 
 struct dfu_interface {
+	struct dfu_data *dfu;
 	const struct dfu_interface_ops *ops;
 	void *priv;
 };
 
 struct dfu_target {
+	struct dfu_data *dfu;
 	struct dfu_interface *interface;
 	const struct dfu_target_ops *ops;
 	unsigned long entry_point;
