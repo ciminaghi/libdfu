@@ -62,7 +62,7 @@ user_init()
 	uart_div_modify(UART0, UART_CLK_FREQ / 115200);
 
 	dfu = dfu_init(&esp8266_serial_star8_interface_ops, "", NULL,
-		       &stm32_dfu_target_ops,
+		       &stm32_dfu_target_ops, NULL,
 		       &esp8266_dfu_host_ops);
 
 	if (!dfu) {

@@ -177,6 +177,7 @@ struct dfu_target {
 	struct dfu_interface *interface;
 	const struct dfu_target_ops *ops;
 	unsigned long entry_point;
+	const void *pars;
 	void *priv;
 };
 

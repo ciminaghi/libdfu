@@ -45,6 +45,7 @@ extern struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 				 const char *interface_path,
 				 const void *interface_pars,
 				 const struct dfu_target_ops *tops,
+				 const void *target_pars,
 				 const struct dfu_host_ops *hops);
 
 

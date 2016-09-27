@@ -22,6 +22,7 @@ struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 			  const char *interface_path,
 			  const void *interface_pars,
 			  const struct dfu_target_ops *tops,
+			  const void *target_pars,
 			  const struct dfu_host_ops *hops)
 {
 	int stat;
@@ -38,6 +39,7 @@ struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 	interface.ops = iops;
 	target.dfu = &dfu;
 	target.ops = tops;
+	target.pars = target_pars;
 	host.ops = hops;
 	if (hops->init) {
 		stat = hops->init(&host);
