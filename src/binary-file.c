@@ -27,6 +27,7 @@ static void _bf_init(struct dfu_binary_file *bf, char *b, struct dfu_data *dfu)
 	bf->rx_method = NULL;
 	bf->max_size = sizeof(bf_buf);
 	bf->tot_appended = 0;
+	bf->decoded_buf_busy = 0;
 	bf->dfu = dfu;
 	dfu->bf = bf;
 }
@@ -46,15 +47,24 @@ static int _bf_do_flush(struct dfu_binary_file *bf)
 	int stat;
 	phys_addr_t addr;
 
+	if (bf->decoded_buf_busy)
+		return 0;
+
 	stat = bf->format_ops->decode_chunk(bf, bf_decoded_buf,
 					    sizeof(bf_decoded_buf), &addr);
 	if (stat < 0) {
 		dfu_err("%s: error in decode_chunk\n", __func__);
 		return -1;
 	}
-	if (stat)
+	bf->curr_addr = addr;
+	bf->curr_decoded_len = stat;
+	bf->decoded_buf_busy++;
+	if (stat && !dfu_target_busy(bf->dfu->target)) {
 		stat = tops->chunk_available(bf->dfu->target, addr,
 					     bf_decoded_buf, stat);
+		if (stat >= 0)
+			bf->decoded_buf_busy--;
+	}
 	return stat < 0 ? stat : 0;
 }
 
@@ -213,4 +223,24 @@ int dfu_binary_file_get_tot_appended(struct dfu_binary_file *f)
 void *dfu_binary_file_get_priv(struct dfu_binary_file *f)
 {
 	return f->priv;
+}
+
+/*
+ * Target is ready. If we have some decoded data in the relevant buffer,
+ * write such data to target and free the buffer
+ */
+void dfu_binary_file_target_ready(struct dfu_binary_file *f)
+{
+	const struct dfu_target_ops *tops = f->dfu->target->ops;
+	int stat;
+
+	if (!f->decoded_buf_busy)
+		/* Nothing to do */
+		return;
+
+	stat = tops->chunk_available(f->dfu->target, f->curr_addr,
+				     bf_decoded_buf, f->curr_decoded_len);
+	if (stat < 0)
+		return;
+	f->decoded_buf_busy--;
 }

@@ -38,17 +38,20 @@ static int _do_read(struct dfu_interface *interface, void *in, unsigned int len)
 	return recvd;
 }
 
-static int _cmd_end(const struct dfu_cmddescr *descr, enum dfu_cmd_status s)
+static int _cmd_end(struct dfu_target *target,
+		    const struct dfu_cmddescr *descr, enum dfu_cmd_status s)
 {
 	struct dfu_cmdstate *state = descr->state;
 
 	state->status = s;
 	if (descr->completed)
 		descr->completed(descr);
+	dfu_target_set_ready(target);
 	return s < 0 ? DO_CMDBUF_ERROR : DO_CMDBUF_DONE;
 }
 
-static int _next_buf(const struct dfu_cmddescr *descr)
+static int _next_buf(struct dfu_target *target,
+		     const struct dfu_cmddescr *descr)
 {
 	struct dfu_cmdstate *state = descr->state;
 	const struct dfu_cmdbuf *buf = &descr->cmdbufs[state->cmdbuf_index];
@@ -57,12 +60,12 @@ static int _next_buf(const struct dfu_cmddescr *descr)
 	if (buf->completed)
 		stat = buf->completed(descr, buf);
 	if (stat < 0)
-		return _cmd_end(descr, stat);
+		return _cmd_end(target, descr, stat);
 	state->cmdbuf_index++;
 	state->status = DFU_CMD_STATUS_INITIALIZED;
 	
 	if (state->cmdbuf_index >= descr->ncmdbufs)
-		return _cmd_end(descr, DFU_CMD_STATUS_OK);
+		return _cmd_end(target, descr, DFU_CMD_STATUS_OK);
 	return DO_CMDBUF_CONTINUE;
 }
 
@@ -72,6 +75,7 @@ static void _on_cmd_timeout(struct dfu_data *data, const void *priv)
 
 	descr->state->status = DFU_CMD_STATUS_TIMEOUT;
 	descr->completed(descr);
+	dfu_target_set_ready(data->target);
 }
 
 static int _do_cmdbuf(struct dfu_target *target,
@@ -90,7 +94,7 @@ static int _do_cmdbuf(struct dfu_target *target,
 		if (stat < 0) {
 			dfu_err("%s: error writing to interface\n",
 				__func__);
-			return _cmd_end(descr, -1);
+			return _cmd_end(target, descr, -1);
 		}
 		if (buf->flags & SEND_CHECKSUM)
 			stat = _do_send(interface, descr->checksum_ptr,
@@ -98,9 +102,9 @@ static int _do_cmdbuf(struct dfu_target *target,
 		if (stat < 0) {
 			dfu_err("%s: error sending checksum\n",
 				__func__);
-			return _cmd_end(descr, -1);
+			return _cmd_end(target, descr, -1);
 		}
-		return _next_buf(descr);
+		return _next_buf(target, descr);
 	case IN:
 		if (!buf->timeout) {
 			/* Timeout is 0, do not wait */
@@ -108,7 +112,7 @@ static int _do_cmdbuf(struct dfu_target *target,
 			if (stat < 0) {
 				dfu_err("%s: error reading from interface\n",
 					__func__);
-				return _cmd_end(descr, -1);
+				return _cmd_end(target, descr, -1);
 			}
 		}
 		if (state->status == DFU_CMD_STATUS_INITIALIZED) {
@@ -129,7 +133,7 @@ static int _do_cmdbuf(struct dfu_target *target,
 		if (stat > 0)
 			state->received += stat;
 		if (state->received == buf->len)
-			return _next_buf(descr);
+			return _next_buf(target, descr);
 		else
 			state->status = DFU_CMD_STATUS_WAITING;
 		break;
@@ -157,6 +161,7 @@ int dfu_cmd_start(struct dfu_target *target, const struct dfu_cmddescr *descr)
 		dfu_err("%s: command has no state struct\n", __func__);
 		return -1;
 	}
+	dfu_target_set_busy(target);
 	state->status = DFU_CMD_STATUS_INITIALIZED;
 	state->cmdbuf_index = 0;
 	ptr = descr->cmdbufs;

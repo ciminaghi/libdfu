@@ -40,6 +40,7 @@ struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 	target.dfu = &dfu;
 	target.ops = tops;
 	target.pars = target_pars;
+	target.busy = 0;
 	host.ops = hops;
 	if (hops->init) {
 		stat = hops->init(&host);
@@ -205,6 +206,10 @@ int dfu_idle(struct dfu_data *dfu)
 {
 	unsigned long now = dfu_get_current_time(dfu);
 	int next_timeout, stat;
+
+	if (!dfu_target_busy(dfu->target))
+		/* Unlock any pending writes of decoded data */
+		dfu_binary_file_target_ready(dfu->bf);
 
 	if (!dfu->host->ops->idle) {
 		/*

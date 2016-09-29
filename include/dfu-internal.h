@@ -53,7 +53,10 @@ struct dfu_interface_ops {
 struct dfu_target_ops {
 	int (*init)(struct dfu_target *, struct dfu_interface *);
 	int (*probe)(struct dfu_target *);
-	/* Chunk of binary data is available for writing */
+	/*
+	 * Chunk of binary data is available for writing
+	 * buf is owned by the caller !
+	 */
 	int (*chunk_available)(struct dfu_target *,
 			       phys_addr_t address,
 			       const void *buf, unsigned long sz);
@@ -80,6 +83,9 @@ struct dfu_binary_file {
 	int rx_done;
 	int flushing;
 	int tot_appended;
+	int decoded_buf_busy;
+	phys_addr_t curr_addr;
+	unsigned long curr_decoded_len;
 	void *format_data;
 	void *priv;
 };
@@ -176,10 +182,26 @@ struct dfu_target {
 	struct dfu_data *dfu;
 	struct dfu_interface *interface;
 	const struct dfu_target_ops *ops;
+	int busy;
 	unsigned long entry_point;
 	const void *pars;
 	void *priv;
 };
+
+static inline int dfu_target_busy(struct dfu_target *t)
+{
+	return t->busy;
+}
+
+static inline void dfu_target_set_busy(struct dfu_target *t)
+{
+	t->busy = 1;
+}
+
+static inline void dfu_target_set_ready(struct dfu_target *t)
+{
+	t->busy = 0;
+}
 
 struct dfu_host {
 	const struct dfu_host_ops *ops;
@@ -225,5 +247,8 @@ extern int dfu_set_timeout(struct dfu_data *dfu, struct dfu_timeout *);
 extern int dfu_cancel_timeout(struct dfu_timeout *);
 
 extern unsigned long dfu_get_current_time(struct dfu_data *dfu);
+
+/* To be invoked by idle loop when target is not busy */
+extern void dfu_binary_file_target_ready(struct dfu_binary_file *bf);
 
 #endif /* __DFU_INTERNAL_H__ */
