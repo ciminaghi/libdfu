@@ -10,8 +10,6 @@ enum reset_disposition {
 };
 
 struct stk500_device_mem {
-	const uint8_t *instr;
-	uint8_t instr_len;
 	uint32_t length;
 	uint8_t readback[2];
 	uint8_t paged;
@@ -20,8 +18,6 @@ struct stk500_device_mem {
 
 struct stk500_device_data {
 	uint8_t devcode;
-	uint8_t signature[3];
-	unsigned int chip_erase_delay;
 	uint8_t pagel;
 	uint8_t bs2;
 	enum reset_disposition rd;
@@ -33,7 +29,6 @@ struct stk500_device_data {
 	const struct stk500_device_mem *flash;
 	const struct stk500_device_mem *eeprom;
 	
-	uint8_t pgm_enable[4];
 	uint8_t chip_erase[4];
 	unsigned int timeout;
 	unsigned int stabdelay;
