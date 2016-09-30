@@ -15,6 +15,7 @@ HTTP_URLS_OBJ := http-urls.o
 
 HTMLS := $(patsubst %.html, %.html.o, $(wildcard http-files/*.html))
 
+STK500_DEVICES_OBJS := $(patsubst %.c, %.o, $(wildcard target/stk500-device-*.c))
 
 ifeq ($(DYNAMIC_LIB),y)
 CFLAGS += -fpic -fPIC
@@ -38,7 +39,7 @@ CFLAGS += -DHAVE_LWIP
 OBJS += picohttpparser.o $(HTTP_URLS_OBJ) $(HTMLS) tcp-conn-lwip-raw.o
 endif
 
-OBJS += $(FORMAT_OBJ) $(RX_METHOD_OBJ)
+OBJS += $(FORMAT_OBJ) $(RX_METHOD_OBJ) $(STK500_DEVICES_OBJS)
 
 LIB := libdfu$(EXT)
 
