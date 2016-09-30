@@ -162,6 +162,7 @@ static int _get_param(struct dfu_target *target, uint8_t param,
 		      unsigned int *_out)
 {
 	int stat;
+	struct stk500_data *priv = target->priv;
 	struct stk500_get_param_cmd *cmdb = (struct stk500_get_param_cmd *)
 		cmd_buffer;
 	static uint8_t param_reply[1];
@@ -219,6 +220,7 @@ static int _get_param(struct dfu_target *target, uint8_t param,
 	cmdb->code = STK_GET_PARAMETER;
 	cmdb->param = param;
 	cmdb->eop = STK_CRC_EOP;
+	priv->curr_descr = &descr0;
 	stat = dfu_cmd_do_sync(target, &descr0);
 	if (stat < 0)
 		return stat;
@@ -244,6 +246,7 @@ struct stk500_sign_on_cmd {
 
 static int _sign_on(struct dfu_target *target)
 {
+	struct stk500_data *priv = target->priv;
 	struct stk500_sign_on_cmd *cmdb = (struct stk500_sign_on_cmd *)
 		cmd_buffer;
 	static uint8_t sync_reply;
@@ -290,6 +293,7 @@ static int _sign_on(struct dfu_target *target)
 
 	cmdb->code= STK_GET_SIGN_ON;
 	cmdb->eop = STK_CRC_EOP;
+	priv->curr_descr = &descr0;
 	return dfu_cmd_do_sync(target, &descr0);
 }
 
@@ -329,6 +333,7 @@ static int _set_device(struct dfu_target *target, int *n_extp)
 	int stat;
 	unsigned min, maj;
 	static uint8_t sync_reply, result;
+	struct stk500_data *priv = target->priv;
 	static const struct dfu_cmdbuf cmdbufs0[] = {
 		/* Send sync */
 		[0] = {
@@ -407,6 +412,7 @@ static int _set_device(struct dfu_target *target, int *n_extp)
 	cmdb->eepromsize[0] = dd->eeprom ? dd->eeprom->length >> 8 : 0;
 	cmdb->eepromsize[1] = dd->eeprom ? dd->eeprom->length : 0;
 	cmdb->eop = STK_CRC_EOP;
+	priv->curr_descr = &descr0;
 	return dfu_cmd_do_sync(target, &descr0);
 }
 
@@ -438,6 +444,7 @@ static int _check_load_addr(const struct dfu_cmddescr *descr,
 
 static int _load_address(struct dfu_target *target, uint16_t addr)
 {
+	struct stk500_data *priv = target->priv;
 	struct stk500_load_address_cmd *cmdb =
 		(struct stk500_load_address_cmd *)cmd_buffer;
 	static uint8_t sync_reply, result;
@@ -484,6 +491,7 @@ static int _load_address(struct dfu_target *target, uint16_t addr)
 	cmdb->code = STK_LOAD_ADDRESS;
 	cmdb->addr = addr;
 	cmdb->eop = STK_CRC_EOP;
+	priv->curr_descr = &descr0;
 	return dfu_cmd_do_sync(target, &descr0);
 }
 
@@ -595,6 +603,7 @@ static int _universal(struct dfu_target *target, const uint8_t *cmd,
 		cmd_buffer;
 	int ret;
 	static uint8_t sync_reply, result;
+	struct stk500_data *priv = target->priv;
 	static const struct dfu_cmdbuf cmdbufs0[] = {
 		/* Send sync */
 		[0] = {
@@ -637,6 +646,7 @@ static int _universal(struct dfu_target *target, const uint8_t *cmd,
 	cmdb->code = STK_UNIVERSAL;
 	memcpy(cmdb->cmd, cmd, sizeof(cmdb->cmd));
 	cmdb->eop = STK_CRC_EOP;
+	priv->curr_descr = &descr0;
 	ret = dfu_cmd_do_sync(target, &descr0);
 	if (ret < 0)
 		return ret;
@@ -672,6 +682,7 @@ static int _check_set_ext_params(const struct dfu_cmddescr *descr,
 
 static int _set_extparams(struct dfu_target *target, int n_extp)
 {
+	struct stk500_data *priv = target->priv;
 	const struct stk500_device_data *dd = target->pars;
 	struct stk500_set_extparams_cmd *cmdb =
 		(struct stk500_set_extparams_cmd *)cmd_buffer;
@@ -724,6 +735,7 @@ static int _set_extparams(struct dfu_target *target, int n_extp)
 	/* bah, avrdude seems wrong, let's copy it anyway */
 	cmdb->reset_disable = dd->rd;
 	cmdb->eop = STK_CRC_EOP;
+	priv->curr_descr = &descr0;
 	return dfu_cmd_do_sync(target, &descr0);
 }
 
@@ -750,6 +762,7 @@ static int _check_enter_progmode(const struct dfu_cmddescr *descr,
 
 static int _enter_progmode(struct dfu_target *target)
 {
+	struct stk500_data *priv = target->priv;
 	const struct stk500_device_data *dd = target->pars;
 	static struct stk500_enter_progmode_cmd *cmdb =
 		(struct stk500_enter_progmode_cmd *)cmd_buffer;
@@ -804,6 +817,7 @@ static int _enter_progmode(struct dfu_target *target)
 	cmdb->pollvalue = dd->pollvalue;
 	return dfu_cmd_do_sync(target, &descr0);
 	cmdb->eop = STK_CRC_EOP;
+	priv->curr_descr = &descr0;
 	return dfu_cmd_do_sync(target, &descr0);
 }
 
@@ -845,6 +859,7 @@ static int _check_leave_progmode(const struct dfu_cmddescr *descr,
 
 static int stk500_run(struct dfu_target *target)
 {
+	struct stk500_data *priv = target->priv;
 	static struct stk500_leave_progmode_cmd *cmdb =
 		(struct stk500_leave_progmode_cmd *)cmd_buffer;
 	static uint8_t sync_reply, result;
@@ -889,6 +904,7 @@ static int stk500_run(struct dfu_target *target)
 	};
 	cmdb->code = STK_LEAVE_PROGMODE;
 	cmdb->eop = STK_CRC_EOP;
+	priv->curr_descr = &descr0;
 	return dfu_cmd_do_sync(target, &descr0);
 }
 
