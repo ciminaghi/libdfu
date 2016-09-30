@@ -15,6 +15,7 @@ struct linux_event_data {
 };
 
 extern const struct dfu_interface_ops linux_serial_stm32_interface_ops;
+extern const struct dfu_interface_ops linux_serial_arduino_uno_interface_ops;
 extern const struct dfu_host_ops linux_dfu_host_ops;
 
 #define dfu_log(a,args...) fprintf(stderr, "DFU: " a, ##args)
