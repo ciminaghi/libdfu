@@ -79,7 +79,8 @@ static void _on_cmd_timeout(struct dfu_data *data, const void *priv)
 	const struct dfu_cmddescr *descr = priv;
 
 	descr->state->status = DFU_CMD_STATUS_TIMEOUT;
-	descr->completed(descr);
+	if (descr->completed)
+		descr->completed(descr);
 	dfu_target_set_ready(data->target);
 }
 
