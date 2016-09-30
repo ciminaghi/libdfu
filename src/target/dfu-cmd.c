@@ -147,6 +147,8 @@ static int _do_cmdbuf(struct dfu_target *target,
 			dfu_dbg("%s: next buf\n", __func__);
 			return _next_buf(target, descr);
 		}
+		state->status = DFU_CMD_STATUS_WAITING;
+		return DO_CMDBUF_WAIT;
 	default:
 		dfu_err("%s: invalid buffer dir\n", __func__);
 		return -1;
