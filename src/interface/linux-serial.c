@@ -5,6 +5,7 @@
 #include <poll.h>
 #include <errno.h>
 #include <stdio.h>
+#include <poll.h>
 #include <sys/ioctl.h>
 #include <termios.h>
 #include "dfu.h"
@@ -18,6 +19,7 @@ int linux_serial_open(struct dfu_interface *iface,
 		      const char *path, const void *pars)
 {
 	struct termios config;
+	struct linux_event_data edata;
 
 	iface->priv = &sdata;
 	sdata.fd = open(path, O_RDWR | O_NOCTTY);
@@ -36,6 +38,12 @@ int linux_serial_open(struct dfu_interface *iface,
 	}
 	if (tcsetattr(sdata.fd, TCSAFLUSH, &config) < 0) {
 		dfu_err("Error setting termios config\n");
+		return -1;
+	}
+	edata.fd = sdata.fd;
+	edata.events = POLLIN;
+	if (dfu_set_interface_event(iface->dfu, &edata) < 0) {
+		dfu_err("Error setting interface event\n");
 		return -1;
 	}
 	return 0;
@@ -62,15 +70,14 @@ int linux_serial_read(struct dfu_interface *iface, char *buf,
 	};
 	int stat;
 
-	/* FIXME: make timeout configurable at runtime */
-	stat = poll(&pfd, 1, 30000);
+	stat = poll(&pfd, 1, 0);
 	if (stat < 0) {
 		dfu_err("%s: %s\n", __func__, strerror(errno));
 		return -1;
 	}
 	if (!stat) {
-		dfu_err("Timeout waiting for serial read\n");
-		return -1;
+		dfu_dbg("Timeout waiting for serial read\n");
+		return 0;
 	}
 	if (stat != 1) {
 		dfu_err("%s: unexpected return value from poll()\n", __func__);
