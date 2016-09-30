@@ -80,17 +80,6 @@ enum stk500_param {
 	STK500_TOPCARD_DETECT = 0x98,
 };
 
-/* Status bits */
-#define STK_INSYNC	BIT(0)
-#define STK_PROGMODE	BIT(1)
-#define STK_STANDALONE	BIT(2)
-#define STK_RESET	BIT(3)
-#define STK_PROGRAM	BIT(4)
-#define STK_LEDG	BIT(5)
-#define STK_LEDR	BIT(6)
-#define STK_LEDBLINK	BIT(7)
-
-
 struct stk500_data {
 	struct dfu_cmdstate cmd_state;
 	uint8_t checksum;
