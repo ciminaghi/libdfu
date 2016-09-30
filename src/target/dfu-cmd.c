@@ -160,7 +160,6 @@ static int _do_cmdbuf(struct dfu_target *target,
 int dfu_cmd_start(struct dfu_target *target, const struct dfu_cmddescr *descr)
 {
 	struct dfu_interface *interface = target->interface;
-	const struct dfu_cmdbuf *ptr;
 	int stat;
 	struct dfu_cmdstate *state = descr->state;
 
@@ -176,9 +175,10 @@ int dfu_cmd_start(struct dfu_target *target, const struct dfu_cmddescr *descr)
 	dfu_target_set_busy(target);
 	state->status = DFU_CMD_STATUS_INITIALIZED;
 	state->cmdbuf_index = 0;
-	ptr = descr->cmdbufs;
 	do {
-		stat = _do_cmdbuf(target, descr, ptr);
+	    stat = _do_cmdbuf(target, descr,
+			      &descr->cmdbufs[state->cmdbuf_index]);
+	    dfu_dbg("%s: _do_cmdbuf returns %d\n", __func__, stat);
 	} while(stat == DO_CMDBUF_CONTINUE);
 
 	return stat == DO_CMDBUF_ERROR ? -1 : 0;
