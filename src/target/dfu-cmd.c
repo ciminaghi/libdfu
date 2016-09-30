@@ -43,6 +43,7 @@ static int _cmd_end(struct dfu_target *target,
 {
 	struct dfu_cmdstate *state = descr->state;
 
+	dfu_dbg("%s, s = %d\n", __func__, s);
 	state->status = s;
 	if (descr->completed)
 		descr->completed(descr);
@@ -56,9 +57,13 @@ static int _next_buf(struct dfu_target *target,
 	struct dfu_cmdstate *state = descr->state;
 	const struct dfu_cmdbuf *buf = &descr->cmdbufs[state->cmdbuf_index];
 	int stat = 0;
-	
-	if (buf->completed)
+
+	dfu_dbg("%s\n", __func__);
+	if (buf->completed) {
+		dfu_dbg("%s: completed\n", __func__);
 		stat = buf->completed(descr, buf);
+		dfu_dbg("%s: completed cb returns %d\n", __func__, stat);
+	}
 	if (stat < 0)
 		return _cmd_end(target, descr, stat);
 	state->cmdbuf_index++;
@@ -88,6 +93,7 @@ static int _do_cmdbuf(struct dfu_target *target,
 
 	switch (buf->dir) {
 	case OUT:
+		dfu_dbg("%s OUT\n", __func__);
 		if (descr->checksum_update)
 			descr->checksum_update(descr, buf->buf.out, buf->len);
 		stat = _do_send(interface, buf->buf.out, buf->len);
@@ -106,7 +112,9 @@ static int _do_cmdbuf(struct dfu_target *target,
 		}
 		return _next_buf(target, descr);
 	case IN:
+		dfu_dbg("%s IN\n", __func__);
 		if (!buf->timeout) {
+			dfu_dbg("%s: no timeout\n", __func__);
 			/* Timeout is 0, do not wait */
 			stat = _do_read(interface, buf->buf.in, buf->len);
 			if (stat < 0) {
@@ -120,6 +128,8 @@ static int _do_cmdbuf(struct dfu_target *target,
 			if (buf->timeout > 0 && !descr->timeout)
 				dfu_err("%s: cannot setup timeout\n", __func__);
 			if (buf->timeout > 0 && descr->timeout) {
+				dfu_dbg("%s: setup timeout (%d)\n", __func__,
+					buf->timeout);
 				descr->timeout->timeout = buf->timeout;
 				descr->timeout->cb = _on_cmd_timeout;
 				descr->timeout->priv = descr;
@@ -130,13 +140,13 @@ static int _do_cmdbuf(struct dfu_target *target,
 			}
 		}
 		stat = interface->ops->read(interface, buf->buf.in, buf->len);
+		dfu_dbg("%s: read returns %d\n", __func__, stat);
 		if (stat > 0)
 			state->received += stat;
-		if (state->received == buf->len)
+		if (state->received == buf->len) {
+			dfu_dbg("%s: next buf\n", __func__);
 			return _next_buf(target, descr);
-		else
-			state->status = DFU_CMD_STATUS_WAITING;
-		break;
+		}
 	default:
 		dfu_err("%s: invalid buffer dir\n", __func__);
 		return -1;
@@ -179,6 +189,7 @@ int dfu_cmd_on_interface_event(struct dfu_target *target,
 	 * We're waiting for the target to reply, go on with the current
 	 * command buffer
 	 */
+	dfu_dbg("%s\n", __func__);
 	return _do_cmdbuf(target, descr,
 			  &descr->cmdbufs[descr->state->cmdbuf_index]);
 }
@@ -188,7 +199,9 @@ int dfu_cmd_do_sync(struct dfu_target *target,
 {
 	if (dfu_cmd_start(target, descr) < 0)
 		return -1;
-	while (descr->state->status == DFU_CMD_STATUS_WAITING)
+	while (descr->state->status == DFU_CMD_STATUS_WAITING) {
+		dfu_dbg("%s: invoking dfu_idle()\n", __func__);
 		dfu_idle(target->dfu);
+	}
 	return descr->state->status == DFU_CMD_STATUS_OK ? 0 : -1;
 }
