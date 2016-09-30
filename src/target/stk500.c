@@ -413,6 +413,12 @@ static int _set_device(struct dfu_target *target, int *n_extp)
 
 static int stk500_probe(struct dfu_target *target)
 {
+	int stat = 0;
+
+	if (target->interface->ops->target_reset)
+		stat = target->interface->ops->target_reset(target->interface);
+	if (stat < 0)
+		return stat;
 	return _sign_on(target);
 }
 
@@ -804,8 +810,12 @@ static int _enter_progmode(struct dfu_target *target)
 /* Reset and sync target */
 static int stk500_reset_and_sync(struct dfu_target *target)
 {
-	int n_extp;
+	int n_extp, stat = 0;
 
+	if (target->interface->ops->target_reset)
+		stat = target->interface->ops->target_reset(target->interface);
+	if (stat < 0)
+		return stat;
 	if (_sign_on(target) < 0)
 		return -1;
 	if (_set_device(target, &n_extp) < 0)
