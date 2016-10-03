@@ -854,6 +854,11 @@ static int stk500_on_interface_event(struct dfu_target *target)
 	return dfu_cmd_on_interface_event(target, priv->curr_descr);
 }
 
+static int stk500_get_max_chunk_size(struct dfu_target *target)
+{
+	return 128;
+}
+
 struct dfu_target_ops stk500_dfu_target_ops = {
 	.init = stk500_init,
 	.probe  = stk500_probe,
@@ -862,4 +867,5 @@ struct dfu_target_ops stk500_dfu_target_ops = {
 	.erase_all = stk500_target_erase_all,
 	.run = stk500_run,
 	.on_interface_event = stk500_on_interface_event,
+	.get_max_chunk_size = stk500_get_max_chunk_size,
 };
