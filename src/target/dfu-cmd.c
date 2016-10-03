@@ -64,6 +64,7 @@ static int _next_buf(struct dfu_target *target,
 		stat = buf->completed(descr, buf);
 		dfu_dbg("%s: completed cb returns %d\n", __func__, stat);
 	}
+	dfu_cancel_timeout(descr->timeout);
 	if (stat < 0)
 		return _cmd_end(target, descr, stat);
 	state->cmdbuf_index++;
