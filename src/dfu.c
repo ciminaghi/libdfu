@@ -114,16 +114,19 @@ static int _remove_timeout(struct dfu_timeout *to)
 
 int dfu_set_timeout(struct dfu_data *dfu, struct dfu_timeout *to)
 {
+	dfu_dbg("%s: inserting timeout %p\n", __func__, to);
 	return _insert_timeout(dfu, to);
 }
 
 int dfu_cancel_timeout(struct dfu_timeout *to)
 {
+	dfu_dbg("%s: removing timeout %p\n", __func__, to);
 	return _remove_timeout(to);
 }
 
 static int _trigger_timeout(struct dfu_data *dfu, struct dfu_timeout *to)
 {
+	dfu_dbg("%s: triggering timeout %p\n", __func__, to);
 	timeouts[0]->cb(dfu, timeouts[0]->priv);
 	return _remove_timeout(to);
 }
