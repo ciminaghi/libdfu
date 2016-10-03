@@ -203,9 +203,17 @@ int dfu_cmd_do_sync(struct dfu_target *target,
 {
 	if (dfu_cmd_start(target, descr) < 0)
 		return -1;
-	while (descr->state->status == DFU_CMD_STATUS_WAITING) {
-		dfu_dbg("%s: invoking dfu_idle()\n", __func__);
-		dfu_idle(target->dfu);
+	while(descr->state->status == DFU_CMD_STATUS_INITIALIZED ||
+	      descr->state->status == DFU_CMD_STATUS_WAITING) {
+		while (descr->state->status == DFU_CMD_STATUS_WAITING) {
+			dfu_dbg("%s: invoking dfu_idle()\n", __func__);
+			dfu_idle(target->dfu);
+		}
+		if (descr->state->status != DFU_CMD_STATUS_INITIALIZED)
+			break;
+		if (_do_cmdbuf(target, descr,
+			       &descr->cmdbufs[descr->state->cmdbuf_index]) < 0)
+			break;
 	}
 	return descr->state->status == DFU_CMD_STATUS_OK ? 0 : -1;
 }
