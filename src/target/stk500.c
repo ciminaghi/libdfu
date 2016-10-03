@@ -732,19 +732,6 @@ static int _set_extparams(struct dfu_target *target, int n_extp)
 	return dfu_cmd_do_sync(target, &descr0);
 }
 
-struct stk500_enter_progmode_cmd {
-	uint8_t code;
-	uint8_t timeout;
-	uint8_t stabdelay;
-	uint8_t cmdexedelay;
-	uint8_t synchloops;
-	uint8_t bytedelay;
-	uint8_t pollvalue;
-	uint8_t pollindex;
-	uint8_t cmd[4];
-	uint8_t eop;
-};
-
 static int _enter_progmode(struct dfu_target *target)
 {
 	const struct stk500_device_data *dd = target->pars;
@@ -771,7 +758,8 @@ static int stk500_reset_and_sync(struct dfu_target *target)
 	if (_set_device(target, &n_extp) < 0)
 		return -1;
 	if (n_extp > 0)
-		return _set_extparams(target, n_extp);
+		if (_set_extparams(target, n_extp) < 0)
+			return -1;
 	if (_enter_progmode(target) < 0)
 		return -1;
 	dfu_log("stk500 target ready\n");
