@@ -68,6 +68,8 @@ struct dfu_target_ops {
 	int (*run)(struct dfu_target *);
 	/* Interface event */
 	int (*on_interface_event)(struct dfu_target *);
+	/* Optional: returns expected max size of chunk */
+	int (*get_max_chunk_size)(struct dfu_target *);
 };
 
 struct dfu_binary_file {

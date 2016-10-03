@@ -47,12 +47,17 @@ static int _bf_do_flush(struct dfu_binary_file *bf)
 	const struct dfu_target_ops *tops = bf->dfu->target->ops;
 	int stat;
 	phys_addr_t addr;
+	int max_chunk_size = sizeof(bf_decoded_buf);
 
 	if (bf->decoded_buf_busy)
 		return 0;
 
+	if (tops->get_max_chunk_size)
+		max_chunk_size = min(max_chunk_size,
+				     tops->get_max_chunk_size(bf->dfu->target));
+
 	stat = bf->format_ops->decode_chunk(bf, bf_decoded_buf,
-					    sizeof(bf_decoded_buf), &addr);
+					    max_chunk_size, &addr);
 	if (stat < 0) {
 		dfu_err("%s: error in decode_chunk\n", __func__);
 		return -1;
