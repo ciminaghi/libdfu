@@ -2,7 +2,7 @@
 include $(BASE)/common.mk
 
 ifeq ($(HOST),linux)
-EXE := linux-stm32
+EXE := linux-stm32 linux-arduino-uno
 
 ifeq ($(HAVE_LWIP),y)
 EXE += linux-http-lwip-stm32
