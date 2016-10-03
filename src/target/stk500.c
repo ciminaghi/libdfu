@@ -745,73 +745,11 @@ struct stk500_enter_progmode_cmd {
 	uint8_t eop;
 };
 
-static int _check_enter_progmode(const struct dfu_cmddescr *descr,
-				 const struct dfu_cmdbuf *buf)
-{
-	unsigned char *ptr = buf->buf.in;
-
-	return ptr[0] == STK_OK ? 0 : -1;
-}
-
 static int _enter_progmode(struct dfu_target *target)
 {
-	struct stk500_data *priv = target->priv;
 	const struct stk500_device_data *dd = target->pars;
-	static struct stk500_enter_progmode_cmd *cmdb =
-		(struct stk500_enter_progmode_cmd *)cmd_buffer;
 
-	static uint8_t sync_reply, result;
-	static const struct dfu_cmdbuf cmdbufs0[] = {
-		/* Send sync */
-		[0] = {
-			.dir = OUT,
-			.buf = {
-				.out = cmd_buffer,
-			},
-			.len = sizeof(*cmdb),
-		},
-		[1] = {
-			.dir = IN,
-			.buf = {
-				.in = &sync_reply,
-			},
-			.len = sizeof(sync_reply),
-			.timeout = 1000,
-			.completed = _check_sync,
-		},
-		[2] = {
-			.dir = IN,
-			.buf = {
-				.in = &result,
-			},
-			.len = sizeof(result),
-			.timeout = 1000,
-			.completed = _check_enter_progmode,
-		},
-	};
-	static const struct dfu_cmddescr descr0 = {
-		.cmdbufs = cmdbufs0,
-		.ncmdbufs = ARRAY_SIZE(cmdbufs0),
-		.checksum_ptr = NULL,
-		.checksum_size = 0,
-		.state = &data.cmd_state,
-		.timeout = &data.cmd_timeout,
-		.checksum_reset = NULL,
-		.checksum_update = NULL,
-		.completed = NULL,
-	};
-	cmdb->code = STK_ENTER_PROGMODE;
-	cmdb->timeout = dd->timeout;
-	cmdb->stabdelay = dd->stabdelay;
-	cmdb->cmdexedelay = dd->cmdexedelay;
-	cmdb->synchloops = dd->synchloops;
-	cmdb->bytedelay = dd->bytedelay;
-	cmdb->pollindex = dd->pollindex;
-	cmdb->pollvalue = dd->pollvalue;
-	return dfu_cmd_do_sync(target, &descr0);
-	cmdb->eop = STK_CRC_EOP;
-	priv->curr_descr = &descr0;
-	return dfu_cmd_do_sync(target, &descr0);
+	return _universal(target, dd->enter_progmode, NULL);
 }
 
 /* Reset and sync target */
