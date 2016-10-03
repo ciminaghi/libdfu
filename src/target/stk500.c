@@ -508,7 +508,8 @@ static void _chunk_done(struct dfu_target *target,
 	struct stk500_data *priv = target->priv;
 
 	if (descr->state->status == DFU_CMD_STATUS_OK)
-		dfu_dbg("chunk 0x%08x programmed OK\n", priv->curr_chunk_addr);
+		dfu_dbg("chunk 0x%08x programmed OK\n",
+			(unsigned int)priv->curr_chunk_addr);
 	dfu_binary_file_chunk_done(target->dfu->bf, priv->curr_chunk_addr,
 				   descr->state->status == DFU_CMD_STATUS_OK ?
 				   0 : -1);
@@ -580,7 +581,8 @@ static int stk500_chunk_available(struct dfu_target *target,
 		dfu_err("%s: target has no flash\n", __func__);
 		return -1;
 	}
-	dfu_dbg("%s: _load address 0x%08x\n", __func__, address);
+	dfu_dbg("%s: _load address 0x%08x\n", __func__,
+		(unsigned int)address);
 	if (_load_address(target, address) < 0) {
 		dfu_err("%s: error loading address\n", __func__);
 		return -1;
