@@ -46,7 +46,7 @@ static int _cmd_end(struct dfu_target *target,
 	dfu_dbg("%s, s = %d\n", __func__, s);
 	state->status = s;
 	if (descr->completed)
-		descr->completed(descr);
+		descr->completed(target, descr);
 	dfu_target_set_ready(target);
 	return s < 0 ? DO_CMDBUF_ERROR : DO_CMDBUF_DONE;
 }
@@ -81,7 +81,7 @@ static void _on_cmd_timeout(struct dfu_data *data, const void *priv)
 
 	descr->state->status = DFU_CMD_STATUS_TIMEOUT;
 	if (descr->completed)
-		descr->completed(descr);
+		descr->completed(data->target, descr);
 	dfu_target_set_ready(data->target);
 }
 

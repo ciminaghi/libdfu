@@ -78,7 +78,10 @@ struct dfu_binary_file {
 	void *buf;
 	int head;
 	int tail;
+	/* All bytes flushed, still waiting for target to confirm write ok */
 	int written;
+	/* All bytes flushed and target said all bytes written */
+	int really_written;
 	int max_size;
 	int rx_done;
 	int flushing;
@@ -250,5 +253,10 @@ extern unsigned long dfu_get_current_time(struct dfu_data *dfu);
 
 /* To be invoked by idle loop when target is not busy */
 extern void dfu_binary_file_target_ready(struct dfu_binary_file *bf);
+
+/* To be invokedby target when a chunk has been written */
+extern void dfu_binary_file_chunk_done(struct dfu_binary_file *,
+				       phys_addr_t chunk_addr, int status);
+
 
 #endif /* __DFU_INTERNAL_H__ */

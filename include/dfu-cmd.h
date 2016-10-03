@@ -63,7 +63,7 @@ struct dfu_cmddescr {
 	void (*checksum_reset)(const struct dfu_cmddescr *);
 	void (*checksum_update)(const struct dfu_cmddescr *, const void *,
 				unsigned int);
-	void (*completed)(const struct dfu_cmddescr *);
+	void (*completed)(struct dfu_target *, const struct dfu_cmddescr *);
 	void *priv;
 };
 

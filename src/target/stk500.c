@@ -86,6 +86,7 @@ struct stk500_data {
 	struct dfu_timeout cmd_timeout;
 	const struct dfu_cmddescr *curr_descr;
 	int busy;
+	phys_addr_t curr_chunk_addr;
 };
 
 static uint8_t cmd_buffer[32];
@@ -501,6 +502,18 @@ static int _check_program_page(const struct dfu_cmddescr *descr,
 	return ptr[0] == STK_OK ? 0 : -1;
 }
 
+static void _chunk_done(struct dfu_target *target,
+			const struct dfu_cmddescr *descr)
+{
+	struct stk500_data *priv = target->priv;
+
+	if (descr->state->status == DFU_CMD_STATUS_OK)
+		dfu_dbg("chunk 0x%08x programmed OK\n", priv->curr_chunk_addr);
+	dfu_binary_file_chunk_done(target->dfu->bf, priv->curr_chunk_addr,
+				   descr->state->status == DFU_CMD_STATUS_OK ?
+				   0 : -1);
+}
+
 
 /* Chunk of binary data is available for writing */
 static int stk500_chunk_available(struct dfu_target *target,
@@ -560,7 +573,7 @@ static int stk500_chunk_available(struct dfu_target *target,
 		.timeout = &data.cmd_timeout,
 		.checksum_reset = NULL,
 		.checksum_update = NULL,
-		.completed = NULL,
+		.completed = _chunk_done,
 	};
 
 	if (!dd->flash) {
@@ -579,6 +592,7 @@ static int stk500_chunk_available(struct dfu_target *target,
 	cmdbufs0[1].buf.out = buf;
 	cmdbufs0[1].len = sz;
 	/* ASYNCHRONOUS */
+	priv->curr_chunk_addr = address;
 	priv->curr_descr = &descr0;
 	return dfu_cmd_start(target, &descr0);
 }

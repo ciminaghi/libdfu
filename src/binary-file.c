@@ -22,6 +22,7 @@ static void _bf_init(struct dfu_binary_file *bf, char *b, struct dfu_data *dfu)
 	bf->buf = b;
 	bf->head = bf->tail = 0;
 	bf->written = 0;
+	bf->really_written = 0;
 	bf->format_data = NULL;
 	bf->format_ops = NULL;
 	bf->rx_method = NULL;
@@ -212,7 +213,7 @@ int dfu_binary_file_flush_start(struct dfu_binary_file *bf)
 
 int dfu_binary_file_written(struct dfu_binary_file *f)
 {
-	return f->written;
+	return f->really_written;
 }
 
 int dfu_binary_file_get_tot_appended(struct dfu_binary_file *f)
@@ -243,4 +244,17 @@ void dfu_binary_file_target_ready(struct dfu_binary_file *f)
 	if (stat < 0)
 		return;
 	f->decoded_buf_busy--;
+}
+
+/* Target is telling us that a chunk is done */
+void dfu_binary_file_chunk_done(struct dfu_binary_file *bf,
+				phys_addr_t chunk_addr, int status)
+{
+	if (status) {
+		/* ERROR: do nothing, the target will signal this */
+		return;
+	}
+	dfu_log_noprefix(".");
+	if (bf->written)
+		bf->really_written = 1;
 }
