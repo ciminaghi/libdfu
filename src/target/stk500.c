@@ -129,6 +129,8 @@ static int _check_sync(const struct dfu_cmddescr *descr,
 {
 	char *ptr = buf->buf.in;
 
+	dfu_dbg("%s: ptr[0] = 0x%02x (expected 0x%02x)\n", __func__, ptr[0],
+		STK_INSYNC);
 	return ptr[0] == STK_INSYNC ? 0 : -1;
 }
 
@@ -576,10 +578,12 @@ static int stk500_chunk_available(struct dfu_target *target,
 		dfu_err("%s: target has no flash\n", __func__);
 		return -1;
 	}
+	dfu_dbg("%s: _load address 0x%08x\n", __func__, address);
 	if (_load_address(target, address) < 0) {
 		dfu_err("%s: error loading address\n", __func__);
 		return -1;
 	}
+	dfu_dbg("%s: address loaded ok\n", __func__);
 	cmdb->code = STK_PROG_PAGE;
 	cmdb->length = sz;
 	cmdb->memtype = 'F';
