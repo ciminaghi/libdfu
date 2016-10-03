@@ -230,29 +230,27 @@ static int _get_param(struct dfu_target *target, uint8_t param,
 	return stat;
 }
 
-/* Probe by sending SIGN_ON command and waiting for reply */
+/* Probe by sending GET_SYNC command and waiting for reply */
 
-#define SIGN_ON_MESSAGE "AVR STK\x10"
-static int _check_sign_on(const struct dfu_cmddescr *descr,
-			  const struct dfu_cmdbuf *buf)
-{
-	char *ptr = buf->buf.in;
-
-	return memcmp(ptr, SIGN_ON_MESSAGE, strlen(SIGN_ON_MESSAGE));
-}
-
-struct stk500_sign_on_cmd {
+struct stk500_get_sync_cmd {
 	uint8_t code;
 	uint8_t eop;
 };
 
-static int _sign_on(struct dfu_target *target)
+static int _check_get_sync(const struct dfu_cmddescr *descr,
+			   const struct dfu_cmdbuf *buf)
+{
+	char *ptr = buf->buf.in;
+
+	return ptr[0] == STK_INSYNC && ptr[1] == STK_OK ? 0 : -1;
+}
+
+int _get_sync(struct dfu_target *target)
 {
 	struct stk500_data *priv = target->priv;
-	struct stk500_sign_on_cmd *cmdb = (struct stk500_sign_on_cmd *)
+	struct stk500_get_sync_cmd *cmdb = (struct stk500_get_sync_cmd *)
 		cmd_buffer;
-	static uint8_t sync_reply;
-	static uint8_t sign_on_str[8];
+	static uint8_t sync_reply[2];
 	static const struct dfu_cmdbuf cmdbufs0[] = {
 		/* Send sync */
 		[0] = {
@@ -269,16 +267,7 @@ static int _sign_on(struct dfu_target *target)
 			},
 			.len = sizeof(sync_reply),
 			.timeout = 1000,
-			.completed = _check_sync,
-		},
-		[2] = {
-			.dir = IN,
-			.buf = {
-				.in = sign_on_str,
-			},
-			.len = sizeof(sign_on_str),
-			.timeout = 1000,
-			.completed = _check_sign_on,
+			.completed = _check_get_sync,
 		},
 	};
 	static const struct dfu_cmddescr descr0 = {
@@ -293,7 +282,7 @@ static int _sign_on(struct dfu_target *target)
 		.completed = NULL,
 	};
 
-	cmdb->code= STK_GET_SIGN_ON;
+	cmdb->code= STK_GET_SYNC;
 	cmdb->eop = STK_CRC_EOP;
 	priv->curr_descr = &descr0;
 	return dfu_cmd_do_sync(target, &descr0);
@@ -427,7 +416,7 @@ static int stk500_probe(struct dfu_target *target)
 		stat = target->interface->ops->target_reset(target->interface);
 	if (stat < 0)
 		return stat;
-	return _sign_on(target);
+	return _get_sync(target);
 }
 
 struct stk500_load_address_cmd {
@@ -828,14 +817,19 @@ static int _enter_progmode(struct dfu_target *target)
 /* Reset and sync target */
 static int stk500_reset_and_sync(struct dfu_target *target)
 {
-	int n_extp, stat = 0;
+	int n_extp, stat = 0, i;
 
 	if (target->interface->ops->target_reset)
 		stat = target->interface->ops->target_reset(target->interface);
 	if (stat < 0)
 		return stat;
-	if (_sign_on(target) < 0)
+	for (i = 0; i < 20; i++)
+		if (!_get_sync(target))
+			break;
+	if (i >= 20) {
+		dfu_err("%s could not sync target\n", __func__);
 		return -1;
+	}
 	if (_set_device(target, &n_extp) < 0)
 		return -1;
 	if (n_extp > 0)
