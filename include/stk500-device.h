@@ -30,6 +30,7 @@ struct stk500_device_data {
 	const struct stk500_device_mem *eeprom;
 	
 	uint8_t chip_erase[4];
+	uint8_t enter_progmode[4];
 	unsigned int timeout;
 	unsigned int stabdelay;
 	unsigned int cmdexedelay;

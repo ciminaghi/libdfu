@@ -21,6 +21,7 @@ const struct stk500_device_data atmega328p_device_data = {
 	.rd = 0,
 	.flash = &atmega328p_flash,
 	.chip_erase = { 0xac, 0x80, 00, 00, },
+	.enter_progmode = { 0xac, 0x53, 0x00, 0x00, },
 	.timeout = 200,
 	.stabdelay = 100,
 	.cmdexedelay = 25,
