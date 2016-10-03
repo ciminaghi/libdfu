@@ -595,7 +595,7 @@ static int _universal(struct dfu_target *target, const uint8_t *cmd,
 	struct stk500_universal_cmd *cmdb = (struct stk500_universal_cmd *)
 		cmd_buffer;
 	int ret;
-	static uint8_t sync_reply, result;
+	static uint8_t sync_reply, result[2];
 	struct stk500_data *priv = target->priv;
 	static const struct dfu_cmdbuf cmdbufs0[] = {
 		/* Send sync */
@@ -618,7 +618,7 @@ static int _universal(struct dfu_target *target, const uint8_t *cmd,
 		[2] = {
 			.dir = IN,
 			.buf = {
-				.in = &result,
+				.in = result,
 			},
 			.len = sizeof(result),
 			.timeout = 1000,
@@ -644,7 +644,7 @@ static int _universal(struct dfu_target *target, const uint8_t *cmd,
 	if (ret < 0)
 		return ret;
 	if (res)
-		*res = result;
+		*res = result[0];
 	return ret;
 }
 
