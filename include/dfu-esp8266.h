@@ -9,6 +9,8 @@ extern "C" {
 #endif
 
 extern const struct dfu_interface_ops esp8266_serial_star8_interface_ops;
+extern const struct dfu_interface_ops
+esp8266_serial_arduinouno_hacked_interface_ops;
 extern const struct dfu_host_ops esp8266_dfu_host_ops;
 
 #ifdef __cplusplus
