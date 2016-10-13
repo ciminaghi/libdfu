@@ -188,59 +188,44 @@ static void _poll_file(struct dfu_data *dfu)
 	}
 }
 
-static void _poll_idle(struct dfu_data *dfu)
-{
-	unsigned long now = dfu_get_current_time(dfu);
-
-	if (timeouts[0] && time_after(now, timeouts[0]->timeout))
-		if (_trigger_timeout(dfu, timeouts[0]) < 0)
-			dfu_err("removing timeout");
-	if (dfu->interface->ops->poll_idle)
-		_poll_interface(dfu);
-	if (dfu->bf && dfu->bf->ops && dfu->bf->ops->poll_idle)
-		_poll_file(dfu);
-}
-
 /*
  * Idle loop: either rely on host's idle operation or poll everything to
  * check whether some event has happened
  */
 int dfu_idle(struct dfu_data *dfu)
 {
+	unsigned long now;
 	int next_timeout, stat;
 
 	if (!dfu_target_busy(dfu->target))
 		/* Unlock any pending writes of decoded data */
 		dfu_binary_file_target_ready(dfu->bf);
 
-	if (!dfu->host->ops->idle) {
-		/*
-		 * If a host has no idle operation, poll_idle methods
-		 * should be present for polling interface and file for
-		 * activity
-		 */
-		_poll_idle(dfu);
-		goto end;
-	}
-
-	next_timeout = !timeouts[0] ? -1 : timeouts[0]->timeout;
-
 	if (dfu->interface->ops->poll_idle)
 		_poll_interface(dfu);
 	if (_bf_is_pollable(dfu->bf))
 		_poll_file(dfu);
-	stat = dfu->host->ops->idle(dfu->host, next_timeout);
-	if (stat & DFU_TIMEOUT)
+	next_timeout = !timeouts[0] ? -1 : timeouts[0]->timeout;
+	now = dfu_get_current_time(dfu);
+	if (timeouts[0] && time_after(now, next_timeout))
 		if (_trigger_timeout(dfu, timeouts[0]) < 0) {
 			dfu_err("removing timeout");
 			return DFU_ERROR;
 		}
-	if (stat & DFU_FILE_EVENT)
-		_trigger_file_event(dfu);
-	if (stat & DFU_INTERFACE_EVENT)
-		_trigger_interface_event(dfu);
-
-end:
+	if (dfu->host->ops->idle) {
+		stat = dfu->host->ops->idle(dfu->host, next_timeout);
+		if (stat < 0)
+			return stat;
+		if (stat & DFU_TIMEOUT)
+			if (_trigger_timeout(dfu, timeouts[0]) < 0) {
+				dfu_err("removing timeout");
+				return DFU_ERROR;
+			}
+		if (stat & DFU_FILE_EVENT)
+			_trigger_file_event(dfu);
+		if (stat & DFU_INTERFACE_EVENT)
+			_trigger_interface_event(dfu);
+	}
 	if (dfu_binary_file_written(dfu->bf))
 		return DFU_ALL_DONE;
 	return DFU_CONTINUE;
