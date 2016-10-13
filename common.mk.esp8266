@@ -3,6 +3,8 @@ SDK_BASE ?= $(shell pwd)/../../esp8266/esp_iot_sdk_v1.5.2/
 SDK_INCDIR := include include/json
 SDK_LIBDIR := lib
 SDK_LDDIR  := ld
+SAMPLES_SSID ?= UNKOWN-SSID
+SAMPLES_PASSWORD ?= UNKNOWN-PASSWORD
 
 DYNAMIC_LIB := n
 LDFLAGS := -nostdlib -Wl,--no-check-sections -u call_user_start -Wl,-static
@@ -16,7 +18,7 @@ SDK_INCDIR	:= $(addprefix -I$(SDK_BASE)/,$(SDK_INCDIR))
 LD_SCRIPT	:= $(addprefix -T$(BASE)/samples/,$(LD_SCRIPT))
 LIBS		:= $(addprefix -l,$(LIBS))
 
-CFLAGS := -Os -g -O2 -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -fno-builtin-putc -nostdlib -mlongcalls -mtext-section-literals  -D__ets__ $(SDK_INCDIR) -DLWIP_OPEN_SRC
+CFLAGS := -Os -g -O2 -Wpointer-arith -Wundef -Werror -Wl,-EL -fno-inline-functions -fno-builtin-putc -nostdlib -mlongcalls -mtext-section-literals  -D__ets__ $(SDK_INCDIR) -DLWIP_OPEN_SRC -DSSID=\"$(SAMPLES_SSID)\" -DSSID_PASSWORD=\"$(SAMPLES_PASSWORD)\"
 
 OBJ_FORMAT := elf32-xtensa-le
 BINARY_ARCHITECTURE := xtensa
