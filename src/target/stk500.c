@@ -10,6 +10,8 @@
 #include "dfu-cmd.h"
 #include "stk500-device.h"
 
+#define MAX_SYNC_ATTEMPTS 8
+
 /* Commands */
 enum stk500_cmd {
 	STK_GET_SIGN_ON = 0x31,
@@ -237,6 +239,7 @@ int _get_sync(struct dfu_target *target)
 	struct stk500_get_sync_cmd *cmdb = (struct stk500_get_sync_cmd *)
 		cmd_buffer;
 	static uint8_t sync_reply[2];
+	int i, ret;
 	static const struct dfu_cmdbuf cmdbufs0[] = {
 		/* Send sync */
 		[0] = {
@@ -252,7 +255,7 @@ int _get_sync(struct dfu_target *target)
 				.in = &sync_reply,
 			},
 			.len = sizeof(sync_reply),
-			.timeout = 1000,
+			.timeout = 300,
 			.completed = _check_get_sync,
 		},
 	};
@@ -267,11 +270,48 @@ int _get_sync(struct dfu_target *target)
 		.checksum_update = NULL,
 		.completed = NULL,
 	};
+	static const struct dfu_cmddescr descr1 = {
+		.cmdbufs = &cmdbufs0[1],
+		.ncmdbufs = 1,
+		.checksum_ptr = NULL,
+		.checksum_size = 0,
+		.state = &data.cmd_state,
+		.timeout = &data.cmd_timeout,
+		.checksum_reset = NULL,
+		.checksum_update = NULL,
+		.completed = NULL,
+	};
 
-	cmdb->code= STK_GET_SYNC;
-	cmdb->eop = STK_CRC_EOP;
-	priv->curr_descr = &descr0;
-	return dfu_cmd_do_sync(target, &descr0);
+	dfu_dbg("syncing target\n");
+	for (i = 0; i < MAX_SYNC_ATTEMPTS; i++) {
+		cmdb->code= STK_GET_SYNC;
+		cmdb->eop = STK_CRC_EOP;
+		priv->curr_descr = &descr0;
+		ret = dfu_cmd_do_sync(target, &descr0);
+		if (!ret) {
+			dfu_dbg("sync ok\n");
+			return ret;
+		}
+		if (ret == DFU_CMD_STATUS_TIMEOUT) {
+			/* No answer, resend command and try again */
+			dfu_dbg("no reply\n");
+			continue;
+		}
+		dfu_dbg("out of sync\n");
+		/*
+		 * There was an answer, but it was wrong.
+		 * Flush input and wait 300ms more
+		 */
+		do {
+			if (dfu_cmd_do_sync(target, &descr1) ==
+			    DFU_CMD_STATUS_TIMEOUT)
+				break;
+		} while(1);
+		dfu_dbg("retrying sync\n");
+	}
+	if (i >= MAX_SYNC_ATTEMPTS)
+		dfu_err("cannot sync target\n");
+	return i < MAX_SYNC_ATTEMPTS ? 0 : -1;
 }
 
 struct stk500_set_device_cmd {
