@@ -72,6 +72,5 @@ int esp8266_serial_poll_idle(struct dfu_interface *iface)
 	int ret;
 
 	ret = get_rx_fifo_cnt(base);
-	dfu_dbg("%s returns %d\n", __func__, ret);
-	return ret;
+	return ret ? DFU_INTERFACE_EVENT : 0;
 }
