@@ -26,15 +26,13 @@ ifeq ($(HOST),esp8266)
 
 all: images
 
-$(EXE).o: $(EXE).c
-	$(CC) $(CFLAGS) -c -o $@ $<
+images: $(foreach e,$(EXE),do_$(e)_images)
 
-$(EXE).out: $(EXE).o
+do_%_images: %
+	$(ESPTOOL) elf2image -o $*- $<
+
+$(EXE): % : %.o
 	$(LD) -L$(SDK_LIBDIR) $+ $(LD_SCRIPT) $(LDFLAGS) -Wl,--start-group $(LIBS) $(APP_AR) -Wl,--end-group -o $@
-
-
-images: $(EXE).out
-	$(ESPTOOL) elf2image -o ./ $<
 
 endif
 
@@ -44,4 +42,4 @@ clean:
 	rm -f $(EXE) *.o *~ *.bin *.out
 
 
-.phony: images all clean
+.phony: all clean images $(foreach e,$(EXE),do_$(e)_images)
