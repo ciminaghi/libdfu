@@ -37,7 +37,11 @@ static void uart1_init(void)
 
 static void uart1_putc(char c)
 {
+	int i = 0;
+
 	/* MMMMHHH FIXME: IS FIFO FREE ? */
+	while (get_tx_fifo_cnt(REG_UART_BASE(1)) >= 126UL && i < 20000)
+		i++;
 	if (c == '\n')
 		writel('\r', REG_UART_BASE(1) + UART_FIFO);
 	writel(c, REG_UART_BASE(1) + UART_FIFO);
