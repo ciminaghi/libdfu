@@ -108,6 +108,7 @@ static int _do_cmdbuf(struct dfu_target *target,
 {
 	struct dfu_cmdstate *state = descr->state;
 	struct dfu_interface *interface = target->interface;
+	char *ptr;
 	int stat;
 
 	switch (buf->dir) {
@@ -159,7 +160,10 @@ static int _do_cmdbuf(struct dfu_target *target,
 					return stat;
 			}
 		}
-		stat = interface->ops->read(interface, buf->buf.in, buf->len);
+		ptr = buf->buf.in;
+		stat = interface->ops->read(interface,
+					    &ptr[state->received],
+					    buf->len - state->received);
 		dfu_dbg("%s: read returns %d\n", __func__, stat);
 		if (stat > 0)
 			state->received += stat;
