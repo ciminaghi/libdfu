@@ -783,19 +783,14 @@ static int _enter_progmode(struct dfu_target *target)
 /* Reset and sync target */
 static int stk500_reset_and_sync(struct dfu_target *target)
 {
-	int n_extp, stat = 0, i;
+	int n_extp, stat = 0;
 
 	if (target->interface->ops->target_reset)
 		stat = target->interface->ops->target_reset(target->interface);
 	if (stat < 0)
 		return stat;
-	for (i = 0; i < 20; i++)
-		if (!_get_sync(target))
-			break;
-	if (i >= 20) {
-		dfu_err("%s could not sync target\n", __func__);
+	if (_get_sync(target) < 0)
 		return -1;
-	}
 	if (_set_device(target, &n_extp) < 0)
 		return -1;
 	if (n_extp > 0)
