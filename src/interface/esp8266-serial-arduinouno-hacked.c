@@ -6,13 +6,7 @@
 #include "gpio.h"
 #include "esp8266-serial.h"
 
-#define REG_UART_BASE(i)		(0x60000000 + (i)*0xf00)
-#define UART_CONF0(i)			(REG_UART_BASE(i) + 0x20)
 #define UART_BIT_NUM_S			2
-#define UART_TXFIFO_RST			(BIT(18))
-#define UART_FIFO(i)			(REG_UART_BASE(i) + 0x0)
-
-
 
 /*
  * Hacked vanilla arduinouno with homemade 8266 shield: uses UART0 and GPIO5
@@ -23,24 +17,30 @@
 /* Console gets redirected to uart1 */
 static void uart1_init(void)
 {
+	uint32_t v;
+	unsigned long base = REG_UART_BASE(1);
+
 	/* Setup tx pin */
 	PIN_PULLUP_DIS(PERIPHS_IO_MUX_GPIO2_U);
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO2_U, FUNC_U1TXD_BK);
 	/* Set baud rate */
 	uart_div_modify(1, UART_CLK_FREQ / 115200);
 	/* Set bit number and parity */
-	WRITE_PERI_REG(UART_CONF0(1), 0x3 << UART_BIT_NUM_S);
+	writel(0x3 << UART_BIT_NUM_S, base + UART_CONF0);
 	/* Reset tx fifo */
-	SET_PERI_REG_MASK(UART_CONF0(1),  UART_TXFIFO_RST);
-	CLEAR_PERI_REG_MASK(UART_CONF0(1), UART_TXFIFO_RST);
+	v = readl(base + UART_CONF0);
+	v |= UART_RXFIFO_RST | UART_TXFIFO_RST;
+	writel(v, base + UART_CONF0);
+	v &= ~(UART_RXFIFO_RST | UART_TXFIFO_RST);
+	writel(v, base + UART_CONF0);
 }
 
 static void uart1_putc(char c)
 {
 	/* MMMMHHH FIXME: IS FIFO FREE ? */
 	if (c == '\n')
-		WRITE_PERI_REG(UART_FIFO(1), '\r');
-	WRITE_PERI_REG(UART_FIFO(1), c);
+		writel('\r', REG_UART_BASE(1) + UART_FIFO);
+	writel(c, REG_UART_BASE(1) + UART_FIFO);
 }
 
 /* Gpio5 is target's reset */

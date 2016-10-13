@@ -5,6 +5,8 @@
 #include "dfu-internal.h"
 #include "user_interface.h"
 
+volatile uint32_t *regs = 0;
+
 static int esp8266_init(struct dfu_host *host)
 {
 	uart_div_modify(0, UART_CLK_FREQ / 115200);

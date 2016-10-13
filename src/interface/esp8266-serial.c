@@ -5,53 +5,11 @@
 #include "dfu-internal.h"
 #include "esp8266-serial.h"
 
-/* Registers' offset */
-#define UART_FIFO	0x00
-#define UART_INT_RAW	0x04
-#define UART_INT_ST	0x08
-# define FRAMING_ERROR  BIT(3)
-# define OVERRUN_ERROR  BIT(4)
-
-#define UART_INT_ENA	0x0c
-# define UART_RXFIFO_FULL_INT_ENA BIT(0)
-#define UART_INT_CLR	0x10
-#define UART_CLKDIV	0x14
-#define UART_AUTOBAUD	0x18
-#define UART_STATUS	0x1c
-#define UART_CONF0	0x20
-# define UART_RXFIFO_RST BIT(17)
-# define UART_TXFIFO_RST BIT(18)
-#define UART_CONF1	0x24
-#define UART_LOWPULSE	0x28
-#define UART_HIGHPULSE	0x2c
-#define UART_PULSE_NUM	0x30
-#define UART_DATE	0x78
-#define UART_ID		0x7c
-
 #define DEFAULT_BAUD 115200
-#define UART0_BASE 0x60000000
 
 static int baud = DEFAULT_BAUD;
-static unsigned long base = UART0_BASE;
+static unsigned long base = REG_UART_BASE(0);
 static int rx_fifo_threshold = 0;
-
-/* Simple I/O accessors */
-uint32_t *regs = 0;
-
-static inline uint32_t readl(unsigned long reg)
-{
-	return regs[reg / 4];
-}
-
-static inline void writel(uint32_t val, unsigned long reg)
-{
-	regs[reg / 4] = val;
-}
-
-static inline unsigned int get_rx_fifo_cnt(unsigned long base)
-{
-	return readl(base + UART_STATUS) & 0xffUL;
-}
 
 void esp8266_uart_irq_handler(void *dummy)
 {
@@ -91,11 +49,6 @@ int esp8266_serial_open(struct dfu_interface *iface,
 	/* Attach interrupt handler */
 	ETS_UART_INTR_ATTACH(esp8266_uart_irq_handler, NULL);
 	return 0;
-}
-
-static inline unsigned int get_tx_fifo_cnt(unsigned long base)
-{
-	return (readl(base + UART_STATUS) >> 16) & 0xffUL;
 }
 
 static int _putc(char c)

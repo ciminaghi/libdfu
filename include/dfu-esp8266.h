@@ -23,6 +23,19 @@ extern const struct dfu_host_ops esp8266_dfu_host_ops;
 		os_printf("ERROR: " a, ##args) ; } while(0)
 #define dfu_log_noprefix(a,args...) os_printf(a, ##args)
 
+/* Simple I/O accessors */
+extern volatile uint32_t *regs;
+
+static inline uint32_t readl(unsigned long reg)
+{
+	return regs[reg / 4];
+}
+
+static inline void writel(uint32_t val, unsigned long reg)
+{
+	regs[reg / 4] = val;
+}
+
 #include <osapi.h>
 #include "espmissingincludes.h"
 
