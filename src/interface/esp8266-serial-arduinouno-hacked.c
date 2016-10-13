@@ -61,13 +61,9 @@ int esp8266_serial_arduinouno_hacked_target_reset(struct dfu_interface *iface)
 		first = 1;
 	}
 	GPIO_OUTPUT_SET(5, 0);
-	os_delay_us(100000);
+	os_delay_us(1000);
 	GPIO_OUTPUT_SET(5, 1);
-	os_printf("DONE\n");
-	os_printf("Redirecting console to uart1\n");
-	uart1_init();
-	os_install_putc1(uart1_putc);
-	os_printf("Console redirected to uart1\n");
+	os_delay_us(200000);
 	return 0;
 }
 
