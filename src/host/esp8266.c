@@ -21,7 +21,7 @@ void esp8266_udelay(struct dfu_host *host, unsigned long us)
 
 int esp8266_idle(struct dfu_host *host, long next_timeout)
 {
-	return DFU_ERROR;
+	return 0;
 }
 
 unsigned long esp8266_get_current_time(struct dfu_host *host)
