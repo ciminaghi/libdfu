@@ -1,2 +1,29 @@
 libdfu: library for implementing Direct Firmware Update for several target
 processors under several host environments.
+
+Design should be modular, so that new programming hosts and targets can
+be added quite easily.
+
+Two hosts (linux pc and esp8266) and two targets (stm32-dfu and stk500 v1)
+are currently supported.
+
+Have a look in samples/ for some sample programs.
+
+To build for linux pc:
+
+make HOST=linux
+
+To build for esp8266:
+
+make
+
+To enable debug prints build with DEBUG=y:
+
+make DEBUG=y
+
+
+This is currently work in progress and completely experimental.
+
+Have fun
+Davide
+
