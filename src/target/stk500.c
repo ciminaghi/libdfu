@@ -114,14 +114,13 @@ static int stk500_init(struct dfu_target *target,
 	static struct stk500_data priv;
 
 	target->interface = interface;
-	dfu_log("%s: target = %p, interface = %p\n", __func__,
-		target, interface);
 	memset(&priv, 0, sizeof(priv));
 	target->priv = &priv;
 	if (!target->pars) {
 		dfu_err("%s: target parameters expected\n", __func__);
 		return -1;
 	}
+	dfu_log("STK500 target initialized\n");
 	return 0;
 }
 
