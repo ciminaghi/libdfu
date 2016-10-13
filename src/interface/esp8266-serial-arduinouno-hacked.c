@@ -50,8 +50,16 @@ static void uart1_putc(char c)
 /* Gpio5 is target's reset */
 int esp8266_serial_arduinouno_hacked_target_reset(struct dfu_interface *iface)
 {
-	os_printf("Resetting target ...");
-	PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO5_U, FUNC_GPIO5);
+	static int first = 0;
+
+	if (!first) {
+		dfu_log("Redirecting console to uart1\n");
+		uart1_init();
+		os_install_putc1(uart1_putc);
+		dfu_log("Console redirected to uart1\n");
+		PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO5_U, FUNC_GPIO5);
+		first = 1;
+	}
 	GPIO_OUTPUT_SET(5, 0);
 	os_delay_us(100000);
 	GPIO_OUTPUT_SET(5, 1);
