@@ -227,7 +227,8 @@ static int _check_get_sync(const struct dfu_cmddescr *descr,
 {
 	char *ptr = buf->buf.in;
 
-	return ptr[0] == STK_INSYNC && ptr[1] == STK_OK ? 0 : -1;
+	return ptr[0] == STK_INSYNC && ptr[1] == STK_OK ? 0 :
+		DFU_CMD_STATUS_ERROR;
 }
 
 int _get_sync(struct dfu_target *target)
