@@ -131,6 +131,8 @@ static int _check_sync(const struct dfu_cmddescr *descr,
 
 	dfu_dbg("%s: ptr[0] = 0x%02x (expected 0x%02x)\n", __func__, ptr[0],
 		STK_INSYNC);
+	if (ptr[0] != STK_INSYNC)
+		dfu_err("_check_sync ERROR (0x%02x)\n", ptr[0]);
 	return ptr[0] == STK_INSYNC ? 0 : -1;
 }
 
