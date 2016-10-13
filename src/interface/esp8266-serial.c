@@ -58,11 +58,12 @@ int esp8266_serial_write(struct dfu_interface *iface,
 int esp8266_serial_read(struct dfu_interface *iface, char *buf,
 			unsigned long size)
 {
-	int available = get_rx_fifo_cnt(base), copied = min(available, size);
+	int available = get_rx_fifo_cnt(base), copied = min(available, size), i;
 
 	if (!available)
 		return -1;
-	memcpy(buf, (void *)(base + UART_FIFO), min(available, copied));
+	for (i = 0; i < copied; i++)
+		buf[i] = readl(base + UART_FIFO);
 	return copied;
 }
 
