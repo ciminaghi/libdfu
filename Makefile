@@ -1,4 +1,5 @@
 
+-include local_config.mk
 
 BASE := $(shell pwd)
 
