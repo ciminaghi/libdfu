@@ -9,7 +9,7 @@ SUBDIRS:=src samples
 
 output_tar_name ?= $(shell echo libdfu-`date +%Y%m%d`.tar.bz2)
 
-export BASE HOST DYNAMIC_LIB SAMPLES_SSID SAMPLES_PASSWORD
+export BASE HOST DYNAMIC_LIB SAMPLES_SSID SAMPLES_PASSWORD SDK_BASE
 
 all: subdirs
 
