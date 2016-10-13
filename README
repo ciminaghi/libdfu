@@ -21,6 +21,20 @@ To enable debug prints build with DEBUG=y:
 
 make DEBUG=y
 
+Before building, setup a file named local_config.mk in the main sources
+directory assigning values to the following make variables:
+
+SDK_BASE
+SAMPLES_SSID
+SAMPLES_PASSWORD
+
+SDK_BASE is the path of the esp8266 sdk you rely on (I'm using
+esp_iot_sdk_v1.5.2).
+
+SAMPLES_SSID and SAMPLE_PASSWORD are respectively the SSID and the password
+of the wifi network the esp8266 shall connect to (these are only used by
+sample programs).
+
 
 This is currently work in progress and completely experimental.
 
