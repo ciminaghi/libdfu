@@ -366,7 +366,7 @@ static int _set_device(struct dfu_target *target, int *n_extp)
 				.in = &sync_reply,
 			},
 			.len = sizeof(sync_reply),
-			.timeout = 1000,
+			.timeout = 300,
 			.completed = _check_sync,
 		},
 		[2] = {
@@ -375,7 +375,7 @@ static int _set_device(struct dfu_target *target, int *n_extp)
 				.in = &result,
 			},
 			.len = sizeof(result),
-			.timeout = 1000,
+			.timeout = 300,
 			.completed = _check_set_device,
 		},
 	};
@@ -480,7 +480,7 @@ static int _load_address(struct dfu_target *target, uint16_t addr)
 				.in = &sync_reply,
 			},
 			.len = sizeof(sync_reply),
-			.timeout = 1000,
+			.timeout = 300,
 			.completed = _check_sync,
 		},
 		[2] = {
@@ -489,7 +489,7 @@ static int _load_address(struct dfu_target *target, uint16_t addr)
 				.in = &result,
 			},
 			.len = sizeof(result),
-			.timeout = 1000,
+			.timeout = 300,
 			.completed = _check_load_addr,
 		},
 	};
@@ -577,7 +577,7 @@ static int stk500_chunk_available(struct dfu_target *target,
 				.in = &sync_reply,
 			},
 			.len = sizeof(sync_reply),
-			.timeout = 1000,
+			.timeout = 300,
 			.completed = _check_sync,
 		},
 		[4] = {
@@ -586,7 +586,7 @@ static int stk500_chunk_available(struct dfu_target *target,
 				.in = &result,
 			},
 			.len = sizeof(result),
-			.timeout = 1000,
+			.timeout = 300,
 			.completed = _check_program_page,
 		},
 	};
@@ -653,7 +653,7 @@ static int _universal(struct dfu_target *target, const uint8_t *cmd,
 				.in = &sync_reply,
 			},
 			.len = sizeof(sync_reply),
-			.timeout = 1000,
+			.timeout = 300,
 			.completed = _check_sync,
 		},
 		[2] = {
@@ -662,7 +662,7 @@ static int _universal(struct dfu_target *target, const uint8_t *cmd,
 				.in = result,
 			},
 			.len = sizeof(result),
-			.timeout = 1000,
+			.timeout = 300,
 		},
 	};
 	static const struct dfu_cmddescr descr0 = {
@@ -736,7 +736,7 @@ static int _set_extparams(struct dfu_target *target, int n_extp)
 				.in = &sync_reply,
 			},
 			.len = sizeof(sync_reply),
-			.timeout = 1000,
+			.timeout = 300,
 			.completed = _check_sync,
 		},
 		[2] = {
@@ -745,7 +745,7 @@ static int _set_extparams(struct dfu_target *target, int n_extp)
 				.in = &result,
 			},
 			.len = sizeof(result),
-			.timeout = 1000,
+			.timeout = 300,
 			.completed = _check_set_ext_params,
 		},
 	};
@@ -843,7 +843,7 @@ static int stk500_run(struct dfu_target *target)
 				.in = &sync_reply,
 			},
 			.len = sizeof(sync_reply),
-			.timeout = 1000,
+			.timeout = 300,
 			.completed = _check_sync,
 		},
 		[2] = {
@@ -852,7 +852,7 @@ static int stk500_run(struct dfu_target *target)
 				.in = &result,
 			},
 			.len = sizeof(result),
-			.timeout = 1000,
+			.timeout = 300,
 			.completed = _check_leave_progmode,
 		},
 	};
