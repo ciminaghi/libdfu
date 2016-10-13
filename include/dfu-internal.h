@@ -123,7 +123,7 @@ struct dfu_host_ops {
 	int (*init)(struct dfu_host *);
 	void (*udelay)(struct dfu_host *, unsigned long us);
 	/* Returns int with last events flags set */
-	int (*idle)(struct dfu_host *, int next_timeout);
+	int (*idle)(struct dfu_host *, long next_timeout);
 	int (*set_interface_event)(struct dfu_host *, void *);
 	int (*set_binary_file_event)(struct dfu_host *, void *);
 	unsigned long (*get_current_time)(struct dfu_host *);

@@ -17,7 +17,7 @@ void esp8266_udelay(struct dfu_host *host, unsigned long us)
 	os_delay_us(us);
 }
 
-int esp8266_idle(struct dfu_host *host, int timeout_ms)
+int esp8266_idle(struct dfu_host *host, long next_timeout)
 {
 	return DFU_ERROR;
 }

@@ -207,7 +207,6 @@ static void _poll_idle(struct dfu_data *dfu)
  */
 int dfu_idle(struct dfu_data *dfu)
 {
-	unsigned long now = dfu_get_current_time(dfu);
 	int next_timeout, stat;
 
 	if (!dfu_target_busy(dfu->target))
@@ -224,7 +223,7 @@ int dfu_idle(struct dfu_data *dfu)
 		goto end;
 	}
 
-	next_timeout = !timeouts[0] ? -1 : timeouts[0]->timeout - now;
+	next_timeout = !timeouts[0] ? -1 : timeouts[0]->timeout;
 
 	if (dfu->interface->ops->poll_idle)
 		_poll_interface(dfu);

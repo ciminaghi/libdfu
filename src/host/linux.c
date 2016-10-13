@@ -35,7 +35,18 @@ void linux_udelay(struct dfu_host *host, unsigned long us)
 	nanosleep(&tv, &tv);
 }
 
-int linux_idle(struct dfu_host *host, int timeout_ms)
+static unsigned long _get_current_time(void)
+{
+	int stat;
+	struct timespec ts;
+
+	stat = clock_gettime(CLOCK_MONOTONIC, &ts);
+	if (stat < 0)
+		return 0xffffffff;
+	return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
+
+int linux_idle(struct dfu_host *host, long next_timeout)
 {
 	int stat, ret = 0, nfds;
 	struct linux_host_data *data = host->priv;
@@ -66,10 +77,10 @@ int linux_idle(struct dfu_host *host, int timeout_ms)
 		nfds = 0;
 		ptr = NULL;
 	}
-	if (!nfds && timeout_ms < 0)
+	if (!nfds && next_timeout < 0)
 		/* No timeout & no events, just return with 0 */
 		return ret;
-	stat = poll(ptr, nfds, timeout_ms);
+	stat = poll(ptr, nfds, next_timeout - _get_current_time());
 	switch(stat) {
 	case 0:
 		return DFU_TIMEOUT;
@@ -110,13 +121,7 @@ int linux_set_binary_file_event(struct dfu_host *host, void *linux_evt_info)
 
 unsigned long linux_get_current_time(struct dfu_host *host)
 {
-	int stat;
-	struct timespec ts;
-
-	stat = clock_gettime(CLOCK_MONOTONIC, &ts);
-	if (stat < 0)
-		return 0xffffffff;
-	return ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+	return _get_current_time();
 }
 
 const struct dfu_host_ops linux_dfu_host_ops = {
