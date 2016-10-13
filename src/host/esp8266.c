@@ -26,7 +26,7 @@ int esp8266_idle(struct dfu_host *host, long next_timeout)
 
 unsigned long esp8266_get_current_time(struct dfu_host *host)
 {
-	return system_get_time();
+	return system_get_time() / 1000;
 }
 
 const struct dfu_host_ops esp8266_dfu_host_ops = {
