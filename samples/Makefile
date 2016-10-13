@@ -9,7 +9,7 @@ EXE += linux-http-lwip-stm32
 endif
 
 else ifeq ($(HOST),esp8266)
-EXE := esp8266-stm32
+EXE := esp8266-stm32 esp8266-http-lwip-arduinouno
 endif
 
 ifeq ($(HOST),linux)
