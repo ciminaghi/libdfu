@@ -3,7 +3,7 @@
 
 BASE := $(shell pwd)
 
-HOST ?= linux
+HOST ?= esp8266
 
 SUBDIRS:=src samples
 
