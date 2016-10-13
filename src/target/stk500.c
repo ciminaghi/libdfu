@@ -131,27 +131,28 @@ static int _check_sync(const struct dfu_cmddescr *descr,
 
 	dfu_dbg("%s: ptr[0] = 0x%02x (expected 0x%02x)\n", __func__, ptr[0],
 		STK_INSYNC);
-	if (ptr[0] != STK_INSYNC)
-		dfu_err("_check_sync ERROR (0x%02x)\n", ptr[0]);
 	return ptr[0] == STK_INSYNC ? 0 : -1;
-}
-
-static int _get_param_value(const struct dfu_cmddescr *descr,
-			    const struct dfu_cmdbuf *buf)
-{
-	unsigned char *ptr = buf->buf.in;
-	unsigned *out = descr->priv;
-
-	*out = ptr[0];
-	return 0;
 }
 
 static int _check_get_param_reply(const struct dfu_cmddescr *descr,
 				  const struct dfu_cmdbuf *buf)
 {
 	unsigned char *ptr = buf->buf.in;
+	unsigned *out = descr->priv;
 
-	return ptr[0] == STK_OK ? 0 : -1;
+	if (ptr[0] != STK_INSYNC) {
+		dfu_err("%s: no sync\n", __func__);
+		goto error;
+	}
+	if (ptr[2] != STK_OK) {
+		dfu_err("%s: ERROR\n", __func__);
+		goto error;
+	}
+	*out = ptr[0];
+	return 0;
+error:
+	dfu_log("buf = 0x%02x 0x%02x 0x%02x\n", ptr[0], ptr[1], ptr[2]);
+	return -1;
 }
 
 
@@ -169,7 +170,7 @@ static int _get_param(struct dfu_target *target, uint8_t param,
 	struct stk500_data *priv = target->priv;
 	struct stk500_get_param_cmd *cmdb = (struct stk500_get_param_cmd *)
 		cmd_buffer;
-	static uint8_t param_reply[1];
+	static uint8_t param_reply[3];
 	static unsigned int out;
 	static const struct dfu_cmdbuf cmdbufs0[] = {
 		/* Send sync */
@@ -183,28 +184,10 @@ static int _get_param(struct dfu_target *target, uint8_t param,
 		[1] = {
 			.dir = IN,
 			.buf = {
-				.in = &param_reply,
-			},
-			.len = sizeof(param_reply),
-			.timeout = 1000,
-			.completed = _check_sync,
-		},
-		[2] = {
-			.dir = IN,
-			.buf = {
 				.in = param_reply,
 			},
 			.len = sizeof(param_reply),
-			.timeout = 1000,
-			.completed = _get_param_value,
-		},
-		[3] = {
-			.dir = IN,
-			.buf = {
-				.in = param_reply,
-			},
-			.len = sizeof(param_reply),
-			.timeout = 1000,
+			.timeout = 300,
 			.completed = _check_get_param_reply,
 		},
 	};
