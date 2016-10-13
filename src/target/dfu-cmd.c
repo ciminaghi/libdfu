@@ -86,6 +86,22 @@ static void _on_cmd_timeout(struct dfu_data *data, const void *priv)
 	dfu_target_set_ready(data->target);
 }
 
+#ifdef DEBUG
+static inline void debug_print_out(const struct dfu_cmdbuf *buf)
+{
+	int i;
+	const char *ptr = buf->buf.out;
+	dfu_dbg("---> ");
+	for (i = 0; i < buf->len; i++)
+		dfu_log_noprefix("0x%02x ", ptr[i]);
+	dfu_log_noprefix("\n");
+}
+#else
+static inline void debug_print_out(const struct dfu_cmdbuf *buf)
+{
+}
+#endif
+
 static int _do_cmdbuf(struct dfu_target *target,
 		      const struct dfu_cmddescr *descr,
 		      const struct dfu_cmdbuf *buf)
@@ -99,6 +115,7 @@ static int _do_cmdbuf(struct dfu_target *target,
 		dfu_dbg("%s OUT\n", __func__);
 		if (descr->checksum_update)
 			descr->checksum_update(descr, buf->buf.out, buf->len);
+		debug_print_out(buf);
 		stat = _do_send(interface, buf->buf.out, buf->len);
 		if (stat < 0) {
 			dfu_err("%s: error writing to interface\n",
