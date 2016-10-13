@@ -20,6 +20,7 @@ int esp8266_serial_open(struct dfu_interface *iface,
 	uint32_t v;
 
 	uart_div_modify(0, UART_CLK_FREQ / baud);
+	PIN_PULLUP_DIS(PERIPHS_IO_MUX_U0RXD_U);
 	PIN_PULLUP_DIS(PERIPHS_IO_MUX_U0TXD_U);
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0TXD_U, FUNC_U0TXD);
 	/* Reset FIFO */
