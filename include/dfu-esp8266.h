@@ -17,8 +17,10 @@ extern const struct dfu_host_ops esp8266_dfu_host_ops;
 }
 #endif
 
-#define dfu_log(a,args...) os_printf("DFU:" a, ##args)
-#define dfu_err(a,args...) os_printf("DFU ERROR: " a, ##args)
+#define dfu_log(a,args...) do { os_printf("DFU [%8u] ", system_get_time()) ; \
+		os_printf(a, ##args); } while(0)
+#define dfu_err(a,args...) do { os_printf("DFU [%8u] ", system_get_time()) ; \
+		os_printf("ERROR: " a, ##args) ; } while(0)
 #define dfu_log_noprefix(a,args...) os_printf(a, ##args)
 
 #include <osapi.h>
