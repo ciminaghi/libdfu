@@ -11,19 +11,6 @@ static int baud = DEFAULT_BAUD;
 static unsigned long base = REG_UART_BASE(0);
 static int rx_fifo_threshold = 0;
 
-void esp8266_uart_irq_handler(void *dummy)
-{
-	uint32_t status;
-
-	status = readl(base + UART_INT_ST);
-	if ((status & FRAMING_ERROR) || (status & OVERRUN_ERROR)) {
-		dfu_dbg("%s: ERROR (0x%08x)\n", __func__, (unsigned int)status);
-		goto end;
-	}
-end:
-	writel(status, base + UART_INT_CLR);
-}
-
 /*
  * FIXME: currently ignores path and works with serial0 only
  */
@@ -46,8 +33,6 @@ int esp8266_serial_open(struct dfu_interface *iface,
 	v &= ~0x7f;
 	v |= (rx_fifo_threshold & 0x7f);
 	writel(v, base + UART_CONF1);
-	/* Attach interrupt handler */
-	ETS_UART_INTR_ATTACH(esp8266_uart_irq_handler, NULL);
 	return 0;
 }
 
