@@ -187,30 +187,30 @@ static int http_send_headers_end(struct tcp_conn_data *cd)
 int http_get_file(const struct http_url *u, struct http_connection *c,
 		  struct phr_header *headers, int num_headers)
 {
-	int ret = 0, data_len;
+	int ret = 0, stat, data_len;
 	struct tcp_conn_data *cd = c->cd;
 
 	c->curr_send_index = 0;
 	ret = http_send_status(c->cd, HTTP_OK);
 	if (ret < 0)
-		return ret;
+		goto end;
 	ret = http_send_ctype(cd,
 			      u->content_type ?
 			      u->content_type : "application/octet-stream");
 	if (ret < 0)
-		return ret;
+		goto end;
 	data_len = (char *)u->data_end - (char *)u->data_start;
 	ret = http_send_clen(cd, data_len);
 	if (ret < 0)
-		return ret;
+		goto end;
 	ret = http_send_headers_end(cd);
 	if (ret < 0)
-		return ret;
+		goto end;
 	ret = tcp_server_socket_lwip_raw_send(cd, u->data_start, data_len);
+end:
 	c->can_close = 1;
-	if (ret < 0)
-		return ret;
-	return tcp_server_socket_lwip_raw_close(cd);
+	stat = tcp_server_socket_lwip_raw_close(cd);
+	return ret < 0 ? ret : stat;
 }
 
 static int http_process_request(struct http_connection *c,
