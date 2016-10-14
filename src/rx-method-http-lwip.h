@@ -37,26 +37,36 @@ struct http_url {
 		    const char *data, int data_len);
 };
 
+/* Force size to 32 bytes */
+union _http_url {
+	struct http_url url;
+	char dummy[32];
+};
+
 #define declare_http_url(p, gt, pt)					\
-	static const struct http_url					\
-	http_url_ ## p __attribute__((section(".http-urls"), used)) = { \
-		.path = "/"#p,						\
-		.get = gt,						\
-		.post = pt,						\
+	static const union _http_url					\
+	http_url_ ## p __attribute__((section(".http-urls"), used, aligned(16))) = { \
+		.url = {						\
+			.path = "/"#p,					\
+			.get = gt,					\
+			.post = pt,					\
+		},							\
 	}
 
 #define declare_http_file_url(p, st, end, ct)				\
-	static const struct http_url					\
+	static const union _http_url					\
 	http_url_ ## p __attribute__((section(".http-urls"), used, aligned(16))) = { \
-		.path = "/"#p,						\
-		.data_start = st,					\
-		.data_end = end,					\
-		.post = NULL,						\
-		.get = http_get_file,					\
-		.content_type = ct,					\
+		.url = {						\
+			.path = "/"#p,					\
+			.data_start = st,				\
+			.data_end = end,				\
+			.post = NULL,					\
+			.get = http_get_file,				\
+			.content_type = ct,				\
+		},							\
 	}
 
-extern const struct http_url http_urls_start[], http_urls_end[];
+extern const union _http_url http_urls_start[], http_urls_end[];
 
 extern struct phr_header *http_find_header(const char *h,
 					   struct phr_header *headers,

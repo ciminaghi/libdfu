@@ -165,11 +165,12 @@ int http_send_clen(struct tcp_conn_data *cd, int clen)
 
 static const struct http_url *find_url(const char *path)
 {
-	const struct http_url *ptr;
+	const union _http_url *ptr;
 
-	for (ptr = http_urls_start; ptr != http_urls_end; ptr++)
-		if (!memcmp(path, ptr->path, strlen(ptr->path)))
-			return ptr;
+	for (ptr = http_urls_start; ptr != http_urls_end; ptr++) {
+		if (!memcmp(path, ptr->url.path, strlen(ptr->url.path)))
+			return &ptr->url;
+	}
 	return NULL;
 }
 
