@@ -147,7 +147,6 @@ struct dfu_format_ops {
 
 struct dfu_file_rx_method_ops {
 	int (*init)(struct dfu_binary_file *, void *arg);
-	int (*poll_idle)(struct dfu_binary_file *);
 };
 
 struct dfu_file_rx_method {

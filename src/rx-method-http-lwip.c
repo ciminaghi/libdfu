@@ -418,14 +418,8 @@ static int http_rx_init(struct dfu_binary_file *bf, void *arg)
 	return stat;
 }
 
-static int http_poll_idle(struct dfu_binary_file *bf)
-{
-	return 0;
-}
-
 static const struct dfu_file_rx_method_ops http_rx_ops = {
 	.init = http_rx_init,
-	.poll_idle = http_poll_idle,
 };
 
 declare_file_rx_method(http, &http_rx_ops);
