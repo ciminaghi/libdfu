@@ -45,6 +45,8 @@ static void uart1_putc(char c)
 	if (c == '\n')
 		writel('\r', REG_UART_BASE(1) + UART_FIFO);
 	writel(c, REG_UART_BASE(1) + UART_FIFO);
+	/* Make this synchronous */
+	while (get_tx_fifo_cnt(REG_UART_BASE(1)));
 }
 
 /* Gpio5 is target's reset */
