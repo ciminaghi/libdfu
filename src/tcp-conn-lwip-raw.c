@@ -234,15 +234,15 @@ int tcp_server_socket_lwip_raw_send(struct tcp_conn_data *es,
 	err_t stat;
 	uint16_t l;
 	const char *ptr = buf;
-	struct tcp_server_socket_lwip_raw *r = es->raw_socket;
 
 	es->written = 0;
 	do {
 
 		l = min(len - es->written, tcp_sndbuf(es->pcb));
 		if (!l) {
-			r->netif_idle(r->netif);
-			continue;
+			dfu_log("%s: no more space in output buffer\n",
+				__func__);
+			return es->written;
 		}
 		dfu_log("%s: tcp_write(%p, len = %u, written = %d, l = %d)\n",
 			__func__, &ptr[es->written], len, es->written, l);
@@ -259,7 +259,7 @@ int tcp_server_socket_lwip_raw_send(struct tcp_conn_data *es,
 		stat = tcp_output(es->pcb);
 	} while(stat == ERR_OK);
 
-	return stat == ERR_OK ? 0 : -1;
+	return stat == ERR_OK ? es->written : -1;
 }
 
 int tcp_server_socket_lwip_raw_close(struct tcp_conn_data *es)

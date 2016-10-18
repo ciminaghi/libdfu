@@ -22,6 +22,8 @@ struct http_connection {
 	int minor_version;
 	int end_of_headers;
 	int content_length;
+	const void *outgoing_data;
+	int outgoing_data_len;
 };
 
 struct http_url {

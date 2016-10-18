@@ -181,6 +181,28 @@ static int http_send_headers_end(struct tcp_conn_data *cd)
 	return tcp_server_socket_lwip_raw_send(cd, newl, strlen(newl));
 }
 
+static int http_async_send_data(struct http_connection *c)
+{
+	int ret;
+
+	ret = tcp_server_socket_lwip_raw_send(c->cd, c->outgoing_data,
+					      c->outgoing_data_len);
+	if (ret < 0)
+		return ret;
+	c->outgoing_data_len -= ret;
+	c->outgoing_data = c->outgoing_data_len ?
+		(char *)c->outgoing_data + ret : NULL;
+	return 0;
+}
+
+static int http_start_sending_data(struct http_connection *c,
+				   const void *data, int data_len)
+{
+	c->outgoing_data = data;
+	c->outgoing_data_len = data_len;
+	return http_async_send_data(c);
+}
+
 /*
  * Get method for regular files
  */
@@ -206,8 +228,13 @@ int http_get_file(const struct http_url *u, struct http_connection *c,
 	ret = http_send_headers_end(cd);
 	if (ret < 0)
 		goto end;
-	ret = tcp_server_socket_lwip_raw_send(cd, u->data_start, data_len);
+	ret = http_start_sending_data(c, u->data_start, data_len);
+	if (!ret && c->outgoing_data_len) {
+		dfu_log("%s: outgoing_data_len !\n", __func__);
+		return 0;
+	}
 end:
+	dfu_log("%s: closing\n", __func__);
 	c->can_close = 1;
 	stat = tcp_server_socket_lwip_raw_close(cd);
 	return ret < 0 ? ret : stat;
@@ -243,6 +270,8 @@ static void http_reset_request_data(struct http_connection *c)
 	c->path_len = 0;
 	c->minor_version = 0;
 	c->end_of_headers = 0;
+	c->outgoing_data = NULL;
+	c->outgoing_data_len = 0;
 }
 
 int http_request_error(struct http_connection *c, enum http_status s)
@@ -359,6 +388,8 @@ int http_recv(struct tcp_server_socket_lwip_raw *r, const void *buf,
 			ptr[c->end_of_headers], ptr[c->end_of_headers + 1],
 			ptr[c->end_of_headers + 2], ptr[c->end_of_headers + 3],
 			ptr[c->end_of_headers + 4]);
+		c->outgoing_data = NULL;
+		c->outgoing_data_len = 0;
 		stat = http_process_request(c,
 					    c->method,
 					    c->method_len,
@@ -369,7 +400,10 @@ int http_recv(struct tcp_server_socket_lwip_raw *r, const void *buf,
 					    &c->request_buf[c->end_of_headers],
 					    c->curr_request_index - 1 -
 					    c->end_of_headers);
-		http_reset_request_data(c);
+		if (!c->outgoing_data_len) {
+			dfu_log("AAARGH reset request data\n");
+			http_reset_request_data(c);
+		}
 		return stat;
 	}
 	}
@@ -405,6 +439,38 @@ static struct tcp_server_socket_lwip_raw http_socket_raw = {
 
 static struct http_lwip_client_priv client_priv;
 
+static int http_poll_idle(struct dfu_binary_file *bf)
+{
+	struct http_connection *c = client_priv.c;
+
+	return c && c->outgoing_data ? DFU_FILE_EVENT : 0;
+}
+
+static int http_on_event(struct dfu_binary_file *bf)
+{
+	struct http_connection *c = client_priv.c;
+	int stat, ret = 0;
+
+	stat = http_async_send_data(c);
+	if (stat < 0) {
+		ret = DFU_ERROR;
+		goto end;
+	}
+	if (c->outgoing_data_len)
+		/* Still some data to be sent */
+		return 0;
+end:
+	c->can_close = 1;
+	tcp_server_socket_lwip_raw_close(c->cd);
+	http_reset_request_data(c);
+	return ret;
+}
+
+static const struct dfu_binary_file_ops http_rx_method_ops = {
+	.poll_idle = http_poll_idle,
+	.on_event = http_on_event,
+};
+
 static int http_rx_init(struct dfu_binary_file *bf, void *arg)
 {
 	int stat;
@@ -415,6 +481,7 @@ static int http_rx_init(struct dfu_binary_file *bf, void *arg)
 	http_socket_raw.netif_idle = data->netif_idle_fun;
 	http_socket_raw.netif = data->netif;
 	stat = tcp_server_socket_lwip_raw_init(&http_socket_raw, 1080);
+	bf->ops = &http_rx_method_ops;
 	return stat;
 }
 
