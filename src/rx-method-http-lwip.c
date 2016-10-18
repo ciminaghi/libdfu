@@ -419,16 +419,26 @@ int http_poll(struct tcp_server_socket_lwip_raw *r)
 	struct http_connection *c = priv->c;
 	int ret = c->can_close;
 
-	dfu_log("can_close = %d\n", ret);
+	dfu_log("c = %p, can_close = %d\n", c, ret);
 	if (ret)
 		free_connection(c);
 	return !ret;
+}
+
+void http_closed(struct tcp_server_socket_lwip_raw *r)
+{
+	struct http_lwip_client_priv *priv = r->client_priv;
+	struct http_connection *c = priv->c;
+
+	dfu_log("%s: freeing connection %p\n", __func__, c);
+	free_connection(c);
 }
 
 static const struct tcp_server_socket_lwip_raw_ops http_socket_ops = {
 	.accept = http_accept,
 	.recv = http_recv,
 	.poll = http_poll,
+	.closed = http_closed,
 };
 
 static struct tcp_server_socket_lwip_raw http_socket_raw = {

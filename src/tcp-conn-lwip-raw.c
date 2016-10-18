@@ -28,6 +28,7 @@ struct tcp_conn_data
 	struct tcp_pcb *pcb;
 	uint16_t written;
 	uint16_t acknowledged;
+	int must_close;
 };
 
 static struct tcp_conn_data connections[MAX_CONNECTIONS];
@@ -39,6 +40,9 @@ static struct tcp_conn_data *alloc_connection(void)
 	for (i = 0; i < ARRAY_SIZE(connections); i++)
 		if (connections[i].state == ES_FREE) {
 			connections[i].state = ES_NONE;
+			connections[i].must_close = 0;
+			dfu_log("%s: connection %p allocated\n", __func__,
+				&connections[i]);
 			return &connections[i];
 		}
 	return NULL;
@@ -46,6 +50,7 @@ static struct tcp_conn_data *alloc_connection(void)
 
 static void free_connection(struct tcp_conn_data *c)
 {
+	dfu_log("%s: freeing connection %p\n", __func__, c);
 	c->state = ES_FREE;
 }
 
@@ -56,13 +61,32 @@ static void tcp_conn_free(struct tcp_conn_data *es)
 
 static void tcp_conn_close(struct tcp_pcb *tpcb, struct tcp_conn_data *es)
 {
+	struct tcp_server_socket_lwip_raw *r = es->raw_socket;
+
+	if (tcp_close(tpcb) != ERR_OK) {
+		/*
+		 * http://lwip.wikia.com/wiki/Raw/TCP, tcp_close:
+		 * The function may
+		 * return ERR_MEM if no memory was available for closing the
+		 * connection. If so, the application should wait and try
+		 * again either by using the acknowledgment callback or the
+		 * polling functionality. If the close succeeds, the function
+		 * returns ERR_OK.
+		 */
+		es->must_close = 1;
+		dfu_log("%s: must_close = 1\n", __func__);
+		return;
+	}
+	dfu_log("%s: must_close = 0\n", __func__);
+	es->must_close = 0;
 	tcp_arg(tpcb, NULL);
 	tcp_sent(tpcb, NULL);
 	tcp_recv(tpcb, NULL);
 	tcp_err(tpcb, NULL);
 	tcp_poll(tpcb, NULL, 0);
 	tcp_conn_free(es);
-	tcp_close(tpcb);
+	if (r->ops->closed)
+		r->ops->closed(r);
 }
 
 err_t tcp_conn_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
@@ -134,7 +158,7 @@ static err_t tcp_conn_poll(void *arg, struct tcp_pcb *tpcb)
 	}
 
 	r = es->raw_socket;
-	if (!r->ops->poll || !r->ops->poll(r))
+	if (es->must_close || !r->ops->poll || !r->ops->poll(r))
 		tcp_conn_close(tpcb, es);
 
 	return ERR_OK;
@@ -264,7 +288,9 @@ int tcp_server_socket_lwip_raw_send(struct tcp_conn_data *es,
 
 int tcp_server_socket_lwip_raw_close(struct tcp_conn_data *es)
 {
-	return tcp_close(es->pcb);
+	dfu_log("%s\n", __func__);
+	tcp_conn_close(es->pcb, es);
+	return 0;
 }
 
 

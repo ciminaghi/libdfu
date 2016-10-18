@@ -21,6 +21,8 @@ struct tcp_server_socket_lwip_raw_ops {
 	 * to send
 	 */
 	int (*poll)(struct tcp_server_socket_lwip_raw *);
+	/* Invoked on actual connection close */
+	void (*closed)(struct tcp_server_socket_lwip_raw *);
 };
 
 struct tcp_server_socket_lwip_raw {
