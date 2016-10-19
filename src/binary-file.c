@@ -195,6 +195,11 @@ int dfu_binary_file_append_buffer(struct dfu_binary_file *f,
 {
 	int cnt, stat, prev_cnt;
 
+	/*
+	 * Check whether the whole buffer can be appended
+	 */
+	if (bf_space(f) < buf_sz)
+		return 0;
 	prev_cnt = bf_count(f);
 	cnt = _bf_append_data(f, buf, buf_sz);
 	if (cnt < 0)

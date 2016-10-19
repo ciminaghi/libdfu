@@ -67,6 +67,13 @@ dfu_new_binary_file(const void *buf,
 		    const struct dfu_binary_file_ops *,
 		    void *priv);
 
+/*
+ * Append buf to file's buffer. Data are appended only if the whole buffer
+ * fits, otherwise 0 is returned. On success, the number of appended bytes
+ * is returned. -1 is returned on error.
+ * If file is being flushed (dfu_binary_file_written() already called),
+ * appending data also triggers data flush to target.
+ */
 extern int dfu_binary_file_append_buffer(struct dfu_binary_file *,
 					 const void *buf,
 					 unsigned long buf_sz);
