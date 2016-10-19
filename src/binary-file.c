@@ -213,6 +213,8 @@ int dfu_binary_file_flush_start(struct dfu_binary_file *bf)
 	if (!bf->format_ops)
 		if (_bf_find_format(bf) < 0)
 			return -1;
+	if (!bf->tot_appended)
+		return 0;
 	return _bf_do_flush(bf);
 }
 
