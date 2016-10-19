@@ -40,9 +40,10 @@ static int http_flash_upload_post(const struct http_url *u,
 					  contents,
 					  data_len - (contents - data)) < 0) {
 		dfu_err("%s: error appending data\n", __func__);
-		return http_request_error(c, HTTP_INTERNAL_SERVER_ERROR);
-	}
-	ret = http_send_status(cd, HTTP_OK);
+		http_request_error(c, HTTP_INTERNAL_SERVER_ERROR);
+		ret = -1;
+	} else
+		ret = http_send_status(cd, HTTP_OK);
 	c->can_close = 1;
 	tcp_server_socket_lwip_raw_close(c->cd);
 	return ret;
