@@ -14,7 +14,7 @@ static int http_flash_upload_post(const struct http_url *u,
 				  const char *data, int data_len)
 {
 	struct phr_header *h;
-	int ret;
+	int stat, ret;
 	struct tcp_conn_data *cd = c->cd;
 	const char *contents;
 
@@ -36,16 +36,18 @@ static int http_flash_upload_post(const struct http_url *u,
 		/* FIXME: IS THIS OK ? */
 		return http_request_error(c, HTTP_BAD_REQUEST);
 	}
-	if (dfu_binary_file_append_buffer(c->bf,
-					  contents,
-					  data_len - (contents - data)) < 0) {
+	stat = dfu_binary_file_append_buffer(c->bf,
+					     contents,
+					     data_len - (contents - data));
+	if (!stat)
+		/* No space enough, just tell the server to retry processing */
+		return stat;
+	if (stat < 0) {
 		dfu_err("%s: error appending data\n", __func__);
 		http_request_error(c, HTTP_INTERNAL_SERVER_ERROR);
 		ret = -1;
 	} else
 		ret = http_send_status(cd, HTTP_OK);
-	c->can_close = 1;
-	tcp_server_socket_lwip_raw_close(c->cd);
 	return ret;
 }
 

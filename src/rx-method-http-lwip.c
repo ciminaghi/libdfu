@@ -14,6 +14,7 @@
 struct http_lwip_client_priv {
 	struct dfu_binary_file *bf;
 	struct http_connection *c;
+	int request_ready;
 };
 
 #ifdef LWIP_TCP
@@ -192,7 +193,7 @@ static int http_async_send_data(struct http_connection *c)
 	c->outgoing_data_len -= ret;
 	c->outgoing_data = c->outgoing_data_len ?
 		(char *)c->outgoing_data + ret : NULL;
-	return 0;
+	return ret;
 }
 
 static int http_start_sending_data(struct http_connection *c,
@@ -205,11 +206,15 @@ static int http_start_sending_data(struct http_connection *c,
 
 /*
  * Get method for regular files
+ * Returns:
+ *
+ * < 0  -> error
+ * > 0  -> ok
  */
 int http_get_file(const struct http_url *u, struct http_connection *c,
 		  struct phr_header *headers, int num_headers)
 {
-	int ret = 0, stat, data_len;
+	int ret = 0, data_len;
 	struct tcp_conn_data *cd = c->cd;
 
 	c->curr_send_index = 0;
@@ -229,17 +234,16 @@ int http_get_file(const struct http_url *u, struct http_connection *c,
 	if (ret < 0)
 		goto end;
 	ret = http_start_sending_data(c, u->data_start, data_len);
-	if (!ret && c->outgoing_data_len) {
-		dfu_log("%s: outgoing_data_len !\n", __func__);
-		return 0;
-	}
 end:
-	dfu_log("%s: closing\n", __func__);
-	c->can_close = 1;
-	stat = tcp_server_socket_lwip_raw_close(cd);
-	return ret < 0 ? ret : stat;
+	return ret < 0 ? ret : 1;
 }
 
+/*
+ * Returns:
+ * < 0  -> error
+ * == 0 -> could not process request, retry
+ * > 0  -> request processed
+ */
 static int http_process_request(struct http_connection *c,
 				const char *method, int method_len,
 				const char *path, int path_len,
@@ -274,13 +278,25 @@ static void http_reset_request_data(struct http_connection *c)
 	c->outgoing_data_len = 0;
 }
 
-int http_request_error(struct http_connection *c, enum http_status s)
+/*
+ * send error and close connection
+ */
+static int _http_request_error(struct http_connection *c, enum http_status s)
 {
-	http_send_status(c->cd, s);
+	http_request_error(c, s);
 	c->can_close = 1;
 	if (!tcp_server_socket_lwip_raw_close(c->cd))
 		free_connection(c);
-	return 0;
+	return 1;
+}
+
+/*
+ * must return > 0 because current request has been processed
+ */
+int http_request_error(struct http_connection *c, enum http_status s)
+{
+	http_send_status(c->cd, s);
+	return 1;
 }
 
 static int simple_atoi(const char *s)
@@ -310,12 +326,12 @@ int http_recv(struct tcp_server_socket_lwip_raw *r, const void *buf,
 	int prevlen, stat;
 
 	if (len > sizeof(c->request_buf) - c->curr_request_index) {
-		http_request_error(c, HTTP_INSUFFICIENT_STORAGE);
-		return 0;
+		_http_request_error(c, HTTP_INSUFFICIENT_STORAGE);
+		return len;
 	}
 	if (!buf) {
-		http_request_error(c, HTTP_INTERNAL_SERVER_ERROR);
-		return 0;
+		_http_request_error(c, HTTP_INTERNAL_SERVER_ERROR);
+		return len;
 	}
 
 	dfu_log("%s: curr_request_index = %d, buf = %p (0x%02x %02x %02x ...), "
@@ -339,8 +355,10 @@ int http_recv(struct tcp_server_socket_lwip_raw *r, const void *buf,
 					 c->headers,
 					 &c->nheaders,
 					 prevlen);
-		if (stat < 0)
-			return http_request_error(c, HTTP_BAD_REQUEST);
+		if (stat < 0) {
+			_http_request_error(c, HTTP_BAD_REQUEST);
+			return len;
+		}
 
 		c->end_of_headers = stat;
 		dfu_log("%s: parse ok, headers end @%d\n", __func__, stat);
@@ -350,14 +368,16 @@ int http_recv(struct tcp_server_socket_lwip_raw *r, const void *buf,
 		if (lh) {
 			if (lh->value_len >= sizeof(tmp)) {
 				dfu_err("Content-length value too big\n");
-				return http_request_error(c, HTTP_BAD_REQUEST);
+				_http_request_error(c, HTTP_BAD_REQUEST);
+				return len;
 			}
 			memcpy(tmp, lh->value, lh->value_len);
 			tmp[lh->value_len] = 0;
 			c->content_length = simple_atoi(tmp);
 			if (c->content_length < 0) {
 				dfu_err("invalid content length\n");
-				return http_request_error(c, HTTP_BAD_REQUEST);
+				_http_request_error(c, HTTP_BAD_REQUEST);
+				return len;
 			}
 		}
 	} else
@@ -366,12 +386,12 @@ int http_recv(struct tcp_server_socket_lwip_raw *r, const void *buf,
 	case -1:
 		/* Incorrect request */
 		dfu_err("Invalid http request\n");
-		return http_request_error(c, HTTP_BAD_REQUEST);
-		return 0;
+		_http_request_error(c, HTTP_BAD_REQUEST);
+		break;
 	case -2:
 		/* Incomplete request */
 		dfu_dbg("Incomplete request, waiting\n");
-		return 0;
+		break;
 	default:
 	{
 		if (c->curr_request_index <
@@ -380,7 +400,7 @@ int http_recv(struct tcp_server_socket_lwip_raw *r, const void *buf,
 				c->curr_request_index, c->end_of_headers,
 				c->content_length);
 			dfu_log("Must wait\n");
-			return 0;
+			break;
 		}
 		dfu_log("%s: got all body\n", __func__);
 		dfu_dbg("%s: ptr = %p, data = %p, %c %c %c %c %c\n",
@@ -388,23 +408,8 @@ int http_recv(struct tcp_server_socket_lwip_raw *r, const void *buf,
 			ptr[c->end_of_headers], ptr[c->end_of_headers + 1],
 			ptr[c->end_of_headers + 2], ptr[c->end_of_headers + 3],
 			ptr[c->end_of_headers + 4]);
-		c->outgoing_data = NULL;
-		c->outgoing_data_len = 0;
-		stat = http_process_request(c,
-					    c->method,
-					    c->method_len,
-					    c->path,
-					    c->path_len,
-					    c->headers,
-					    c->nheaders,
-					    &c->request_buf[c->end_of_headers],
-					    c->curr_request_index - 1 -
-					    c->end_of_headers);
-		if (!c->outgoing_data_len) {
-			dfu_log("AAARGH reset request data\n");
-			http_reset_request_data(c);
-		}
-		return stat;
+		priv->request_ready = 1;
+		break;
 	}
 	}
 	return len;
@@ -453,7 +458,8 @@ static int http_poll_idle(struct dfu_binary_file *bf)
 {
 	struct http_connection *c = client_priv.c;
 
-	return c && c->outgoing_data ? DFU_FILE_EVENT : 0;
+	return c && (client_priv.request_ready || c->outgoing_data_len) ?
+		DFU_FILE_EVENT : 0;
 }
 
 static int http_on_event(struct dfu_binary_file *bf)
@@ -461,15 +467,49 @@ static int http_on_event(struct dfu_binary_file *bf)
 	struct http_connection *c = client_priv.c;
 	int stat, ret = 0;
 
-	stat = http_async_send_data(c);
-	if (stat < 0) {
-		ret = DFU_ERROR;
-		goto end;
+	if (!client_priv.request_ready && !c->outgoing_data_len) {
+		dfu_err("%s: BUG, request is not ready\n", __func__);
+		return DFU_ERROR;
+	}
+
+	if (client_priv.request_ready) {
+		c->outgoing_data = NULL;
+		c->outgoing_data_len = 0;
+		/*
+		 * Process request may imply calling dfu_idle() again, so we
+		 * reset the flag here and set it again if
+		 * http_process_reequest() returns 0
+		 */
+		client_priv.request_ready = 0;
+		stat = http_process_request(c,
+					    c->method,
+					    c->method_len,
+					    c->path,
+					    c->path_len,
+					    c->headers,
+					    c->nheaders,
+					    &c->request_buf[c->end_of_headers],
+					    c->curr_request_index - 1 -
+					    c->end_of_headers);
+		if (!stat) {
+			/* Request not processed, retry on next idle loop */
+			client_priv.request_ready = 1;
+			dfu_log("%s: request not processed\n", __func__);
+			return 0;
+		}
+	} else if (c->outgoing_data_len) {
+		/* outgoing_data_len > 0 */
+		stat = http_async_send_data(c);
+		if (stat < 0) {
+			ret = DFU_ERROR;
+			goto end;
+		}
 	}
 	if (c->outgoing_data_len)
 		/* Still some data to be sent */
 		return 0;
 end:
+	dfu_log("%s: request done\n", __func__);
 	c->can_close = 1;
 	tcp_server_socket_lwip_raw_close(c->cd);
 	http_reset_request_data(c);

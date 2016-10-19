@@ -32,8 +32,20 @@ struct http_url {
 	/* Pointers to const data start and end (for GET queries) */
 	const void *data_start;
 	const void *data_end;
+	/*
+	 * Must return:
+	 * < 0  -> error
+	 * == 0 -> request could not be processed, retry
+	 * > 0  -> OK
+	 */
 	int (*get)(const struct http_url *, struct http_connection *,
 		   struct phr_header *headers, int num_headers);
+	/*
+	 * Must return:
+	 * < 0  -> error
+	 * == 0 -> request could not be processed, retry
+	 * > 0  -> OK
+	 */
 	int (*post)(const struct http_url *, struct http_connection *,
 		    struct phr_header *headers, int num_headers,
 		    const char *data, int data_len);
