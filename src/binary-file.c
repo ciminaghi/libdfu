@@ -38,6 +38,20 @@ static void _bf_fini(struct dfu_binary_file *bf, struct dfu_data *dfu)
 	_bf_init(bf, NULL, dfu);
 }
 
+static int _bf_find_format(struct dfu_binary_file *bf)
+{
+	const struct dfu_format_ops *ptr;
+
+	for (ptr = registered_formats_start;
+	     ptr != registered_formats_end; ptr++) {
+		if (!ptr->probe(bf)) {
+			bf->format_ops = ptr;
+			return 0;
+		}
+	}
+	return -1;
+}
+
 /*
  * Decode chunk and start writing it
  * Assumes interface can write to target
@@ -51,6 +65,10 @@ static int _bf_do_flush(struct dfu_binary_file *bf)
 
 	if (bf->decoded_buf_busy)
 		return 0;
+
+	if (!bf->format_ops)
+		if (_bf_find_format(bf) < 0)
+			return -1;
 
 	if (tops->get_max_chunk_size)
 		max_chunk_size = min(max_chunk_size,
@@ -114,20 +132,6 @@ end:
 	return ret;
 }
 
-static int _bf_find_format(struct dfu_binary_file *bf)
-{
-	const struct dfu_format_ops *ptr;
-
-	for (ptr = registered_formats_start;
-	     ptr != registered_formats_end; ptr++) {
-		if (!ptr->probe(bf)) {
-			bf->format_ops = ptr;
-			return 0;
-		}
-	}
-	return -1;
-}
-
 struct dfu_binary_file *
 dfu_new_binary_file(const void *buf,
 		    unsigned long buf_sz,
@@ -144,10 +148,6 @@ dfu_new_binary_file(const void *buf,
 	if (!buf || !buf_sz)
 		return &bfile;
 	if (_bf_append_data(&bfile, buf, buf_sz) < 0) {
-		_bf_fini(&bfile, dfu);
-		return NULL;
-	}
-	if (_bf_find_format(&bfile) < 0) {
 		_bf_fini(&bfile, dfu);
 		return NULL;
 	}
@@ -193,31 +193,24 @@ int dfu_binary_file_append_buffer(struct dfu_binary_file *f,
 				  const void *buf,
 				  unsigned long buf_sz)
 {
-	int cnt, stat, prev_cnt;
+	int cnt;
 
 	/*
 	 * Check whether the whole buffer can be appended
 	 */
+	dfu_dbg("%s: bf_space(f) = %u, buf_sz = %lu\n", __func__, bf_space(f),
+		buf_sz);
 	if (bf_space(f) < buf_sz)
 		return 0;
-	prev_cnt = bf_count(f);
 	cnt = _bf_append_data(f, buf, buf_sz);
 	if (cnt < 0)
 		return cnt;
-	if (!prev_cnt && bf_count(f)) {
-		stat = _bf_find_format(&bfile);
-		if (stat < 0)
-			return stat;
-	}
 	return cnt;
 }
 
 int dfu_binary_file_flush_start(struct dfu_binary_file *bf)
 {
 	bf->flushing = 1;
-	if (!bf->format_ops)
-		if (_bf_find_format(bf) < 0)
-			return -1;
 	if (!bf->tot_appended)
 		return 0;
 	return _bf_do_flush(bf);
