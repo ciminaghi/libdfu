@@ -8,13 +8,6 @@
 
 #define POST_FORM_DATA "multipart/form-data"
 
-struct flash_upload_post_session {
-	char session_id[40];
-	/* Contains data to be appended on next post request */
-	char buf[60];
-	int len;
-};
-
 static int http_flash_upload_post(const struct http_url *u,
 				  struct http_connection *c,
 				  struct phr_header *headers, int num_headers,
