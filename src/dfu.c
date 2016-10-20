@@ -193,6 +193,9 @@ int dfu_idle(struct dfu_data *dfu)
 	unsigned long now;
 	int next_timeout, stat;
 
+	if (dfu_error(dfu))
+		/* An asynchronous error occurred, tell the user */
+		return DFU_ERROR;
 	if (!dfu_target_busy(dfu->target))
 		/* Unlock any pending writes of decoded data */
 		dfu_binary_file_target_ready(dfu->bf);
