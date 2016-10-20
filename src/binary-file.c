@@ -128,7 +128,7 @@ end:
 	dfu_dbg("%s: flushing = %d, appended = %d, tot_appended = %d\n",
 		__func__, bf->flushing, tot, bf->tot_appended);
 	if (bf->flushing)
-		_bf_do_flush(bf);
+		ret = _bf_do_flush(bf);
 	return ret;
 }
 
