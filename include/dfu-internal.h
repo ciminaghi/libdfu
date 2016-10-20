@@ -218,7 +218,18 @@ struct dfu_data {
 	struct dfu_host *host;
 	struct dfu_binary_file *bf;
 	int busy;
+	int error;
 };
+
+static inline void dfu_notify_error(struct dfu_data *dfu)
+{
+	dfu->error++;
+}
+
+static inline int dfu_error(struct dfu_data *dfu)
+{
+	return dfu->error;
+}
 
 extern struct dfu_interface *
 dfu_interface_init(const struct dfu_interface_ops *ops);

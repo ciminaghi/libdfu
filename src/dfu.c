@@ -32,6 +32,7 @@ struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 	if (dfu.busy)
 		return NULL;
 	dfu.busy = 1;
+	dfu.error = 0;
 	dfu.interface = &interface;
 	dfu.target = &target;
 	dfu.host = &host;
