@@ -235,8 +235,9 @@ int dfu_cmd_do_sync(struct dfu_target *target,
 	       descr->state->status == DFU_CMD_STATUS_WAITING ||
 	       descr->state->status == DFU_CMD_STATUS_INTERFACE_READY) {
 		if (descr->state->status == DFU_CMD_STATUS_WAITING) {
-			dfu_idle(target->dfu);
-			continue;
+			if (dfu_idle(target->dfu) == DFU_CONTINUE)
+				continue;
+			break;
 		}
 		if (_do_cmdbuf(target, descr,
 			       &descr->cmdbufs[descr->state->cmdbuf_index]) < 0)
