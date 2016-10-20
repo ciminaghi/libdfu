@@ -68,7 +68,6 @@ loop(os_event_t *events)
 		dfu_err("Invalid return value %d from dfu_idle\n", stat);
 		break;
 	}
-	system_os_post(USER_PRIO, 0, 0 );
 }
 
 void ICACHE_FLASH_ATTR
