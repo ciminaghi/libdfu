@@ -235,20 +235,21 @@ void *dfu_binary_file_get_priv(struct dfu_binary_file *f)
  * Target is ready. If we have some decoded data in the relevant buffer,
  * write such data to target and free the buffer
  */
-void dfu_binary_file_target_ready(struct dfu_binary_file *f)
+int dfu_binary_file_target_ready(struct dfu_binary_file *f)
 {
 	const struct dfu_target_ops *tops = f->dfu->target->ops;
 	int stat;
 
 	if (!f->decoded_buf_busy)
 		/* Nothing to do */
-		return;
+		return 0;
 
 	stat = tops->chunk_available(f->dfu->target, f->curr_addr,
 				     bf_decoded_buf, f->curr_decoded_len);
 	if (stat < 0)
-		return;
+		return stat;
 	f->decoded_buf_busy--;
+	return stat;
 }
 
 /* Target is telling us that a chunk is done */

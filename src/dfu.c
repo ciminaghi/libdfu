@@ -198,7 +198,8 @@ int dfu_idle(struct dfu_data *dfu)
 		return DFU_ERROR;
 	if (!dfu_target_busy(dfu->target))
 		/* Unlock any pending writes of decoded data */
-		dfu_binary_file_target_ready(dfu->bf);
+		if (dfu_binary_file_target_ready(dfu->bf) < 0)
+			return DFU_ERROR;
 
 	if (dfu->interface->ops->poll_idle)
 		_poll_interface(dfu);

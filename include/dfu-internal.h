@@ -264,7 +264,7 @@ extern int dfu_cancel_timeout(struct dfu_timeout *);
 extern unsigned long dfu_get_current_time(struct dfu_data *dfu);
 
 /* To be invoked by idle loop when target is not busy */
-extern void dfu_binary_file_target_ready(struct dfu_binary_file *bf);
+extern int dfu_binary_file_target_ready(struct dfu_binary_file *bf);
 
 /* To be invokedby target when a chunk has been written */
 extern void dfu_binary_file_chunk_done(struct dfu_binary_file *,
