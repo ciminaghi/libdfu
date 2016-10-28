@@ -47,15 +47,19 @@ static int http_flash_upload_post(const struct http_url *u,
 					     ptr ? ptr - contents :
 					     /* No boundary found, all data */
 					     data_len - (contents - data));
-	if (!stat)
+	if (!stat) {
 		/* No space enough, just tell the server to retry processing */
+		dfu_dbg("%s: no space enough for appending buffer\n", __func__);
 		return stat;
+	}
 	if (stat < 0) {
 		dfu_err("%s: error appending data\n", __func__);
 		http_request_error(c, HTTP_INTERNAL_SERVER_ERROR);
 		ret = -1;
-	} else
+	} else  {
+		dfu_dbg("%s: SENDING OK\n", __func__);
 		ret = http_send_status(cd, HTTP_OK);
+	}
 	return ret;
 }
 
