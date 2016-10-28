@@ -7,6 +7,9 @@ HOSTS="linux esp8266"
 
 for h in $HOSTS ; do
     echo -n "Building for host $h ... "
-    eval "(make clean 1>/dev/null && make HOST=$h $Q && echo OK) || \
+    eval "(make clean 1>/dev/null && make HOST=$h DEBUG=n $Q && echo OK) || \
     	 { echo "Error building for host $h" ; exit 1; }"
+    echo -n "Building for host $h DEBUG=y ... "
+    eval "(make clean 1>/dev/null && make HOST=$h DEBUG= $Q && echo OK) || \
+         { echo "Error building for host $h and DEBUG=y" ; exit 1; }"
 done
