@@ -278,3 +278,11 @@ void dfu_binary_file_chunk_done(struct dfu_binary_file *bf,
 		bf->decoded_buf_busy--;
 	}
 }
+
+void dfu_binary_file_on_idle(struct dfu_binary_file *bf)
+{
+	if (!bf)
+		return;
+	if (!bf->decoded_buf_busy && bf->flushing)
+		_bf_do_flush(bf);
+}

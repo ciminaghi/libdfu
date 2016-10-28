@@ -272,5 +272,6 @@ extern int dfu_binary_file_target_ready(struct dfu_binary_file *bf);
 extern void dfu_binary_file_chunk_done(struct dfu_binary_file *,
 				       phys_addr_t chunk_addr, int status);
 
+extern void dfu_binary_file_on_idle(struct dfu_binary_file *bf);
 
 #endif /* __DFU_INTERNAL_H__ */

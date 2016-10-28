@@ -214,6 +214,7 @@ int dfu_idle(struct dfu_data *dfu)
 		}
 	if (dfu->target->ops->on_idle)
 		dfu->target->ops->on_idle(dfu->target);
+	dfu_binary_file_on_idle(dfu->bf);
 	if (dfu->host->ops->idle) {
 		stat = dfu->host->ops->idle(dfu->host, next_timeout);
 		if (stat < 0)
