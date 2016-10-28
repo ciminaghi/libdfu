@@ -15,6 +15,7 @@ struct http_lwip_client_priv {
 	struct dfu_binary_file *bf;
 	struct http_connection *c;
 	int request_ready;
+	int serving_request;
 };
 
 #ifdef LWIP_TCP
@@ -472,7 +473,7 @@ static int http_on_event(struct dfu_binary_file *bf)
 		return DFU_ERROR;
 	}
 
-	if (client_priv.request_ready) {
+	if (client_priv.request_ready && !client_priv.serving_request) {
 		c->outgoing_data = NULL;
 		c->outgoing_data_len = 0;
 		/*
@@ -481,6 +482,7 @@ static int http_on_event(struct dfu_binary_file *bf)
 		 * http_process_reequest() returns 0
 		 */
 		client_priv.request_ready = 0;
+		client_priv.serving_request = 1;
 		stat = http_process_request(c,
 					    c->method,
 					    c->method_len,
@@ -510,6 +512,7 @@ static int http_on_event(struct dfu_binary_file *bf)
 		return 0;
 end:
 	dfu_log("%s: request done\n", __func__);
+	client_priv.serving_request = 0;
 	c->can_close = 1;
 	tcp_server_socket_lwip_raw_close(c->cd);
 	http_reset_request_data(c);
