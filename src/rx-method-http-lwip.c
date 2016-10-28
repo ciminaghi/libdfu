@@ -474,6 +474,7 @@ static int http_on_event(struct dfu_binary_file *bf)
 	}
 
 	if (client_priv.request_ready && !client_priv.serving_request) {
+		dfu_dbg("%s: request ready\n", __func__);
 		c->outgoing_data = NULL;
 		c->outgoing_data_len = 0;
 		/*
