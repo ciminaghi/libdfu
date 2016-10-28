@@ -80,9 +80,13 @@ static int _bf_do_flush(struct dfu_binary_file *bf)
 		dfu_err("%s: error in decode_chunk\n", __func__);
 		return -1;
 	}
+	dfu_dbg("%s: chunk decoded, addr = 0x%08x\n", __func__,
+		(unsigned int)addr);
 	bf->curr_addr = addr;
 	bf->curr_decoded_len = stat;
 	bf->decoded_buf_busy++;
+	dfu_dbg("%s %d, stat = %d, dfu_target_busy = %d\n",
+		__func__, __LINE__, stat, dfu_target_busy(bf->dfu->target));
 	if (stat && !dfu_target_busy(bf->dfu->target)) {
 		stat = tops->chunk_available(bf->dfu->target, addr,
 					     bf_decoded_buf, stat);
