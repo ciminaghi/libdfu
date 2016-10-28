@@ -95,7 +95,7 @@ static int _bf_do_flush(struct dfu_binary_file *bf)
 static int _bf_append_data(struct dfu_binary_file *bf, const void *buf,
 			   unsigned long buf_sz)
 {
-	int sz, tot = 0, ret;
+	int sz, tot = 0, ret, stat = 0;
 	char *ptr = bf->buf;
 
 	if (!buf_sz) {
@@ -132,8 +132,8 @@ end:
 	dfu_dbg("%s: flushing = %d, appended = %d, tot_appended = %d\n",
 		__func__, bf->flushing, tot, bf->tot_appended);
 	if (bf->flushing)
-		ret = _bf_do_flush(bf);
-	return ret;
+		stat = _bf_do_flush(bf);
+	return stat < 0 ? stat : ret;
 }
 
 struct dfu_binary_file *
