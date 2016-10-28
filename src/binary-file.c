@@ -103,6 +103,10 @@ static int _bf_append_data(struct dfu_binary_file *bf, const void *buf,
 		bf->written = 1;
 		return 0;
 	}
+	if (bf_space(bf) < buf_sz) {
+		ret = 0;
+		goto end;
+	}
 	sz = min(bf_space_to_end(bf), buf_sz);
 	if (sz <= 0) {
 		ret = sz;
@@ -200,8 +204,6 @@ int dfu_binary_file_append_buffer(struct dfu_binary_file *f,
 	 */
 	dfu_dbg("%s: bf_space(f) = %u, buf_sz = %lu\n", __func__, bf_space(f),
 		buf_sz);
-	if (bf_space(f) < buf_sz)
-		return 0;
 	cnt = _bf_append_data(f, buf, buf_sz);
 	if (cnt < 0)
 		return cnt;
