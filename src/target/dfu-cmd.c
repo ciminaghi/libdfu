@@ -110,12 +110,15 @@ static int _do_cmdbuf(struct dfu_target *target,
 	struct dfu_interface *interface = target->interface;
 	char *ptr;
 	int stat;
+	char dummy_buf[8];
 
 	switch (buf->dir) {
 	case OUT:
 		dfu_dbg("%s OUT\n", __func__);
 		if (descr->checksum_update)
 			descr->checksum_update(descr, buf->buf.out, buf->len);
+		/* Flush interface first */
+		interface->ops->read(interface, dummy_buf, sizeof(dummy_buf));
 		debug_print_out(buf);
 		stat = _do_send(interface, buf->buf.out, buf->len);
 		if (stat < 0) {
@@ -216,13 +219,18 @@ int dfu_cmd_on_interface_event(struct dfu_target *target,
 	 * We're waiting for the target to reply, go on with the current
 	 * command buffer
 	 */
-	dfu_dbg("%s\n", __func__);
+	dfu_dbg("%s, status = %d\n", __func__, descr->state->status);
 	if (descr->state->status == DFU_CMD_STATUS_WAITING) {
 		descr->state->status = DFU_CMD_STATUS_INTERFACE_READY;
 		return 0;
 	}
-	/* Flush interface */
-	interface->ops->read(interface, dummy_buf, sizeof(dummy_buf));
+	if (descr->state->status == DFU_CMD_STATUS_OK ||
+	    descr->state->status == DFU_CMD_STATUS_ERROR) {
+		/* Flush interface */
+		dfu_dbg("%s: flushing interface, status = %d\n", __func__,
+			descr->state->status);
+		interface->ops->read(interface, dummy_buf, sizeof(dummy_buf));
+	}
 	return 0;
 }
 
