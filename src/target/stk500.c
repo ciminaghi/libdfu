@@ -436,13 +436,7 @@ static int _set_device(struct dfu_target *target, int *n_extp)
 
 static int stk500_probe(struct dfu_target *target)
 {
-	int stat = 0;
-
-	if (target->interface->ops->target_reset)
-		stat = target->interface->ops->target_reset(target->interface);
-	if (stat < 0)
-		return stat;
-	return _get_sync(target);
+	return 0;
 }
 
 struct stk500_load_address_cmd {
