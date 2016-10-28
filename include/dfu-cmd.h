@@ -72,6 +72,8 @@ struct dfu_cmddescr {
 extern int dfu_cmd_start(struct dfu_target *, const struct dfu_cmddescr *descr);
 extern int dfu_cmd_on_interface_event(struct dfu_target *target,
 				      const struct dfu_cmddescr *descr);
+extern int dfu_cmd_on_idle(struct dfu_target *target,
+			   const struct dfu_cmddescr *descr);
 /* Synchronously complete command */
 extern int dfu_cmd_do_sync(struct dfu_target *target,
 			   const struct dfu_cmddescr *descr);

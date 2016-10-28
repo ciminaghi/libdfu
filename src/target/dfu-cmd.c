@@ -226,6 +226,21 @@ int dfu_cmd_on_interface_event(struct dfu_target *target,
 	return 0;
 }
 
+int dfu_cmd_on_idle(struct dfu_target *target,
+		    const struct dfu_cmddescr *descr)
+{
+	int stat = 0;
+
+	if (descr->state->status == DFU_CMD_STATUS_INITIALIZED ||
+	    descr->state->status == DFU_CMD_STATUS_INTERFACE_READY) {
+		stat = _do_cmdbuf(target, descr,
+				  &descr->cmdbufs[descr->state->cmdbuf_index]);
+		if (stat < 0)
+			dfu_err("%s %d\n", __func__, __LINE__);
+	}
+	return stat;
+}
+
 int dfu_cmd_do_sync(struct dfu_target *target,
 		    const struct dfu_cmddescr *descr)
 {
@@ -234,13 +249,8 @@ int dfu_cmd_do_sync(struct dfu_target *target,
 	while (descr->state->status == DFU_CMD_STATUS_INITIALIZED ||
 	       descr->state->status == DFU_CMD_STATUS_WAITING ||
 	       descr->state->status == DFU_CMD_STATUS_INTERFACE_READY) {
-		if (descr->state->status == DFU_CMD_STATUS_WAITING) {
 			if (dfu_idle(target->dfu) == DFU_CONTINUE)
 				continue;
-			break;
-		}
-		if (_do_cmdbuf(target, descr,
-			       &descr->cmdbufs[descr->state->cmdbuf_index]) < 0)
 			break;
 	}
 	dfu_dbg("%s returns, status = %d\n", __func__, descr->state->status);
