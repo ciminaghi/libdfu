@@ -16,7 +16,7 @@ static int http_flash_upload_post(const struct http_url *u,
 	struct phr_header *h;
 	int stat, ret;
 	struct tcp_conn_data *cd = c->cd;
-	const char *contents;
+	const char *contents, *ptr;
 
 	h = http_find_header("Content-Type", headers, num_headers);
 	if (!h) {
@@ -36,8 +36,16 @@ static int http_flash_upload_post(const struct http_url *u,
 		/* FIXME: IS THIS OK ? */
 		return http_request_error(c, HTTP_BAD_REQUEST);
 	}
+	/*
+	 * Look for the beginning of last line, which contains the boundary
+	 * The boundary line (and the preceding end of line) is __not__ part of
+	 * the buffer to be appended
+	 */
+	ptr = strstr(contents, "\r\n--");
 	stat = dfu_binary_file_append_buffer(c->bf,
 					     contents,
+					     ptr ? ptr - contents :
+					     /* No boundary found, all data */
 					     data_len - (contents - data));
 	if (!stat)
 		/* No space enough, just tell the server to retry processing */
