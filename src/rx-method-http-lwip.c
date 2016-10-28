@@ -513,6 +513,7 @@ static int http_on_event(struct dfu_binary_file *bf)
 end:
 	dfu_log("%s: request done\n", __func__);
 	client_priv.serving_request = 0;
+	client_priv.request_ready = 0;
 	c->can_close = 1;
 	tcp_server_socket_lwip_raw_close(c->cd);
 	http_reset_request_data(c);
