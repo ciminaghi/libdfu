@@ -90,7 +90,7 @@ static int _bf_do_flush(struct dfu_binary_file *bf)
 	if (stat && !dfu_target_busy(bf->dfu->target)) {
 		stat = tops->chunk_available(bf->dfu->target, addr,
 					     bf_decoded_buf, stat);
-		if (stat >= 0)
+		if (stat < 0 && bf->decoded_buf_busy)
 			bf->decoded_buf_busy--;
 	}
 	return stat < 0 ? stat : 0;
@@ -254,7 +254,6 @@ int dfu_binary_file_target_ready(struct dfu_binary_file *f)
 				     bf_decoded_buf, f->curr_decoded_len);
 	if (stat < 0)
 		return stat;
-	f->decoded_buf_busy--;
 	return stat;
 }
 
@@ -262,6 +261,7 @@ int dfu_binary_file_target_ready(struct dfu_binary_file *f)
 void dfu_binary_file_chunk_done(struct dfu_binary_file *bf,
 				phys_addr_t chunk_addr, int status)
 {
+	dfu_dbg("%s, status = %d\n", __func__, status);
 	if (status) {
 		/* ERROR: do nothing, the target will signal this */
 		return;
@@ -269,4 +269,8 @@ void dfu_binary_file_chunk_done(struct dfu_binary_file *bf,
 	dfu_log_noprefix(".");
 	if (bf->written)
 		bf->really_written = 1;
+	if (bf->decoded_buf_busy) {
+		dfu_dbg("freeing decoded buffer\n");
+		bf->decoded_buf_busy--;
+	}
 }
