@@ -210,6 +210,24 @@ static int ihex_probe(struct dfu_binary_file *f)
 	return 0;
 }
 
+#ifdef DEBUG
+static void _print_bad_line(struct dfu_binary_file *bf,
+			    struct ihex_line_data *ld, int index)
+{
+	int i, j;
+
+	dfu_log("bad line:\n");
+	for (i = 0, j = index; i < ld->byte_count; i++,
+		     j = _next(bf, j))
+		dfu_log_noprefix("0x%02x ", ((char *)bf->buf)[j]);
+}
+#else
+static void _print_bad_line(struct dfu_binary_file *bf,
+			    struct ihex_line_data *ld, int index)
+{
+}
+#endif
+
 /*
  * Decode a data line. bf->tail must point to line's data section
  */
@@ -231,8 +249,10 @@ static int _decode_data_line(struct dfu_binary_file *bf,
 	index = bf->tail;
 	stat = _decode_hex_buf(bf, &index, dst, ld->byte_count * 2);
 	dfu_dbg("%s: decoded %d bytes\n", __func__, stat);
-	if (stat <= 0)
+	if (stat <= 0) {
+		_print_bad_line(bf, ld, index);
 		return stat;
+	}
 	ret += stat;
 	bf->tail = _go_on(bf, bf->tail, stat);
 	dfu_dbg("%s: new tail is %d\n", __func__, bf->tail);
