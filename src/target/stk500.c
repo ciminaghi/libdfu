@@ -453,6 +453,8 @@ static int _check_load_addr(const struct dfu_cmddescr *descr,
 	return ptr[0] == STK_OK ? 0 : -1;
 }
 
+static int stk500_reset_and_sync(struct dfu_target *target);
+
 static int _load_address(struct dfu_target *target, uint16_t addr)
 {
 	struct stk500_data *priv = target->priv;
@@ -544,6 +546,7 @@ static int stk500_chunk_available(struct dfu_target *target,
 	struct stk500_data *priv = target->priv;
 	struct stk500_prog_page_cmd *cmdb = (struct stk500_prog_page_cmd *)
 		cmd_buffer;
+	int i;
 	static const uint8_t end = STK_CRC_EOP;
 	static uint8_t sync_reply, result;
 	static struct dfu_cmdbuf cmdbufs0[] = {
@@ -602,9 +605,11 @@ static int stk500_chunk_available(struct dfu_target *target,
 	}
 	dfu_dbg("%s: _load address 0x%08x\n", __func__,
 		(unsigned int)address);
-	if (_load_address(target, address) < 0) {
+	for (i = 0; i < 3; i++) {
+		if (!_load_address(target, address))
+			break;
 		dfu_err("%s: error loading address\n", __func__);
-		return -1;
+		stk500_reset_and_sync(target);
 	}
 	dfu_dbg("%s: address loaded ok\n", __func__);
 	cmdb->code = STK_PROG_PAGE;
