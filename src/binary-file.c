@@ -63,6 +63,10 @@ static int _bf_do_flush(struct dfu_binary_file *bf)
 	phys_addr_t addr;
 	int max_chunk_size = sizeof(bf_decoded_buf);
 
+	if (!bf_count(bf))
+		/* Nothing to flush */
+		return 0;
+
 	if (bf->decoded_buf_busy)
 		return 0;
 
