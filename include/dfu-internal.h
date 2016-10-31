@@ -170,6 +170,13 @@ extern const struct dfu_file_rx_method registered_rx_methods_start[],
 extern const struct dfu_format_ops registered_formats_start[],
     registered_formats_end[];
 
+/*
+ * Letting the linker automatically build binary formats tables is
+ * complicated under the arduino build system. We work around this by
+ * simply declaring pointers to operations and letting the
+ * arduino/build_src_tar script do the rest.
+ */
+#ifndef ARDUINO
 #define declare_dfu_format(n,p,d)					\
     static const struct							\
     dfu_format_ops format_ ## n						\
@@ -177,6 +184,14 @@ extern const struct dfu_format_ops registered_formats_start[],
 	.probe = p,							\
 	.decode_chunk = d,						\
     };
+#else
+#define declare_dfu_format(n,p,d)					\
+    int (* n ## _probe_ptr)(struct dfu_binary_file *) = p;		\
+    int (* n ## _decode_chunk_ptr)(struct dfu_binary_file *bf,		\
+				   void *out_buf,			\
+				   unsigned long out_sz,		\
+				   phys_addr_t *addr) = d
+#endif
 
 struct dfu_interface {
 	struct dfu_data *dfu;
