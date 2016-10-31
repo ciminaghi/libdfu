@@ -5,6 +5,11 @@
 extern "C" {
 #endif
 
+#ifdef ARDUINO
+#define HOST esp8266
+#define HOST_esp8266 1
+#endif
+
 #ifdef HOST_esp8266
 #include "dfu-esp8266.h"
 #elif defined HOST_linux

@@ -1,0 +1,12 @@
+# List of files needed to build the arduino tar
+include/*.h
+src/binary-file.c
+src/binary-format-*.c
+src/dfu.c
+src/host/esp8266.c
+src/interface/esp8266*
+src/target/dfu-cmd.c
+src/target/stk500-device-atmega328p.c
+src/target/stk500.c
+src/target/stm32-usart.c
+src/target.c

@@ -37,7 +37,9 @@ static inline void writel(uint32_t val, unsigned long reg)
 }
 
 #include <osapi.h>
+#ifndef ARDUINO
 #include "espmissingincludes.h"
+#endif
 
 #endif /* __DFU_ESP8266_H__ */
 

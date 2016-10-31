@@ -1,0 +1,9 @@
+name=dfu
+version=AUTO
+author=Davide Ciminaghi <davide@linino.org>
+maintainer=Arduino <info@arduino.cc>
+sentence=library for implementing On The Air firmware update via esp8266
+paragraph=this is still experimental code
+category=Data Storage
+url=http://www.arduino.cc/en/Reference/DFU
+architectures=esp8266

@@ -9,7 +9,7 @@ struct binary_format_data {
 static struct binary_format_data bfdata;
 
 /* Binary format, anything is ok */
-static int binary_probe(struct dfu_binary_file *f)
+int binary_probe(struct dfu_binary_file *f)
 {
 	dfu_log("raw binary format probed\n");
 	f->format_data = &bfdata;
@@ -19,8 +19,8 @@ static int binary_probe(struct dfu_binary_file *f)
 }
 
 /* Fix this */
-static int binary_decode_chunk(struct dfu_binary_file *bf, void *out_buf,
-			       unsigned long out_sz, phys_addr_t *addr)
+int binary_decode_chunk(struct dfu_binary_file *bf, void *out_buf,
+			unsigned long out_sz, phys_addr_t *addr)
 {
 	int sz = min(out_sz, bf_count_to_end(bf)), tot = sz;
 	struct binary_format_data *data = bf->format_data;

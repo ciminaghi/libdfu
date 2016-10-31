@@ -8,6 +8,8 @@ HOST ?= esp8266
 SUBDIRS:=src samples
 
 output_tar_name ?= $(shell echo libdfu-`date +%Y%m%d`.tar.bz2)
+arduino_output_zip_name ?= \
+	$(BASE)/$(shell echo -n libdfu-$$(date +%Y%m%d)-g$$(git rev-parse --verify --short HEAD).zip)
 
 export BASE HOST DYNAMIC_LIB SAMPLES_SSID SAMPLES_PASSWORD SDK_BASE
 
@@ -20,6 +22,9 @@ clean: subdirs_clean
 subdirs: $(SUBDIRS)
 
 subdirs_clean subdirs_install: subdirs_%: $(foreach s,$(SUBDIRS),$(s)_%)
+
+arduino_zip: all
+	./arduino/build_src_zip $(arduino_output_zip_name)
 
 $(SUBDIRS):
 	make -C $@

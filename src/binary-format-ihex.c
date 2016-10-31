@@ -190,7 +190,7 @@ static int _peek_line_header(struct dfu_binary_file *f,
 }
 
 /* Intel HEX, check for correct first line header */
-static int ihex_probe(struct dfu_binary_file *f)
+int ihex_probe(struct dfu_binary_file *f)
 {
 	int cnt = bf_count(f), stat;
 	struct ihex_line_data ld;
@@ -271,8 +271,8 @@ static int _decode_data_line(struct dfu_binary_file *bf,
  * Decode new file chunk (some lines in general)
  * Stop on line boundary
  */
-static int ihex_decode_chunk(struct dfu_binary_file *bf, void *out_buf,
-			     unsigned long out_sz, uint32_t *addr)
+int ihex_decode_chunk(struct dfu_binary_file *bf, void *out_buf,
+		      unsigned long out_sz, uint32_t *addr)
 {
 	struct ihex_line_data ld;
 	int stat, index, tot, decoded_tot, stopit;
