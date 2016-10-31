@@ -28,6 +28,17 @@ struct dfu_host_ops;
 #define DFU_FILE_EVENT		2
 #define DFU_TIMEOUT		4
 
+struct dfu_file_rx_method_ops {
+	int (*init)(struct dfu_binary_file *, void *arg);
+};
+
+struct dfu_file_rx_method {
+	const struct dfu_file_rx_method_ops *ops;
+	const char *name;
+	void *priv;
+};
+
+
 struct dfu_binary_file_ops {
 	/*
 	 * Invoked on idle if host has no idle operation.
@@ -49,9 +60,10 @@ extern struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 				 const struct dfu_host_ops *hops);
 
 
-extern struct dfu_binary_file *dfu_binary_file_start_rx(const char *method,
-							struct dfu_data *data,
-							void *method_arg);
+extern struct dfu_binary_file *
+dfu_binary_file_start_rx(struct dfu_file_rx_method *method,
+			 struct dfu_data *data,
+			 void *method_arg);
 
 /*
  * If totsz == 0, total size is unknown
@@ -97,6 +109,12 @@ extern int dfu_target_probe(struct dfu_data *dfu);
 extern int dfu_target_go(struct dfu_data *dfu);
 
 extern int dfu_target_erase_all(struct dfu_data *dfu);
+
+/*
+ * File rx methods
+ */
+extern struct dfu_file_rx_method dfu_rx_method_http;
+extern struct dfu_file_rx_method dfu_rx_method_tftp;
 
 #define DFU_ALL_DONE 1
 #define DFU_CONTINUE 2

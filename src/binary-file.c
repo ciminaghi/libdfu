@@ -168,36 +168,23 @@ dfu_new_binary_file(const void *buf,
 	return &bfile;
 }
 
-static int _bf_find_rx_method(struct dfu_binary_file *bf, const char *name,
-			      void *arg)
-{
-	const struct dfu_file_rx_method *ptr;
-
-	for (ptr = registered_rx_methods_start;
-	     ptr != registered_rx_methods_end; ptr++) {
-		if (strcmp(ptr->name, name))
-			continue;
-		if (ptr->ops && ptr->ops->init(bf, arg) < 0)
-			return -1;
-		bf->rx_method = ptr;
-		return 0;
-	}
-	return -1;
-}
-
-struct dfu_binary_file *dfu_binary_file_start_rx(const char *method,
-						 struct dfu_data *dfu,
-						 void *arg)
+struct dfu_binary_file *
+dfu_binary_file_start_rx(struct dfu_file_rx_method *method,
+			 struct dfu_data *dfu,
+			 void *method_arg)
 {
 	struct dfu_binary_file *out = NULL;
 
+	if (!method || !method->ops)
+		return out;
 	out = dfu_new_binary_file(NULL, 0, 0, dfu, 0, NULL, NULL);
 	if (!out)
 		return out;
-	if (_bf_find_rx_method(out, method, arg) < 0) {
+	if (method->ops->init(out, method_arg) < 0) {
 		_bf_fini(out, dfu);
 		return NULL;
 	}
+	out->rx_method = method;
 	return out;
 }
 

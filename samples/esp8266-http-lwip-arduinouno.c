@@ -91,7 +91,7 @@ user_init(void)
 		return;
 	}
 
-	f = dfu_binary_file_start_rx("http", dfu, &md);
+	f = dfu_binary_file_start_rx(&dfu_rx_method_http, dfu, &md);
 	if (!f) {
 		dfu_err("Error setting up binary file struct\n");
 		return;

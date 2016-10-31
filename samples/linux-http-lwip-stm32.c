@@ -136,7 +136,7 @@ int main(int argc, char *argv[])
 
 	md.netif_idle_fun = lwip_idle;
 	md.netif = &netif;
-	f = dfu_binary_file_start_rx("http", dfu, &md);
+	f = dfu_binary_file_start_rx(&dfu_rx_method_http, dfu, &md);
 	if (!f) {
 		fprintf(stderr, "Error setting up binary file struct\n");
 		exit(127);

@@ -147,22 +147,8 @@ struct dfu_format_ops {
 			    unsigned long out_sz, phys_addr_t *addr);
 };
 
-struct dfu_file_rx_method_ops {
-	int (*init)(struct dfu_binary_file *, void *arg);
-};
-
-struct dfu_file_rx_method {
-	const struct dfu_file_rx_method_ops *ops;
-	const char *name;
-	void *priv;
-};
-
-extern const struct dfu_file_rx_method registered_rx_methods_start[],
-	registered_rx_methods_end[];
-
 #define declare_file_rx_method(n,o)				\
-	static struct dfu_file_rx_method rx_method_ ## n	\
-	__attribute__((section(".rx-methods"), used)) = {	\
+	struct dfu_file_rx_method dfu_rx_method_ ## n = {	\
 		.name = #n,					\
 		.ops = o,					\
 	}
