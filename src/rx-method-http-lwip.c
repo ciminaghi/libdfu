@@ -45,7 +45,7 @@ static struct http_connection *find_connection(void)
 
 static void free_connection(struct http_connection *c)
 {
-	dfu_log("%s\n", __func__);
+	dfu_dbg("%s\n", __func__);
 	c->cd = NULL;
 }
 
@@ -139,7 +139,7 @@ int http_send_header(struct tcp_conn_data *cd, const char *key,
 	memcpy(buf, key, strlen(key));
 	memcpy(&buf[strlen(key)], value, strlen(value));
 	memcpy(&buf[strlen(key) + strlen(value)], newl, strlen(newl));
-	dfu_log("%s: writing %s\n", __func__, buf);
+	dfu_dbg("%s: writing %s\n", __func__, buf);
 	return tcp_server_socket_lwip_raw_send(cd, buf, tot);
 }
 
@@ -315,6 +315,21 @@ static int simple_atoi(const char *s)
 	return out;
 }
 
+#ifdef DEBUG
+static inline void dump_request(struct http_connection *c, const char *ptr,
+				unsigned int len)
+{
+	dfu_dbg("%s: curr_request_index = %d, buf = %p (0x%02x %02x %02x ...), len = %d\n",
+		__func__, c->curr_request_index, ptr, ptr[0], ptr[1], ptr[2],
+		len);
+}
+#else
+static inline void dump_request(struct http_connection *c, const char *ptr,
+				unsigned int len)
+{
+}
+#endif
+
 /*
  * Data received
  */
@@ -324,7 +339,6 @@ int http_recv(struct tcp_server_socket_lwip_raw *r, const void *buf,
 	struct http_lwip_client_priv *priv = r->client_priv;
 	struct http_connection *c = priv->c;
 	static struct phr_header *lh;
-	const char *ptr = buf;
 	int prevlen, stat;
 
 	if (len > sizeof(c->request_buf) - c->curr_request_index) {
@@ -336,9 +350,7 @@ int http_recv(struct tcp_server_socket_lwip_raw *r, const void *buf,
 		return len;
 	}
 
-	dfu_log("%s: curr_request_index = %d, buf = %p (0x%02x %02x %02x ...), "
-		"len = %d\n", __func__, c->curr_request_index, buf, ptr[0],
-		ptr[1], ptr[2], len);
+	dump_request(c, buf, len);
 
 	memcpy(&c->request_buf[c->curr_request_index], buf, len);
 	prevlen = c->curr_request_index;
@@ -363,7 +375,7 @@ int http_recv(struct tcp_server_socket_lwip_raw *r, const void *buf,
 		}
 
 		c->end_of_headers = stat;
-		dfu_log("%s: parse ok, headers end @%d\n", __func__, stat);
+		dfu_dbg("%s: parse ok, headers end @%d\n", __func__, stat);
 
 		lh = http_find_header("Content-Length",
 				      c->headers, c->nheaders);
@@ -398,18 +410,13 @@ int http_recv(struct tcp_server_socket_lwip_raw *r, const void *buf,
 	{
 		if (c->curr_request_index <
 		    c->end_of_headers + c->content_length) {
-			dfu_log("curr len = %d, headers = %d, clen = %d\n",
+			dfu_dbg("curr len = %d, headers = %d, clen = %d\n",
 				c->curr_request_index, c->end_of_headers,
 				c->content_length);
-			dfu_log("Must wait\n");
+			dfu_dbg("Must wait\n");
 			break;
 		}
-		dfu_log("%s: got all body\n", __func__);
-		dfu_dbg("%s: ptr = %p, data = %p, %c %c %c %c %c\n",
-			__func__, ptr, &ptr[c->end_of_headers],
-			ptr[c->end_of_headers], ptr[c->end_of_headers + 1],
-			ptr[c->end_of_headers + 2], ptr[c->end_of_headers + 3],
-			ptr[c->end_of_headers + 4]);
+		dfu_dbg("%s: got all body\n", __func__);
 		priv->request_ready = 1;
 		break;
 	}
@@ -426,7 +433,7 @@ int http_poll(struct tcp_server_socket_lwip_raw *r)
 	struct http_connection *c = priv->c;
 	int ret = c->can_close;
 
-	dfu_log("c = %p, can_close = %d\n", c, ret);
+	dfu_dbg("c = %p, can_close = %d\n", c, ret);
 	if (ret)
 		free_connection(c);
 	return !ret;
@@ -437,7 +444,7 @@ void http_closed(struct tcp_server_socket_lwip_raw *r)
 	struct http_lwip_client_priv *priv = r->client_priv;
 	struct http_connection *c = priv->c;
 
-	dfu_log("%s: freeing connection %p\n", __func__, c);
+	dfu_dbg("%s: freeing connection %p\n", __func__, c);
 	free_connection(c);
 }
 
@@ -499,13 +506,13 @@ static int http_on_event(struct dfu_binary_file *bf)
 		case HTTP_URL_PROCESSING:
 			/* Request not finished, retry on next idle loop */
 			client_priv.request_ready = 1;
-			dfu_log("%s: request not processed\n", __func__);
+			dfu_dbg("%s: request not processed\n", __func__);
 			return 0;
 		case HTTP_URL_TEMP_ERROR:
 			/* Temporary error, retry later on */
 			client_priv.request_ready = 1;
 			client_priv.serving_request = 0;
-			dfu_log("%s: temporary error on request\n", __func__);
+			dfu_dbg("%s: temporary error on request\n", __func__);
 			return 0;
 		default:
 			/* Fatal error */
@@ -525,7 +532,7 @@ static int http_on_event(struct dfu_binary_file *bf)
 		/* Still some data to be sent */
 		return 0;
 end:
-	dfu_log("%s: request done\n", __func__);
+	dfu_dbg("%s: request done\n", __func__);
 	client_priv.serving_request = 0;
 	client_priv.request_ready = 0;
 	c->can_close = 1;
