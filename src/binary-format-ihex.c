@@ -180,7 +180,7 @@ static int _peek_line_header(struct dfu_binary_file *f,
 		return -1;
 	odata->data_start_index = index;
 	/* Data bytes + header length (without ':') + checksum */
-	line_length = odata->byte_count * 2 + 9 + 2;
+	line_length = odata->byte_count * 2 + ret + 2;
 	/* A whole line cannot be read, give up */
 	dfu_dbg("%s, count = %d, line_length = %d\n", __func__,
 		bf_count(f), line_length);
