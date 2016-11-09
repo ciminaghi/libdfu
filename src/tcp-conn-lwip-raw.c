@@ -41,7 +41,7 @@ static struct tcp_conn_data *alloc_connection(void)
 		if (connections[i].state == ES_FREE) {
 			connections[i].state = ES_NONE;
 			connections[i].must_close = 0;
-			dfu_log("%s: connection %p allocated\n", __func__,
+			dfu_dbg("%s: connection %p allocated\n", __func__,
 				&connections[i]);
 			return &connections[i];
 		}
@@ -50,7 +50,7 @@ static struct tcp_conn_data *alloc_connection(void)
 
 static void free_connection(struct tcp_conn_data *c)
 {
-	dfu_log("%s: freeing connection %p\n", __func__, c);
+	dfu_dbg("%s: freeing connection %p\n", __func__, c);
 	c->state = ES_FREE;
 }
 
@@ -74,10 +74,10 @@ static void tcp_conn_close(struct tcp_pcb *tpcb, struct tcp_conn_data *es)
 		 * returns ERR_OK.
 		 */
 		es->must_close = 1;
-		dfu_log("%s: must_close = 1\n", __func__);
+		dfu_dbg("%s: must_close = 1\n", __func__);
 		return;
 	}
-	dfu_log("%s: must_close = 0\n", __func__);
+	dfu_dbg("%s: must_close = 0\n", __func__);
 	es->must_close = 0;
 	tcp_arg(tpcb, NULL);
 	tcp_sent(tpcb, NULL);
@@ -140,7 +140,7 @@ void tcp_conn_error(void *arg, err_t err)
 	LWIP_UNUSED_ARG(err);
 
 	es = (struct tcp_conn_data *)arg;
-	dfu_log("%s\n", __func__);
+	dfu_dbg("%s\n", __func__);
 
 	tcp_conn_free(es);
 }
@@ -235,7 +235,7 @@ int tcp_server_socket_lwip_raw_init(struct tcp_server_socket_lwip_raw *r,
 		return -1;
 	}
 	tcp_arg(tcp_conn_pcb, r);
-	dfu_log("%s: binding to port %u\n", __func__, port);
+	dfu_dbg("%s: binding to port %u\n", __func__, port);
 	err = tcp_bind(tcp_conn_pcb, IP_ADDR_ANY, port);
 	if (err != ERR_OK) {
 		dfu_err("%s: tcp_bind() to port %u returns error %d\n", __func__, port, err);
@@ -264,11 +264,11 @@ int tcp_server_socket_lwip_raw_send(struct tcp_conn_data *es,
 
 		l = min(len - es->written, tcp_sndbuf(es->pcb));
 		if (!l) {
-			dfu_log("%s: no more space in output buffer\n",
+			dfu_dbg("%s: no more space in output buffer\n",
 				__func__);
 			return es->written;
 		}
-		dfu_log("%s: tcp_write(%p, len = %u, written = %d, l = %d)\n",
+		dfu_dbg("%s: tcp_write(%p, len = %u, written = %d, l = %d)\n",
 			__func__, &ptr[es->written], len, es->written, l);
 		stat = tcp_write(es->pcb, &ptr[es->written], l,
 				 TCP_WRITE_FLAG_COPY);
@@ -277,7 +277,7 @@ int tcp_server_socket_lwip_raw_send(struct tcp_conn_data *es,
 			break;
 		}
 		es->written += l;
-		dfu_log("%s: written = %d\n", __func__, es->written);
+		dfu_dbg("%s: written = %d\n", __func__, es->written);
 		if (es->written >= len)
 			break;
 		stat = tcp_output(es->pcb);
@@ -288,7 +288,7 @@ int tcp_server_socket_lwip_raw_send(struct tcp_conn_data *es,
 
 int tcp_server_socket_lwip_raw_close(struct tcp_conn_data *es)
 {
-	dfu_log("%s\n", __func__);
+	dfu_dbg("%s\n", __func__);
 	tcp_conn_close(es->pcb, es);
 	return 0;
 }
