@@ -123,7 +123,7 @@ static inline int _decode_hex_buf(struct dfu_binary_file *f, int *index,
  */
 static int _check_line(struct dfu_binary_file *bf, struct ihex_line_data *ld)
 {
-	return 0;
+	return 2;
 }
 
 /*
