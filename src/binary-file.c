@@ -80,9 +80,10 @@ static int _bf_do_flush(struct dfu_binary_file *bf)
 
 	stat = bf->format_ops->decode_chunk(bf, bf_decoded_buf,
 					    max_chunk_size, &addr);
-	if (stat < 0) {
-		dfu_err("%s: error in decode_chunk\n", __func__);
-		return -1;
+	if (stat <= 0) {
+		if (stat < 0)
+			dfu_err("%s: error in decode_chunk\n", __func__);
+		return stat;
 	}
 	dfu_dbg("%s: chunk decoded, addr = 0x%08x\n", __func__,
 		(unsigned int)addr);
