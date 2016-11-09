@@ -502,7 +502,7 @@ static int _load_address(struct dfu_target *target, uint16_t addr)
 	};
 
 	cmdb->code = STK_LOAD_ADDRESS;
-	cmdb->addr = cpu_to_be16(addr);
+	cmdb->addr = addr;
 	cmdb->eop = STK_CRC_EOP;
 	priv->curr_descr = &descr0;
 	return dfu_cmd_do_sync(target, &descr0);
