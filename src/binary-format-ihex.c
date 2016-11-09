@@ -313,7 +313,7 @@ int ihex_decode_chunk(struct dfu_binary_file *bf, void *out_buf,
 			/* note that _decode_data_line() verifies checksum */
 			stat = _decode_data_line(bf, &ld, &dst[decoded_tot],
 						 out_sz - decoded_tot);
-			if (stat < 0) {
+			if (stat <= 0) {
 				dfu_dbg("%s %d stat = %d\n", __func__, __LINE__,
 					stat);
 				return stat;
