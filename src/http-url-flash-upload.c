@@ -50,7 +50,7 @@ static int http_flash_upload_post(const struct http_url *u,
 	if (!stat) {
 		/* No space enough, just tell the server to retry processing */
 		dfu_dbg("%s: no space enough for appending buffer\n", __func__);
-		return stat;
+		return HTTP_URL_TEMP_ERROR;
 	}
 	if (stat < 0) {
 		dfu_err("%s: error appending data\n", __func__);

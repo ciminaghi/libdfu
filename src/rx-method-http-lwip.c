@@ -209,7 +209,8 @@ static int http_start_sending_data(struct http_connection *c,
  * Get method for regular files
  * Returns:
  *
- * < 0  -> error
+ * -1  -> fatal error
+ * -2  -> temporary error
  * > 0  -> ok
  */
 int http_get_file(const struct http_url *u, struct http_connection *c,
@@ -236,7 +237,7 @@ int http_get_file(const struct http_url *u, struct http_connection *c,
 		goto end;
 	ret = http_start_sending_data(c, u->data_start, data_len);
 end:
-	return ret < 0 ? ret : 1;
+	return ret < 0 ? HTTP_URL_FATAL_ERROR : 1;
 }
 
 /*
@@ -494,11 +495,23 @@ static int http_on_event(struct dfu_binary_file *bf)
 					    &c->request_buf[c->end_of_headers],
 					    c->curr_request_index - 1 -
 					    c->end_of_headers);
-		if (!stat) {
-			/* Request not processed, retry on next idle loop */
+		switch (stat) {
+		case HTTP_URL_PROCESSING:
+			/* Request not finished, retry on next idle loop */
 			client_priv.request_ready = 1;
 			dfu_log("%s: request not processed\n", __func__);
 			return 0;
+		case HTTP_URL_TEMP_ERROR:
+			/* Temporary error, retry later on */
+			client_priv.request_ready = 1;
+			client_priv.serving_request = 0;
+			dfu_log("%s: temporary error on request\n", __func__);
+			return 0;
+		default:
+			/* Fatal error */
+			if (stat < 0)
+				dfu_err("%s: fatal error\n", __func__);
+			break;
 		}
 	} else if (c->outgoing_data_len) {
 		/* outgoing_data_len > 0 */
