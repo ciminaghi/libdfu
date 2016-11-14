@@ -215,6 +215,9 @@ int dfu_cmd_on_interface_event(struct dfu_target *target,
 	char dummy_buf[8];
 	struct dfu_interface *interface = target->interface;
 
+	if (!descr)
+		return 0;
+
 	/*
 	 * We're waiting for the target to reply, go on with the current
 	 * command buffer
