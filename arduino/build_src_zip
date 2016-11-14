@@ -88,6 +88,7 @@ while read -r -u 9 line; do
     echo $line | grep -q "^#.*" && continue
     # Remove empty lines
     [ -z "$line" ] && continue
+    [ -n "$(ls $BASE/$line)" ] || { echo "$BASE/$line not found" ; exit 127 ; }
     for f in $(ls $BASE/$line) ; do
 	cp -a $f $SRCDIR
     done
