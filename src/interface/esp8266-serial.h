@@ -6,6 +6,10 @@
 
 #include "dfu.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define REG_UART_BASE(i)		(0x60000000 + (i)*0xf00)
 
 /* Registers' offset */
@@ -48,6 +52,10 @@ int esp8266_serial_write(struct dfu_interface *iface,
 int esp8266_serial_read(struct dfu_interface *iface, char *buf,
 			unsigned long size);
 int esp8266_serial_poll_idle(struct dfu_interface *iface);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ESP8266_SERIAL_H__ */
 

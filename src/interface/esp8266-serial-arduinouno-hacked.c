@@ -14,6 +14,7 @@
  * This configuration is used for 8266 + stk500 debugging
  */
 
+#ifndef ARDUINO
 /* Console gets redirected to uart1 */
 static void uart1_init(void)
 {
@@ -69,6 +70,19 @@ int esp8266_serial_arduinouno_hacked_target_reset(struct dfu_interface *iface)
 	return 0;
 }
 
+#else /* ARDUINO */
+
+int esp8266_serial_arduinouno_hacked_target_reset(struct dfu_interface *iface)
+{
+	pinMode(5, OUTPUT);
+	digitalWrite(5, 0);
+	delay(1);
+	digitalWrite(5, 1);
+	delay(200);
+	return 0;
+}
+
+#endif /* ARDUINO */
 
 const struct dfu_interface_ops
 esp8266_serial_arduinouno_hacked_interface_ops = {
