@@ -12,16 +12,25 @@ extern const struct dfu_interface_ops esp8266_serial_star8_interface_ops;
 extern const struct dfu_interface_ops
 esp8266_serial_arduinouno_hacked_interface_ops;
 extern const struct dfu_host_ops esp8266_dfu_host_ops;
+extern int _dfu_log(const char *, ...);
 
 #ifdef __cplusplus
 }
 #endif
+
+#ifndef ARDUINO
 
 #define dfu_log(a,args...) do { os_printf("DFU [%8u] ", system_get_time()) ; \
 		os_printf(a, ##args); } while(0)
 #define dfu_err(a,args...) do { os_printf("DFU [%8u] ", system_get_time()) ; \
 		os_printf("ERROR: " a, ##args) ; } while(0)
 #define dfu_log_noprefix(a,args...) os_printf(a, ##args)
+#else
+#define dfu_log(a,args...) _dfu_log("DFU " a, ##args)
+#define dfu_err(a,args...) do { _dfu_log("DFU ERROR: "); \
+	_dfu_log(a, ##args) ; } while(0)
+#define dfu_log_noprefix(a,args...) _dfu_log(a, ##args)
+#endif
 
 /* Simple I/O accessors */
 extern volatile uint32_t *regs;
