@@ -879,6 +879,8 @@ static int stk500_on_idle(struct dfu_target *target)
 {
 	struct stk500_data *priv = target->priv;
 
+	if (!priv->curr_descr)
+		return 0;
 	return dfu_cmd_on_idle(target, priv->curr_descr);
 }
 
