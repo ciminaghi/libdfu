@@ -38,6 +38,7 @@ extern "C" int arduino_server_poll(int *_chunk_ready, int *_error,
 extern "C" int arduino_server_get_chunk(const void **ptr)
 {
 	*ptr = current_chunk.c_str();
+	chunk_ready = 0;
 	return current_chunk.length();
 }
 
