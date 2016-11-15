@@ -1,7 +1,10 @@
 # List of files needed to build the arduino tar
 include/*.h
+src/arduino-server.cpp
+src/arduino-server.h
 src/binary-file.c
 src/binary-format-*.c
+src/rx-method-http-arduino.c
 src/dfu.c
 src/host/esp8266.c
 src/host/esp8266-log.cpp

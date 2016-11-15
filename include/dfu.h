@@ -115,6 +115,7 @@ extern int dfu_target_erase_all(struct dfu_data *dfu);
  */
 extern struct dfu_file_rx_method dfu_rx_method_http;
 extern struct dfu_file_rx_method dfu_rx_method_tftp;
+extern struct dfu_file_rx_method dfu_rx_method_http_arduino;
 
 #define DFU_ALL_DONE 1
 #define DFU_CONTINUE 2
