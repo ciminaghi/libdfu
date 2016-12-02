@@ -196,11 +196,6 @@ int dfu_idle(struct dfu_data *dfu)
 	if (dfu_error(dfu))
 		/* An asynchronous error occurred, tell the user */
 		return DFU_ERROR;
-	if (!dfu_target_busy(dfu->target))
-		/* Unlock any pending writes of decoded data */
-		if (dfu_binary_file_target_ready(dfu->bf) < 0)
-			return DFU_ERROR;
-
 	if (dfu->interface->ops->poll_idle)
 		_poll_interface(dfu);
 	if (_bf_is_pollable(dfu->bf))
