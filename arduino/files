@@ -8,8 +8,8 @@ src/rx-method-http-arduino.c
 src/dfu.c
 src/host/esp8266.c
 src/host/esp8266-log.cpp
-src/interface/esp8266-arduino-serial.cpp
 src/interface/esp8266-serial-arduinouno-hacked.cpp
+src/interface/esp8266-serial.c
 src/interface/esp8266-serial.h
 src/target/dfu-cmd.c
 src/target/stk500-device-atmega328p.c

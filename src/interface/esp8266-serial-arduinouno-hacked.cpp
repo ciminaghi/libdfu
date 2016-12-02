@@ -16,7 +16,17 @@
  * OUTSIDE THE ARDUINO ENVIRONMENT
  */
 
-int esp8266_serial_arduinouno_hacked_target_reset(struct dfu_interface *iface)
+static int esp8266_arduino_hacked_serial_open(struct dfu_interface *iface,
+					      const char *path,
+					      const void *pars)
+{
+	/* Close serial port and replace low level serial driver with ours */
+	Serial.end();
+	return esp8266_serial_open(iface, path, pars);
+}
+
+static int
+esp8266_serial_arduinouno_hacked_target_reset(struct dfu_interface *iface)
 {
 	pinMode(5, OUTPUT);
 	digitalWrite(5, 0);
@@ -28,7 +38,7 @@ int esp8266_serial_arduinouno_hacked_target_reset(struct dfu_interface *iface)
 
 const struct dfu_interface_ops
 esp8266_serial_arduinouno_hacked_interface_ops = {
-	.open = esp8266_serial_open,
+	.open = esp8266_arduino_hacked_serial_open,
 	.write = esp8266_serial_write,
 	.read = esp8266_serial_read,
 	.target_reset = esp8266_serial_arduinouno_hacked_target_reset,

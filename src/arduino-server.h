@@ -11,8 +11,8 @@ extern "C" {
 #endif
 
 extern int arduino_server_send(int code, const char *msg);
-extern int arduino_server_poll(int *chunk_ready, int *error, int *num_chunk,
-			       int *tot_chunks);
+extern int arduino_server_poll(int *chunk_ready, int *error, int *first_chunk,
+			       int *last_chunk);
 extern int arduino_server_get_chunk(const void **ptr);
 extern int arduino_server_init(void);
 

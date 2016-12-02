@@ -6,15 +6,26 @@
 #include "arduino-server.h"
 
 static ESP8266WebServer server(80);
-static int tot_chunks, num_chunk, chunk_ready, error;
-static String current_chunk;
+static int first_chunk, error, chunk_ready, last_chunk;
+static uint8_t *current_chunk;
+static int current_chunk_len;
+static int polled;
 
-static void handle_chunk(void)
+static void handle_ota_post(void)
 {
-	tot_chunks = server.arg(0).toInt();
-	num_chunk = server.arg(1).toInt();
-	current_chunk = server.arg(2);
+	HTTPUpload& upload = server.upload();
+	int n, tot;
+
+	tot = server.arg("totchunk").toInt();
+	n = server.arg("numchunk").toInt();
+	if (n == 1)
+		first_chunk = 1;
+	if (n == tot)
+		last_chunk = 1;
 	chunk_ready = 1;
+	current_chunk = upload.buf;
+	current_chunk_len = upload.currentSize;
+	polled = 0;
 }
 
 
@@ -25,25 +36,32 @@ extern "C" int arduino_server_send(int code, const char *msg)
 }
 
 extern "C" int arduino_server_poll(int *_chunk_ready, int *_error,
-				   int *_num_chunk, int *_tot_chunks)
+				   int *_first_chunk, int *_last_chunk)
 {
 	server.handleClient();
+	if (polled) {
+		*_chunk_ready = 0;
+		*_error = 0;
+		*_first_chunk = 0;
+		*_last_chunk = 0;
+		return 0;
+	}
 	*_chunk_ready = chunk_ready;
 	*_error = error;
-	*_num_chunk = num_chunk;
-	*_tot_chunks = tot_chunks;
+	*_first_chunk = first_chunk;
+	*_last_chunk = last_chunk;
+	polled = 1;
 	return chunk_ready;
 }
 
 extern "C" int arduino_server_get_chunk(const void **ptr)
 {
-	*ptr = current_chunk.c_str();
-	chunk_ready = 0;
-	return current_chunk.length();
+	*ptr = current_chunk;
+	return current_chunk_len;
 }
 
 extern "C" int arduino_server_init(void)
 {
-	server.on("/otafile", HTTP_POST, handle_chunk);
+	server.on("/otafile", HTTP_POST, handle_ota_post);
 	server.begin();
 }
