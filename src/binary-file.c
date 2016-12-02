@@ -46,6 +46,13 @@ static int _bf_find_format(struct dfu_binary_file *bf)
 
 	for (ptr = registered_formats_start;
 	     ptr != registered_formats_end; ptr++) {
+		if (!ptr->probe && !ptr->decode_chunk)
+			/*
+			 * Avoid using linker scripts under arduino, so
+			 * we haven't a reliable registered_formats_end there.
+			 * See arduino/build_src_zip
+			 */
+			return -1;
 		if (!ptr->probe(bf)) {
 			bf->format_ops = ptr;
 			return 0;
