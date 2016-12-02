@@ -7,6 +7,11 @@
 
 #define DEFAULT_BAUD 115200
 
+/* Depends on the sdk we're building for :-( */
+#ifndef FUNC_U0RXD
+#define FUNC_U0RXD 0
+#endif
+
 static int baud = DEFAULT_BAUD;
 static unsigned long base = REG_UART_BASE(0);
 static int rx_fifo_threshold = 0;
@@ -23,6 +28,7 @@ int esp8266_serial_open(struct dfu_interface *iface,
 	PIN_PULLUP_DIS(PERIPHS_IO_MUX_U0RXD_U);
 	PIN_PULLUP_DIS(PERIPHS_IO_MUX_U0TXD_U);
 	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0TXD_U, FUNC_U0TXD);
+	PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0RXD_U, FUNC_U0RXD);
 	/* Reset FIFO */
 	v = readl(base + UART_CONF0);
 	v |= (UART_RXFIFO_RST | UART_TXFIFO_RST);
