@@ -158,7 +158,6 @@ static int _bf_append_data(struct dfu_binary_file *bf, const void *buf,
 	buf_sz -= sz;
 	tot = sz;
 	ret = tot;
-	goto end;
 	if (!buf_sz) {
 		ret = sz;
 		goto end;
