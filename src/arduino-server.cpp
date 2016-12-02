@@ -18,10 +18,8 @@ static void handle_ota_post(void)
 
 	tot = server.arg("totchunk").toInt();
 	n = server.arg("numchunk").toInt();
-	if (n == 1)
-		first_chunk = 1;
-	if (n == tot)
-		last_chunk = 1;
+	first_chunk = n == 1;
+	last_chunk = n == tot;
 	chunk_ready = 1;
 	current_chunk = upload.buf;
 	current_chunk_len = upload.currentSize;
