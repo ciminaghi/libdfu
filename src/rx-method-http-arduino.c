@@ -67,7 +67,7 @@ static int http_arduino_on_event(struct dfu_binary_file *bf)
 	appended = dfu_binary_file_append_buffer(bf, ptr, stat);
 	if (appended < 0) {
 		dfu_log("Error appending current chunk\n");
-		return DFU_ERROR;
+		goto error;
 	}
 	dfu_log("%s: %d bytes appended\n", __func__, appended);
 	if (!appended)
@@ -75,7 +75,7 @@ static int http_arduino_on_event(struct dfu_binary_file *bf)
 		return appended;
 	if (appended < stat) {
 		dfu_log("Error: partially appended chunk\n");
-		return DFU_ERROR;
+		goto error;
 	}
 	client_priv.chunk_ready = 0;
 	/* OK */
@@ -86,6 +86,7 @@ static int http_arduino_on_event(struct dfu_binary_file *bf)
 error:
 	dfu_log("ERROR\n");
 	client_priv.busy = 0;
+	client_priv.chunk_ready = 0;
 	return DFU_ERROR;
 }
 
