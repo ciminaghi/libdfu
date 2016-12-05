@@ -138,6 +138,7 @@ static int _bf_append_data(struct dfu_binary_file *bf, const void *buf,
 {
 	int sz, tot = 0, ret, stat = 0;
 	char *ptr = bf->buf;
+	const char *src = buf;
 
 	if (!buf_sz) {
 		/* size is 0, file written */
@@ -153,9 +154,10 @@ static int _bf_append_data(struct dfu_binary_file *bf, const void *buf,
 		ret = sz;
 		goto end;
 	}
-	memcpy(&ptr[bf->head], buf, sz);
+	memcpy(&ptr[bf->head], src, sz);
 	bf->head = (bf->head + sz) & (ARRAY_SIZE(bf_buf) - 1);
 	buf_sz -= sz;
+	src += sz;
 	tot = sz;
 	ret = tot;
 	if (!buf_sz) {
@@ -164,7 +166,7 @@ static int _bf_append_data(struct dfu_binary_file *bf, const void *buf,
 	}
 	sz = min(bf_space(bf), buf_sz);
 	tot += sz;
-	memcpy(&ptr[bf->head], buf, sz);
+	memcpy(&ptr[bf->head], src, sz);
 	bf->head = (bf->head + sz) & (ARRAY_SIZE(bf_buf) - 1);
 	ret = tot;
 end:
