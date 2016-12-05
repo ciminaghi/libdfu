@@ -324,6 +324,8 @@ int ihex_decode_chunk(struct dfu_binary_file *bf, void *out_buf,
 				return decoded_tot;
 			break;
 		case IHEX_EOF:
+			/* peek line header does not update tail, do it now */
+			bf->tail = _go_on(bf, bf->tail, stat);
 			bf->rx_done = 1;
 			/* Force written flag to 1 */
 			dfu_binary_file_append_buffer(bf, NULL, 0);
