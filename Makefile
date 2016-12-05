@@ -23,7 +23,7 @@ subdirs: $(SUBDIRS)
 
 subdirs_clean subdirs_install: subdirs_%: $(foreach s,$(SUBDIRS),$(s)_%)
 
-arduino_zip: all
+arduino_zip:
 	./arduino/build_src_zip $(arduino_output_zip_name)
 
 $(SUBDIRS):
