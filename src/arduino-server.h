@@ -10,10 +10,19 @@
 extern "C" {
 #endif
 
+struct arduino_server_data {
+	int chunk_ready;
+	int first_chunk;
+	int last_chunk;
+	int error;
+	const void *chunk_ptr;
+	int chunk_len;
+};
+
 extern int arduino_server_send(int code, const char *msg);
-extern int arduino_server_poll(int *chunk_ready, int *error, int *first_chunk,
-			       int *last_chunk);
-extern int arduino_server_get_chunk(const void **ptr);
+extern int arduino_server_poll(void);
+extern void arduino_server_ack(void);
+extern void arduino_server_get_data(struct arduino_server_data *);
 extern int arduino_server_init(void);
 
 

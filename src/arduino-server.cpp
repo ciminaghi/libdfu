@@ -9,7 +9,6 @@ static ESP8266WebServer server(80);
 static int first_chunk, error, chunk_ready, last_chunk;
 static uint8_t *current_chunk;
 static int current_chunk_len;
-static int polled;
 
 static void handle_ota_post(void)
 {
@@ -23,39 +22,34 @@ static void handle_ota_post(void)
 	chunk_ready = 1;
 	current_chunk = upload.buf;
 	current_chunk_len = upload.currentSize;
-	polled = 0;
 }
 
 
 extern "C" int arduino_server_send(int code, const char *msg)
 {
-	server.send(code, msg);
+	server.send(code, "text/plain", msg);
 	return 0;
 }
 
-extern "C" int arduino_server_poll(int *_chunk_ready, int *_error,
-				   int *_first_chunk, int *_last_chunk)
+extern "C" int arduino_server_poll(void)
 {
 	server.handleClient();
-	if (polled) {
-		*_chunk_ready = 0;
-		*_error = 0;
-		*_first_chunk = 0;
-		*_last_chunk = 0;
-		return 0;
-	}
-	*_chunk_ready = chunk_ready;
-	*_error = error;
-	*_first_chunk = first_chunk;
-	*_last_chunk = last_chunk;
-	polled = 1;
 	return chunk_ready;
 }
 
-extern "C" int arduino_server_get_chunk(const void **ptr)
+extern "C" void arduino_server_ack(void)
 {
-	*ptr = current_chunk;
-	return current_chunk_len;
+	chunk_ready = 0;
+}
+
+extern "C" void arduino_server_get_data(struct arduino_server_data *sd)
+{
+	sd->chunk_ready = chunk_ready;
+	sd->first_chunk = first_chunk;
+	sd->last_chunk = last_chunk;
+	sd->error = error;
+	sd->chunk_ptr = current_chunk;
+	sd->chunk_len = current_chunk_len;
 }
 
 extern "C" int arduino_server_init(void)

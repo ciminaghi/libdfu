@@ -5,13 +5,10 @@
 
 #include <dfu.h>
 #include <dfu-internal.h>
+#include "arduino-server.h"
 
 struct http_arduino_client_priv {
 	struct dfu_binary_file *bf;
-	int chunk_ready;
-	int error;
-	int first_chunk;
-	int last_chunk;
 	int busy;
 };
 
@@ -23,26 +20,22 @@ static int http_arduino_poll_idle(struct dfu_binary_file *bf)
 {
 	if (client_priv.busy)
 		return 0;
-	arduino_server_poll(&client_priv.chunk_ready, &client_priv.error,
-			    &client_priv.first_chunk, &client_priv.last_chunk);
-	return client_priv.chunk_ready ? DFU_FILE_EVENT : 0;
+	return arduino_server_poll() ? DFU_FILE_EVENT : 0;
 }
 
 static int http_arduino_on_event(struct dfu_binary_file *bf)
 {
+	struct arduino_server_data sd;
 	int stat, appended;
 	void *ptr;
 
-	if (!client_priv.chunk_ready) {
-		dfu_err("%s: BUG, chunk is not ready\n", __func__);
-		return DFU_ERROR;
-	}
-	if (client_priv.error)  {
-		arduino_server_send(500, "text/plain", "Programming error");
-		client_priv.chunk_ready = 0;
+	arduino_server_get_data(&sd);
+	if (sd.error)  {
+		arduino_server_send(500, "Programming error");
+		arduino_server_ack();
 		return 0;
 	}
-	if (client_priv.first_chunk == 1) {
+	if (sd.first_chunk) {
 		client_priv.busy = 1;
 		dfu_log("Resetting target ... ");
 		if (dfu_target_reset(bf->dfu) < 0)
@@ -58,13 +51,9 @@ static int http_arduino_on_event(struct dfu_binary_file *bf)
 		dfu_log("OK\n");
 	}
 	client_priv.busy = 0;
-	stat = arduino_server_get_chunk(&ptr);
-	if (stat < 0) {
-		dfu_log("Error getting pointer to current chunk\n");
-		return DFU_ERROR;
-	}
 	dfu_log("%s: appending %d bytes\n", __func__, stat);
-	appended = dfu_binary_file_append_buffer(bf, ptr, stat);
+	appended = dfu_binary_file_append_buffer(bf, sd.chunk_ptr,
+						 sd.chunk_len);
 	if (appended < 0) {
 		dfu_log("Error appending current chunk\n");
 		goto error;
@@ -77,16 +66,16 @@ static int http_arduino_on_event(struct dfu_binary_file *bf)
 		dfu_log("Error: partially appended chunk\n");
 		goto error;
 	}
-	client_priv.chunk_ready = 0;
+	arduino_server_ack();
 	/* OK */
-	if (!client_priv.last_chunk)
-		arduino_server_send(200, "text/plain", "Partial content");
+	if (!sd.last_chunk)
+		arduino_server_send(200, "Partial content");
 	return 0;
 
 error:
 	dfu_log("ERROR\n");
 	client_priv.busy = 0;
-	client_priv.chunk_ready = 0;
+	arduino_server_ack();
 	return DFU_ERROR;
 }
 
