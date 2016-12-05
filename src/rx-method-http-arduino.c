@@ -92,8 +92,17 @@ static int http_arduino_rx_init(struct dfu_binary_file *bf, void *arg)
 	return arduino_server_init();
 }
 
+static void http_arduino_rx_done(struct dfu_binary_file *bf, int status)
+{
+	int code = status < 0 ? 500 : 200;
+	const char *msg = status < 0 ? "Programming error" : "All done";
+
+	arduino_server_send(code, msg);
+}
+
 static const struct dfu_file_rx_method_ops http_arduino_rx_ops = {
 	.init = http_arduino_rx_init,
+	.done = http_arduino_rx_done,
 };
 
 declare_file_rx_method(http_arduino, &http_arduino_rx_ops);
