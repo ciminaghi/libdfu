@@ -30,6 +30,7 @@ struct dfu_host_ops;
 
 struct dfu_file_rx_method_ops {
 	int (*init)(struct dfu_binary_file *, void *arg);
+	void (*done)(struct dfu_binary_file *, int status);
 };
 
 struct dfu_file_rx_method {

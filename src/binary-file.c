@@ -282,8 +282,11 @@ void dfu_binary_file_chunk_done(struct dfu_binary_file *bf,
 		_bf_write_subchunk(bf);
 		return;
 	}
-	if (bf->written)
+	if (bf->written) {
 		bf->really_written = 1;
+		if (bf->rx_method->ops->done)
+			bf->rx_method->ops->done(bf, status);
+	}
 	if (bf->decoded_buf_busy) {
 		dfu_dbg("freeing decoded buffer\n");
 		bf->decoded_buf_busy--;
