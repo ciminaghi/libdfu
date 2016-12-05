@@ -51,14 +51,14 @@ static int http_arduino_on_event(struct dfu_binary_file *bf)
 		dfu_log("OK\n");
 	}
 	client_priv.busy = 0;
-	dfu_log("%s: appending %d bytes\n", __func__, stat);
+	dfu_dbg("%s: appending %d bytes\n", __func__, stat);
 	appended = dfu_binary_file_append_buffer(bf, sd.chunk_ptr,
 						 sd.chunk_len);
 	if (appended < 0) {
 		dfu_log("Error appending current chunk\n");
 		goto error;
 	}
-	dfu_log("%s: %d bytes appended\n", __func__, appended);
+	dfu_dbg("%s: %d bytes appended\n", __func__, appended);
 	if (!appended)
 		/* No space enough, do nothing */
 		return appended;
