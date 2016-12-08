@@ -502,7 +502,8 @@ static int _load_address(struct dfu_target *target, uint16_t addr)
 	};
 
 	cmdb->code = STK_LOAD_ADDRESS;
-	cmdb->addr = addr;
+	/* Convert to flash word address */
+	cmdb->addr = addr >> 1;
 	cmdb->eop = STK_CRC_EOP;
 	priv->curr_descr = &descr0;
 	return dfu_cmd_do_sync(target, &descr0);
