@@ -18,12 +18,9 @@ int binary_probe(struct dfu_binary_file *f)
 	return 0;
 }
 
-/* Fix this */
-int binary_decode_chunk(struct dfu_binary_file *bf, void *out_buf,
-			unsigned long out_sz, phys_addr_t *addr)
+static int _subcopy(struct dfu_binary_file *bf, void *out_buf, int out_sz)
 {
 	int sz = min(out_sz, bf_count_to_end(bf)), tot = sz;
-	struct binary_format_data *data = bf->format_data;
 	char *ptr = bf->buf, *dst = out_buf;
 
 	if (!sz)
@@ -36,6 +33,31 @@ int binary_decode_chunk(struct dfu_binary_file *bf, void *out_buf,
 	memcpy(&dst[tot], &ptr[bf->tail], sz);
 	bf->tail = (bf->tail + sz) & (bf->max_size - 1);
 	tot += sz;
+
+	return tot;
+}
+
+/* Fix this */
+int binary_decode_chunk(struct dfu_binary_file *bf, phys_addr_t *addr)
+{
+	int tot = 0, sz, out_sz = bf_dec_space_to_end(bf);
+	struct binary_format_data *data = bf->format_data;
+
+	if (!out_sz)
+		return out_sz;
+
+	sz = _subcopy(bf, &((char *)bf->decoded_buf)[bf->decoded_head], out_sz);
+	bf->decoded_head = (bf->decoded_head + sz) & (bf->decoded_size - 1);
+	tot += sz;
+
+	out_sz = bf_dec_space(bf);
+	if (!out_sz)
+		goto end;
+	sz = _subcopy(bf, &((char *)bf->decoded_buf)[bf->decoded_head], out_sz);
+	bf->decoded_head = (bf->decoded_head + sz) & (bf->decoded_size - 1);
+	tot += sz;
+
+end:
 	*addr = data->curr_addr;
 	data->curr_addr += tot;
 	return tot;

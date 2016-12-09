@@ -17,10 +17,34 @@ static char bf_decoded_buf[CONFIG_DECODED_BINARY_FILE_BUFSIZE];
 
 static struct dfu_binary_file bfile;
 
-static void _bf_init(struct dfu_binary_file *bf, char *b, struct dfu_data *dfu)
+static int _bf_init(struct dfu_binary_file *bf, char *b, char *db,
+		    int db_size, struct dfu_data *dfu)
 {
+	struct dfu_target *tgt = dfu->target;
+	int cs;
+
 	bf->buf = b;
 	bf->head = bf->tail = 0;
+	bf->decoded_buf = db;
+	bf->decoded_head = bf->decoded_tail = bf->write_tail = 0;
+	bf->decoded_size = db_size;
+	bf->write_chunk_size = db_size;
+	if (tgt->ops->get_write_chunk_size) {
+		/*
+		 * If target asks for a fixed chunk size, actual decoded
+		 * buffer size must be an integer multiple of chunk
+		 * size: we don't want wrap arounds in the middle of a
+		 * flash page
+		 */
+		cs = tgt->ops->get_write_chunk_size(tgt);
+		if (cs > db_size) {
+			dfu_err("%s: chunk size is too big\n", __func__);
+			return -1;
+		}
+		bf->write_chunk_size = cs;
+		bf->decoded_size = (db_size / cs) * cs;
+	}
+	bf->write_chunks_head = bf->write_chunks_tail = 0;
 	bf->written = 0;
 	bf->really_written = 0;
 	bf->format_data = NULL;
@@ -28,16 +52,14 @@ static void _bf_init(struct dfu_binary_file *bf, char *b, struct dfu_data *dfu)
 	bf->rx_method = NULL;
 	bf->max_size = sizeof(bf_buf);
 	bf->tot_appended = 0;
-	bf->decoded_buf_busy = 0;
-	bf->curr_write_size = 0;
-	bf->curr_write_src = 0;
 	bf->dfu = dfu;
 	dfu->bf = bf;
+	return 0;
 }
 
 static void _bf_fini(struct dfu_binary_file *bf, struct dfu_data *dfu)
 {
-	_bf_init(bf, NULL, dfu);
+	_bf_init(bf, NULL, NULL, 0, dfu);
 }
 
 static int _bf_find_format(struct dfu_binary_file *bf)
@@ -61,35 +83,122 @@ static int _bf_find_format(struct dfu_binary_file *bf)
 	return -1;
 }
 
-/* Write a sub-chunk (possibly the whole decoded chunk) */
-static void _bf_write_subchunk(struct dfu_binary_file *bf)
+/*
+ * Enqueue @len bytes for writing, starting from physical address @addr
+ */
+static int bf_enqueue_for_writing(struct dfu_binary_file *bf, int len,
+				  phys_addr_t addr)
+{
+	struct dfu_write_chunk *wc;
+
+	dfu_dbg("%s: len = %d, addr = 0x%08x\n", __func__, len,
+		(unsigned int)addr);
+	do {
+		wc = NULL;
+		if (bf_wc_count(bf)) {
+			/*
+			 * Check whether last write chunk before head is
+			 * pending
+			 */
+			int w = bf->write_chunks_head - 1;
+
+			if (w < 0)
+				w = ARRAY_SIZE(bf->write_chunks) - 1;
+			if (bf->write_chunks[w].pending)
+				wc = &bf->write_chunks[w];
+		}
+		if (!wc)
+			wc = bf_get_write_chunk(bf);
+		if (!wc) {
+			dfu_log("%s: no write chunk available\n", __func__);
+			/* No write chunks available */
+			return -1;
+		}
+		if (wc->pending && addr == wc->addr + wc->len) {
+			int l;
+			
+			/* Pending contiguous chunk */
+			dfu_dbg("%s: pending contiguous chunk\n", __func__);
+			if (wc->len + len <= bf->write_chunk_size) {
+				/* No further chunks needed */
+				wc->len += len;
+				dfu_dbg("%s: new length = %d\n", __func__,
+					wc->len);
+				if (wc->len == bf->write_chunk_size) {
+					dfu_dbg("%s: resetting pending flag\n");
+					wc->pending = 0;
+				}
+				bf->write_tail = (bf->write_tail + len) &
+				    (bf->decoded_size - 1);
+				return 0;
+			}
+			/* Further chunk(s) needed */
+			dfu_dbg("%s: further chunks needed\n", __func__);
+			l = bf->write_chunk_size - wc->len;
+			len -= l;
+			/* write chunk filled, mark it as no more pending */
+			wc->len = bf->write_chunk_size;
+			wc->pending = 0;
+			bf->write_tail = (bf->write_tail + l) &
+				(bf->decoded_size - 1);
+			addr += l;
+			continue;
+		}
+		if (wc->pending) {
+			/*
+			 * Pending non-contiguous chunk: close pending chunk
+			 * and get a new one
+			 */
+			dfu_dbg("%s: pending non-contiguous chunk\n", __func__);
+			wc->pending = 0;
+			continue;
+		}
+		/* New chunk */
+		wc->start = bf->write_tail;
+		wc->len = min(len, bf->write_chunk_size);
+		wc->addr = addr;
+		wc->pending = wc->len < bf->write_chunk_size;
+		dfu_dbg("%s: new chunk: start = %d, len = %d, addr = 0x%08x, pending = %d\n", __func__, wc->start, wc->len, (unsigned int)wc->addr,
+			wc->pending);
+		len -= wc->len;
+		addr += wc->len;
+		bf->write_tail = (bf->write_tail + wc->len) &
+		    (bf->decoded_size - 1);
+		dfu_dbg("%s remaining length = %d\n", __func__, len);
+	} while(len);
+	return 0;
+}
+
+
+/* Send first available write chunk to target for writing */
+static void _bf_do_write(struct dfu_binary_file *bf)
 {
 	struct dfu_target *tgt = bf->dfu->target;
 	const struct dfu_target_ops *tops = tgt->ops;
 	int stat;
+	struct dfu_write_chunk *wc;
 
-	if (bf->curr_write_size)
-		/* Already writing sub-chunk */
-		return;
 	if (dfu_target_busy(tgt))
 		/* Target is busy */
 		return;
-	bf->curr_write_size = bf->curr_decoded_len;
-	if (tops->get_max_chunk_size)
-		bf->curr_write_size = min(bf->curr_decoded_len,
-					  tops->get_max_chunk_size(tgt));
-	dfu_dbg("%s: writing subchunk @0x%08x, size = %lu\n",
-		__func__, bf->curr_addr, bf->curr_write_size);
+	/*
+	 * Get next non-pending write chunk. Be happy with a pending chunk
+	 * if this is the last one
+	 */
+	wc = bf_next_write_chunk(bf, bf->written && bf_wc_count(bf) == 1);
+	if (!wc)
+		/* Nothing to write */
+		return;
+
+	dfu_dbg("%s: writing chunk %d @0x%08x, size = %lu\n",
+		__func__, wc - bf->write_chunks, wc->addr, wc->len);
 	stat = tops->chunk_available(tgt,
-				     bf->curr_addr,
-				     bf->curr_write_src,
-				     bf->curr_write_size);
-	if (stat < 0 && bf->decoded_buf_busy) {
-		dfu_dbg("%s: error from chunk_available(), throwing away buf\n",
-			__func__);
-		bf->curr_decoded_len = 0;
-		bf->curr_write_size = 0;
-		bf->decoded_buf_busy--;
+				     wc->addr,
+				     &((char *)bf->decoded_buf)[wc->start],
+				     wc->len);
+	if (stat < 0) {
+		dfu_dbg("%s: error from chunk_available(), throwing away write cchunk\n", __func__);
+		bf_put_write_chunk(bf);
 	}
 }
 
@@ -106,30 +215,20 @@ static int _bf_do_flush(struct dfu_binary_file *bf)
 		/* Nothing to flush */
 		return 0;
 
-	if (bf->decoded_buf_busy)
-		return 0;
-
 	if (!bf->format_ops)
 		if (_bf_find_format(bf) < 0)
 			return -1;
 
-	stat = bf->format_ops->decode_chunk(bf, bf_decoded_buf,
-					    sizeof(bf_decoded_buf), &addr);
+	stat = bf->format_ops->decode_chunk(bf, &addr);
 	if (stat <= 0) {
 		if (stat < 0)
 			dfu_err("%s: error in decode_chunk\n", __func__);
 		return stat;
 	}
-	dfu_dbg("%s: chunk decoded, addr = 0x%08x\n", __func__,
-		(unsigned int)addr);
-	bf->curr_addr = addr;
-	bf->curr_decoded_len = stat;
-	bf->decoded_buf_busy++;
-	/* We can start writing the subchunk immediately */
-	bf->curr_write_size = 0;
-	bf->curr_write_src = bf_decoded_buf;
-	/* Start writing subchunks */
-	_bf_write_subchunk(bf);
+	dfu_dbg("%s: chunk decoded, addr = 0x%08x, len = %d\n", __func__,
+		(unsigned int)addr, stat);
+
+	bf_enqueue_for_writing(bf, stat, addr);
 	return 0;
 }
 
@@ -188,7 +287,9 @@ dfu_new_binary_file(const void *buf,
 	if (bfile.buf)
 		/* Busy, one bfile at a time allowed at present */
 		return NULL;
-	_bf_init(&bfile, bf_buf, dfu);
+	if (_bf_init(&bfile, bf_buf, bf_decoded_buf,
+		     sizeof(bf_decoded_buf), dfu) < 0)
+		return NULL;
 	if (!buf || !buf_sz)
 		return &bfile;
 	if (_bf_append_data(&bfile, buf, buf_sz) < 0) {
@@ -268,24 +369,13 @@ void dfu_binary_file_chunk_done(struct dfu_binary_file *bf,
 		return;
 	}
 	dfu_log_noprefix(".");
-	/* Update curr_decoded_len and data src/dst pointers */
-	bf->curr_decoded_len -= bf->curr_write_size;
-	bf->curr_write_src += bf->curr_write_size;
-	bf->curr_addr += bf->curr_write_size;
-	/* Subchunk write is done, go on with next one if needed */
-	bf->curr_write_size = 0;
-	if (bf->curr_decoded_len) {
-		_bf_write_subchunk(bf);
-		return;
-	}
-	if (bf->written) {
+	/* Free written chunk */
+	bf_put_write_chunk(bf);
+	/* All done ? */
+	if (bf->written && !bf_wc_count(bf)) {
 		bf->really_written = 1;
 		if (bf->rx_method->ops->done)
 			bf->rx_method->ops->done(bf, status);
-	}
-	if (bf->decoded_buf_busy) {
-		dfu_dbg("freeing decoded buffer\n");
-		bf->decoded_buf_busy--;
 	}
 }
 
@@ -293,8 +383,7 @@ void dfu_binary_file_on_idle(struct dfu_binary_file *bf)
 {
 	if (!bf)
 		return;
-	if (bf->decoded_buf_busy)
-		_bf_write_subchunk(bf);
-	if (!bf->decoded_buf_busy && bf->flushing)
+	_bf_do_write(bf);
+	if (bf->flushing)
 		_bf_do_flush(bf);
 }

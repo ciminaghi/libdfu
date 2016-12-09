@@ -885,7 +885,7 @@ static int stk500_on_idle(struct dfu_target *target)
 	return dfu_cmd_on_idle(target, priv->curr_descr);
 }
 
-static int stk500_get_max_chunk_size(struct dfu_target *target)
+static int stk500_get_write_chunk_size(struct dfu_target *target)
 {
 	return 128;
 }
@@ -899,5 +899,5 @@ struct dfu_target_ops stk500_dfu_target_ops = {
 	.run = stk500_run,
 	.on_interface_event = stk500_on_interface_event,
 	.on_idle = stk500_on_idle,
-	.get_max_chunk_size = stk500_get_max_chunk_size,
+	.get_write_chunk_size = stk500_get_write_chunk_size,
 };

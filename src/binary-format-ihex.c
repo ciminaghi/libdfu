@@ -30,14 +30,29 @@ static inline uint32_t _hi_addr(uint32_t a)
 	return a & 0xffff0000;
 }
 
+static inline int __go_on(int index, int amount, int buf_size)
+{
+	return (index + amount) & (buf_size - 1);
+}
+
 static inline int _go_on(struct dfu_binary_file *f, int index, int amount)
 {
-	return (index + amount) & (f->max_size - 1);
+	return __go_on(index, amount, f->max_size);
+}
+
+static inline int _dec_go_on(struct dfu_binary_file *f, int index, int amount)
+{
+	return __go_on(index, amount, f->decoded_size);
 }
 
 static inline int _next(struct dfu_binary_file *f, int index)
 {
 	return _go_on(f, index, 1);
+}
+
+static inline int _dec_next(struct dfu_binary_file *f, int index)
+{
+	return _dec_go_on(f, index, 1);
 }
 
 static inline int _hex_to_int(char c)
@@ -60,10 +75,10 @@ static inline int _hex_to_int(char c)
  * bytes ( == 0) or error ( < 0)
  */
 static int _decode_hex(struct dfu_binary_file *f, int *index, int nbytes,
-		       int *out, void *buf_out)
+		       int *out, int *out_index)
 {
 	int i, stat = 0, ret;
-	char *ptr = f->buf, *dst = buf_out;
+	char *ptr = f->buf, *dst;
 	int _out = 0;
 
 	if (out && (nbytes > sizeof(*out) * 2))
@@ -75,12 +90,15 @@ static int _decode_hex(struct dfu_binary_file *f, int *index, int nbytes,
 			return stat;
 		/* big endian */
 		_out |= (stat << (4 * (nbytes - (i + 1))));
-		if (dst) {
+		/* FIXME: do this faster (fewer *out_index updates ?) */
+		if (out_index) {
+			dst = &((char *)f->decoded_buf)[*out_index];
 			if (!(i & 0x1)) {
-				dst[i/2] = (stat << 4);
+				*dst = (stat << 4);
 				continue;
 			}
-			dst[i/2] |= stat;
+			*dst |= stat;
+			*out_index = _dec_next(f, *out_index);
 		}
 	}
 	if (out)
@@ -109,9 +127,9 @@ static inline int _decode_hex_dword(struct dfu_binary_file *f, int *index,
 }
 
 static inline int _decode_hex_buf(struct dfu_binary_file *f, int *index,
-				  char *buf, int len)
+				  int *out_index, int len)
 {
-	return _decode_hex(f, index, len, NULL, buf);
+	return _decode_hex(f, index, len, NULL, out_index);
 }
 
 
@@ -232,11 +250,11 @@ static void _print_bad_line(struct dfu_binary_file *bf,
  * Decode a data line. bf->tail must point to line's data section
  */
 static int _decode_data_line(struct dfu_binary_file *bf,
-			     struct ihex_line_data *ld,
-			     char *dst, unsigned long space)
+			     struct ihex_line_data *ld)
 {
-	int index, stat, ret = 0;
+	int index, out_index, stat, ret = 0, space;
 
+	space = bf_dec_space(bf);
 	dfu_dbg("%s: space = %lu, ld->byte_count = %d\n", __func__, space,
 		ld->byte_count);
 	if (space < ld->byte_count)
@@ -247,7 +265,8 @@ static int _decode_data_line(struct dfu_binary_file *bf,
 		return -1;
 	}
 	index = bf->tail;
-	stat = _decode_hex_buf(bf, &index, dst, ld->byte_count * 2);
+	out_index = bf->decoded_head;
+	stat = _decode_hex_buf(bf, &index, &out_index, ld->byte_count * 2);
 	dfu_dbg("%s: decoded %d bytes\n", __func__, stat);
 	if (stat <= 0) {
 		_print_bad_line(bf, ld, index);
@@ -255,7 +274,9 @@ static int _decode_data_line(struct dfu_binary_file *bf,
 	}
 	ret += stat;
 	bf->tail = _go_on(bf, bf->tail, stat);
-	dfu_dbg("%s: new tail is %d\n", __func__, bf->tail);
+	bf->decoded_head = out_index;
+	dfu_dbg("%s: new tail is %d, decoded_head is %d\n", __func__, bf->tail,
+		bf->decoded_head);
 	/* Check line (checksum) */
 	stat = _check_line(bf, ld);
 	dfu_dbg("%s: _check_line() returns %d\n", __func__, stat);
@@ -271,19 +292,18 @@ static int _decode_data_line(struct dfu_binary_file *bf,
  * Decode new file chunk (some lines in general)
  * Stop on line boundary
  */
-int ihex_decode_chunk(struct dfu_binary_file *bf, void *out_buf,
-		      unsigned long out_sz, uint32_t *addr)
+int ihex_decode_chunk(struct dfu_binary_file *bf, uint32_t *addr)
 {
 	struct ihex_line_data ld;
 	int stat, index, tot, decoded_tot, stopit;
-	char *dst = out_buf;
 	struct ihex_format_data *priv = bf->format_data;
 	uint32_t curr_addr, next_addr = 0;
 
 	for (stopit = 0, tot = 0, decoded_tot = 0; !bf->rx_done && !stopit; ) {
 		stat = _peek_line_header(bf, &ld);
 		if (stat <= 0) {
-			dfu_dbg("%s %d, stat = %d\n", __func__, __LINE__, stat);
+			dfu_dbg("%s %d, stat = %d, decoded_tot = %d\n",
+				__func__, __LINE__, stat, decoded_tot);
 			return stat < 0 ? stat : decoded_tot;
 		}
 		switch (ld.record_type) {
@@ -311,8 +331,7 @@ int ihex_decode_chunk(struct dfu_binary_file *bf, void *out_buf,
 			next_addr = curr_addr + ld.byte_count;
 			/* decode line and write data to output buffer */
 			/* note that _decode_data_line() verifies checksum */
-			stat = _decode_data_line(bf, &ld, &dst[decoded_tot],
-						 out_sz - decoded_tot);
+			stat = _decode_data_line(bf, &ld);
 			if (stat <= 0) {
 				dfu_dbg("%s %d stat = %d\n", __func__, __LINE__,
 					stat);
