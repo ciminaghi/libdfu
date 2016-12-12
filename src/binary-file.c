@@ -218,6 +218,10 @@ static int _bf_do_flush(struct dfu_binary_file *bf)
 	if (!bf->format_ops)
 		if (_bf_find_format(bf) < 0)
 			return -1;
+	if (bf_dec_space(bf) < bf->decoded_chunk_size) {
+		dfu_dbg("no space enough in decode buffer\n");
+		return 0;
+	}
 
 	stat = bf->format_ops->decode_chunk(bf, &addr);
 	if (stat <= 0) {
@@ -227,6 +231,9 @@ static int _bf_do_flush(struct dfu_binary_file *bf)
 	}
 	dfu_dbg("%s: chunk decoded, addr = 0x%08x, len = %d\n", __func__,
 		(unsigned int)addr, stat);
+	if (stat > bf->decoded_chunk_size)
+		/* Stay on the safe side */
+		bf->decoded_chunk_size = stat;
 
 	bf_enqueue_for_writing(bf, stat, addr);
 	return 0;

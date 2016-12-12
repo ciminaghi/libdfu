@@ -141,6 +141,8 @@ struct dfu_binary_file {
 	int write_tail;
 	/* Actual size of decoded buffer */
 	int decoded_size;
+	/* Safe estimate of decoded chunk's size */
+	int decoded_chunk_size;
 	/* Size of a write chunk */
 	int write_chunk_size;
 	/* Decoded chunks data */
