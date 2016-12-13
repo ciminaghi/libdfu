@@ -9,7 +9,7 @@
 #endif
 
 #ifndef CONFIG_DECODED_BINARY_FILE_BUFSIZE
-#define CONFIG_DECODED_BINARY_FILE_BUFSIZE 1024
+#define CONFIG_DECODED_BINARY_FILE_BUFSIZE 2048
 #endif
 
 static char bf_buf[CONFIG_BINARY_FILE_BUFSIZE];
@@ -218,7 +218,7 @@ static int _bf_do_flush(struct dfu_binary_file *bf)
 	if (!bf->format_ops)
 		if (_bf_find_format(bf) < 0)
 			return -1;
-	if (bf_dec_space(bf) < bf->decoded_chunk_size) {
+	if (bf_dec_space(bf) < 2 * bf->decoded_chunk_size) {
 		dfu_dbg("no space enough in decode buffer\n");
 		return 0;
 	}
