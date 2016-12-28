@@ -9,6 +9,7 @@ src/dfu.c
 src/host/esp8266.c
 src/host/esp8266-log.cpp
 src/interface/esp8266-serial-arduinouno-hacked.cpp
+src/interface/esp8266-serial-arduinounowifi.cpp
 src/interface/esp8266-serial.c
 src/interface/esp8266-serial.h
 src/target/dfu-cmd.c
