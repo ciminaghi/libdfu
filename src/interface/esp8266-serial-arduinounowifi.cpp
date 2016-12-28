@@ -41,6 +41,11 @@ esp8266_serial_arduino_unowifi_target_reset(struct dfu_interface *iface)
 	return 0;
 }
 
+static void esp8266_serial_arduino_unowifi_done(struct dfu_interface *iface)
+{
+	digitalWrite(4, 1);
+}
+
 const struct dfu_interface_ops
 esp8266_serial_arduino_unowifi_interface_ops = {
 	.open = esp8266_arduino_unowifi_serial_open,
@@ -48,4 +53,5 @@ esp8266_serial_arduino_unowifi_interface_ops = {
 	.read = esp8266_serial_read,
 	.target_reset = esp8266_serial_arduino_unowifi_target_reset,
 	.poll_idle = esp8266_serial_poll_idle,
+	.done = esp8266_serial_arduino_unowifi_done,
 };
