@@ -401,9 +401,13 @@ void dfu_binary_file_chunk_done(struct dfu_binary_file *bf,
 	bf_put_write_chunk(bf);
 	/* All done ? */
 	if (bf->written && !bf_wc_count(bf)) {
+		struct dfu_interface *iface = bf->dfu->interface;
+
 		bf->really_written = 1;
 		if (bf->rx_method->ops->done)
 			bf->rx_method->ops->done(bf, status);
+		if (iface->ops->done)
+			iface->ops->done(iface);
 	}
 }
 

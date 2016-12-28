@@ -48,6 +48,8 @@ struct dfu_interface_ops {
 	 * is missing. Returns DFU_INTERFACE_EVENT in case interface is ready
 	 */
 	int (*poll_idle)(struct dfu_interface *);
+	/* Invoked on programming done */
+	void (*done)(struct dfu_interface *);
 };
 
 struct dfu_target_ops {
