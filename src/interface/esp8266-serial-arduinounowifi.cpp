@@ -14,6 +14,9 @@
  * THIS FILE IS FOR THE ARDUINO VERSION OF THE LIBRARY, DO NOT TRY TO BUILD IT
  * OUTSIDE THE ARDUINO ENVIRONMENT
  *
+ * IMPORTANT NOTICE: this code only works for boards with hw revisions 3 and 4.
+ * It does __not__ work for V2 boards.
+ *
  * Original code by Sebastiano Longo <sebba@arduino.org> and
  * Francesco Alessi <francesco@arduino.org>
  */
