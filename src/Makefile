@@ -32,7 +32,8 @@ endif
 ifeq ($(HOST),esp8266)
 OBJS += host/esp8266.o interface/esp8266-serial.o \
 interface/esp8266-serial-star8.o \
-interface/esp8266-serial-arduinouno-hacked.o
+interface/esp8266-serial-arduinouno-hacked.o \
+interface/esp8266-spi.o
 endif
 
 ifeq ($(HAVE_LWIP),y)
