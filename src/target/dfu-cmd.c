@@ -176,6 +176,33 @@ static int _do_cmdbuf(struct dfu_target *target,
 		}
 		state->status = DFU_CMD_STATUS_WAITING;
 		return DO_CMDBUF_WAIT;
+	case OUT_IN:
+		/*
+		 * This is for spi based interfaces: spi can write and read
+		 * at the same time. Write and read are synchronous, so we
+		 * don't have to wait for the target to reply
+		 */
+		dfu_dbg("%s OUT_IN\n", __func__);
+		if (buf->flags & SEND_CHECKSUM) {
+			dfu_err("%s: checksum not supported for OUT_IN cmds\n",
+				__func__);
+			return _cmd_end(target, descr, -1);
+		}
+		if (!interface->ops->write_read) {
+			dfu_err("%s: write_read() not supported\n", __func__);
+			return _cmd_end(target, descr, -1);
+		}
+		debug_print_out(buf);
+		stat = interface->ops->write_read(interface,
+						  buf->buf.out,
+						  buf->buf.in,
+						  buf->len);
+		if (stat < 0) {
+			dfu_err("%s: interface's write_read returns error\n",
+				__func__);
+			return _cmd_end(target, descr, -1);
+		}
+		return _next_buf(target, descr);
 	default:
 		dfu_err("%s: invalid buffer dir\n", __func__);
 		return -1;

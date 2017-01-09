@@ -7,6 +7,7 @@
 enum dfu_cmd_dir {
 	IN,
 	OUT,
+	OUT_IN,
 };
 
 #define START_CHECKSUM		BIT(0)
@@ -17,7 +18,7 @@ struct dfu_cmddescr;
 struct dfu_cmdbuf {
 	enum dfu_cmd_dir dir;
 	int flags;
-	union {
+	struct dfu_cmdbuf_buf {
 		void *in;
 		const void *out;
 	} buf;
