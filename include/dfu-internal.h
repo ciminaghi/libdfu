@@ -41,6 +41,8 @@ struct dfu_interface_ops {
 	int (*open)(struct dfu_interface *, const char *path, const void *pars);
 	int (*write)(struct dfu_interface *, const char *, unsigned long size);
 	int (*read)(struct dfu_interface *, char *, unsigned long size);
+	int (*write_read)(struct dfu_interface *, const char *wr_buf,
+			  char *rd_buf, unsigned long size);
 	/* Do hw reset for target (maybe gpio ?) */
 	int (*target_reset)(struct dfu_interface *);
 	/*
