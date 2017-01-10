@@ -419,7 +419,15 @@ extern int dfu_interface_open(struct dfu_interface *, const char *name,
 extern struct dfu_target *
 dfu_target_init(const struct dfu_target_ops *ops);
 
-extern int dfu_udelay(struct dfu_data *data, unsigned long us);
+static inline int dfu_udelay(struct dfu_data *dfu, unsigned long us)
+{
+	struct dfu_host *h = dfu->host;
+
+	if (!h->ops || !h->ops->udelay)
+		return -1;
+	h->ops->udelay(h, us);
+	return 0;
+}
 
 extern struct dfu_format_ops *dfu_find_format(const void *start_bfu,
 					      unsigned long buf_size);
