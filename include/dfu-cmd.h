@@ -12,6 +12,7 @@ enum dfu_cmd_dir {
 
 #define START_CHECKSUM		BIT(0)
 #define SEND_CHECKSUM		BIT(1)
+#define RETRY_ON_ERROR		BIT(2)
 
 struct dfu_cmddescr;
 
@@ -32,6 +33,8 @@ struct dfu_cmdbuf {
 	 */
 	int (*completed)(const struct dfu_cmddescr *,
 			 const struct dfu_cmdbuf *);
+	/* Index of buffer to jump to in case of retry */
+	int next_on_retry;
 };
 
 enum dfu_cmd_status {
@@ -39,6 +42,7 @@ enum dfu_cmd_status {
 	DFU_CMD_STATUS_INITIALIZED = 1,
 	DFU_CMD_STATUS_INTERFACE_READY = 2,
 	DFU_CMD_STATUS_WAITING = 3,
+	DFU_CMD_STATUS_RETRYING = 4,
 	DFU_CMD_STATUS_ERROR = -1,
 	DFU_CMD_STATUS_TIMEOUT = -2,
 };

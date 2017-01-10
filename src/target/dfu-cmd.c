@@ -64,14 +64,28 @@ static int _next_buf(struct dfu_target *target,
 		stat = buf->completed(descr, buf);
 		dfu_dbg("%s: completed cb returns %d\n", __func__, stat);
 	}
-	if (buf->timeout > 0)
-		dfu_cancel_timeout(descr->timeout);
-	if (stat < 0)
-		return _cmd_end(target, descr, stat);
-	state->cmdbuf_index++;
-	state->status = DFU_CMD_STATUS_INITIALIZED;
+	if (!(buf->flags & RETRY_ON_ERROR)) {
+		if (buf->timeout > 0)
+			dfu_cancel_timeout(descr->timeout);
+		if (stat < 0)
+			return _cmd_end(target, descr, stat);
+		state->cmdbuf_index++;
+		state->status = DFU_CMD_STATUS_INITIALIZED;
+	} else {
+		/*
+		 * Repeat on error: only advance to next command and cancel
+		 * timeout if completed callback returned ok.
+		 */
+		if (stat >= 0 && buf->timeout > 0)
+			dfu_cancel_timeout(descr->timeout);
+		state->cmdbuf_index = stat < 0 ? buf->next_on_retry :
+			state->cmdbuf_index + 1;
+		if (stat < 0)
+			state->status = DFU_CMD_STATUS_RETRYING;
+	}
 	
-	if (state->cmdbuf_index >= descr->ncmdbufs)
+	if (state->cmdbuf_index >= descr->ncmdbufs &&
+	    state->status != DFU_CMD_STATUS_RETRYING)
 		return _cmd_end(target, descr, DFU_CMD_STATUS_OK);
 	return DO_CMDBUF_CONTINUE;
 }
@@ -112,6 +126,22 @@ static int _do_cmdbuf(struct dfu_target *target,
 	int stat;
 	char dummy_buf[8];
 
+	if (state->status == DFU_CMD_STATUS_INITIALIZED) {
+		if (buf->timeout > 0 && !descr->timeout)
+			dfu_err("%s: cannot setup timeout\n", __func__);
+		if (buf->timeout > 0 && descr->timeout) {
+			dfu_dbg("%s: setup timeout (%d)\n", __func__,
+				buf->timeout);
+			descr->timeout->timeout = buf->timeout;
+			descr->timeout->cb = _on_cmd_timeout;
+			descr->timeout->priv = descr;
+			stat = dfu_set_timeout(target->dfu,
+					       descr->timeout);
+			if (stat < 0)
+				return stat;
+		}
+	}
+
 	switch (buf->dir) {
 	case OUT:
 		dfu_dbg("%s OUT\n", __func__);
@@ -147,22 +177,9 @@ static int _do_cmdbuf(struct dfu_target *target,
 				return _cmd_end(target, descr, -1);
 			}
 		}
-		if (state->status == DFU_CMD_STATUS_INITIALIZED) {
+		if (state->status == DFU_CMD_STATUS_INITIALIZED ||
+		    state->status == DFU_CMD_STATUS_RETRYING)
 			state->received = 0;
-			if (buf->timeout > 0 && !descr->timeout)
-				dfu_err("%s: cannot setup timeout\n", __func__);
-			if (buf->timeout > 0 && descr->timeout) {
-				dfu_dbg("%s: setup timeout (%d)\n", __func__,
-					buf->timeout);
-				descr->timeout->timeout = buf->timeout;
-				descr->timeout->cb = _on_cmd_timeout;
-				descr->timeout->priv = descr;
-				stat = dfu_set_timeout(target->dfu,
-						       descr->timeout);
-				if (stat < 0)
-					return stat;
-			}
-		}
 		ptr = buf->buf.in;
 		stat = interface->ops->read(interface,
 					    &ptr[state->received],
@@ -270,6 +287,7 @@ int dfu_cmd_on_idle(struct dfu_target *target,
 	int stat = 0;
 
 	if (descr->state->status == DFU_CMD_STATUS_INITIALIZED ||
+	    descr->state->status == DFU_CMD_STATUS_RETRYING ||
 	    descr->state->status == DFU_CMD_STATUS_INTERFACE_READY) {
 		stat = _do_cmdbuf(target, descr,
 				  &descr->cmdbufs[descr->state->cmdbuf_index]);
@@ -285,6 +303,7 @@ int dfu_cmd_do_sync(struct dfu_target *target,
 	if (dfu_cmd_start(target, descr) < 0)
 		return -1;
 	while (descr->state->status == DFU_CMD_STATUS_INITIALIZED ||
+	       descr->state->status == DFU_CMD_STATUS_RETRYING ||
 	       descr->state->status == DFU_CMD_STATUS_WAITING ||
 	       descr->state->status == DFU_CMD_STATUS_INTERFACE_READY) {
 			if (dfu_idle(target->dfu) == DFU_CONTINUE)
