@@ -32,6 +32,7 @@ struct stk500_device_data {
 	uint8_t chip_erase[4];
 	uint8_t enter_progmode[4];
 	unsigned int timeout;
+	unsigned int chip_erase_delay;
 	unsigned int stabdelay;
 	unsigned int cmdexedelay;
 	unsigned int synchloops;
