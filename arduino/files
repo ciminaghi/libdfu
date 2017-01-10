@@ -13,6 +13,7 @@ src/interface/esp8266-serial-arduinounowifi.cpp
 src/interface/esp8266-serial.c
 src/interface/esp8266-serial.h
 src/interface/esp8266-spi.c
+src/interface/esp8266-spi-arduinouno-hacked.cpp
 src/interface/esp8266-spi.h
 src/target/dfu-cmd.c
 src/target/stk500-device-atmega328p.c
