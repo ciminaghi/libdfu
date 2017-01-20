@@ -170,6 +170,14 @@ static int bf_enqueue_for_writing(struct dfu_binary_file *bf, int len,
 		wc->start = bf->write_tail;
 		wc->len = min(len, bf->write_chunk_size);
 		wc->addr = addr;
+		if (bf->write_chunk_size &&
+		    (wc->addr & (bf->write_chunk_size - 1))) {
+			/* This cannot happen, it is an error */
+			dfu_err("%s %d: UNALIGNED wc ADDR\n",
+				__func__, __LINE__);
+			dfu_err("len = %d, write_chunk_size = %d, addr = 0x%08x\n", len, bf->write_chunk_size, (unsigned int)addr);
+			return -1;
+		}
 		wc->pending = wc->len < bf->write_chunk_size;
 		dfu_dbg("%s: new chunk: start = %d, len = %d, addr = 0x%08x, pending = %d\n", __func__, wc->start, wc->len, (unsigned int)wc->addr,
 			wc->pending);
@@ -184,7 +192,7 @@ static int bf_enqueue_for_writing(struct dfu_binary_file *bf, int len,
 
 
 /* Send first available write chunk to target for writing */
-static void _bf_do_write(struct dfu_binary_file *bf)
+static int _bf_do_write(struct dfu_binary_file *bf)
 {
 	struct dfu_target *tgt = bf->dfu->target;
 	const struct dfu_target_ops *tops = tgt->ops;
@@ -193,7 +201,7 @@ static void _bf_do_write(struct dfu_binary_file *bf)
 
 	if (dfu_target_busy(tgt))
 		/* Target is busy */
-		return;
+		return 0;
 	/*
 	 * Get next non-pending write chunk. Be happy with a pending chunk
 	 * if this is the last one
@@ -201,7 +209,7 @@ static void _bf_do_write(struct dfu_binary_file *bf)
 	wc = bf_next_write_chunk(bf, bf->written && bf_wc_count(bf) == 1);
 	if (!wc)
 		/* Nothing to write */
-		return;
+		return 0;
 
 	dfu_dbg("%s: writing chunk %d @0x%08x, size = %lu\n",
 		__func__, wc - bf->write_chunks, wc->addr, wc->len);
@@ -213,6 +221,7 @@ static void _bf_do_write(struct dfu_binary_file *bf)
 		dfu_dbg("%s: error from chunk_available(), throwing away write cchunk\n", __func__);
 		bf_put_write_chunk(bf);
 	}
+	return stat;
 }
 
 /*
@@ -248,7 +257,11 @@ static int _bf_do_flush(struct dfu_binary_file *bf)
 		/* Stay on the safe side */
 		bf->decoded_chunk_size = stat;
 
-	bf_enqueue_for_writing(bf, stat, addr);
+	stat = bf_enqueue_for_writing(bf, stat, addr);
+	if (stat < 0) {
+		dfu_err("%s: error enqueueing\n", __func__);
+		return -1;
+	}
 	return 0;
 }
 
@@ -411,11 +424,13 @@ void dfu_binary_file_chunk_done(struct dfu_binary_file *bf,
 	}
 }
 
-void dfu_binary_file_on_idle(struct dfu_binary_file *bf)
+int dfu_binary_file_on_idle(struct dfu_binary_file *bf)
 {
 	if (!bf)
-		return;
-	_bf_do_write(bf);
+		return 0;
+	if (_bf_do_write(bf) < 0)
+		return -1;
 	if (bf->flushing)
-		_bf_do_flush(bf);
+		return _bf_do_flush(bf);
+	return 0;
 }
