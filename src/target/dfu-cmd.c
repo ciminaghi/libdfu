@@ -148,7 +148,9 @@ static int _do_cmdbuf(struct dfu_target *target,
 		if (descr->checksum_update)
 			descr->checksum_update(descr, buf->buf.out, buf->len);
 		/* Flush interface first */
-		interface->ops->read(interface, dummy_buf, sizeof(dummy_buf));
+		if (interface->ops->read)
+		    interface->ops->read(interface, dummy_buf,
+					 sizeof(dummy_buf));
 		debug_print_out(buf);
 		stat = _do_send(interface, buf->buf.out, buf->len);
 		if (stat < 0) {
@@ -235,7 +237,7 @@ int dfu_cmd_start(struct dfu_target *target, const struct dfu_cmddescr *descr)
 	struct dfu_cmdstate *state = descr->state;
 
 	if (!interface || !interface->ops || !interface->ops->write ||
-	    !interface->ops->read) {
+	    (!interface->ops->read && !interface->ops->write_read)) {
 		dfu_err("%s: cannot access interface\n", __func__);
 		return -1;
 	}
