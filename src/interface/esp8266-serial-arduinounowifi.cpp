@@ -55,6 +55,7 @@ esp8266_serial_arduino_unowifi_interface_ops = {
 	.write = esp8266_serial_write,
 	.read = esp8266_serial_read,
 	.target_reset = esp8266_serial_arduino_unowifi_target_reset,
+	.target_run = NULL,
 	.poll_idle = esp8266_serial_poll_idle,
 	.done = esp8266_serial_arduino_unowifi_done,
 };
