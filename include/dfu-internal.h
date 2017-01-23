@@ -81,7 +81,7 @@ struct dfu_target_ops {
 };
 
 #ifndef CONFIG_MAX_CHUNKS
-#define CONFIG_MAX_CHUNKS 16
+#define CONFIG_MAX_CHUNKS 32
 #endif
 
 /*
