@@ -9,6 +9,7 @@ static ESP8266WebServer server(80);
 static int first_chunk, error, chunk_ready, last_chunk;
 static uint8_t *current_chunk;
 static int current_chunk_len;
+static int finalized;
 
 static void handle_ota_post(void)
 {
@@ -54,6 +55,19 @@ extern "C" void arduino_server_get_data(struct arduino_server_data *sd)
 
 extern "C" int arduino_server_init(void)
 {
-	server.on("/otafile", HTTP_POST, handle_ota_post);
-	server.begin();
+	if (!finalized) {
+		server.on("/otafile", HTTP_POST, handle_ota_post);
+		server.begin();
+	}
+	finalized = 0;
+}
+
+extern "C" void arduino_server_fini(void)
+{
+	/*
+	 * ESP8266WebServer has no end() method.
+	 * We just take note that the server has been finalized and avoid
+	 * trying to re-initialize it next time
+	 */
+	finalized = 1;
 }
