@@ -560,8 +560,25 @@ static int http_rx_init(struct dfu_binary_file *bf, void *arg)
 	return stat;
 }
 
+static int http_rx_fini(struct dfu_binary_file *bf)
+{
+	int i;
+	struct http_connection *c;
+
+	for (i = 0, c = http_connections; i < ARRAY_SIZE(http_connections);
+	     i++, c++)
+		if (c->cd) {
+			tcp_server_socket_lwip_raw_abort(c->cd);
+			free_connection(c);
+		}
+	if (tcp_server_socket_lwip_raw_fini(&http_socket_raw) < 0)
+		return -1;
+	return 0;
+}
+
 static const struct dfu_file_rx_method_ops http_rx_ops = {
 	.init = http_rx_init,
+	.fini = http_rx_fini,
 };
 
 declare_file_rx_method(http, &http_rx_ops);

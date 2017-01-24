@@ -31,6 +31,9 @@ struct tcp_conn_data
 	int must_close;
 };
 
+/* Just one socket supported */
+static struct tcp_pcb *tcp_conn_pcb = NULL;
+
 static struct tcp_conn_data connections[MAX_CONNECTIONS];
 
 static struct tcp_conn_data *alloc_connection(void)
@@ -223,8 +226,11 @@ int tcp_server_socket_lwip_raw_init(struct tcp_server_socket_lwip_raw *r,
 				    unsigned short port)
 {
 	err_t err;
-	struct tcp_pcb *tcp_conn_pcb;
 
+	if (!tcp_conn_pcb) {
+		dfu_err("%s: socket busy\n", __func__);
+		return -1;
+	}
 	if (!r->ops) {
 		dfu_err("%s: ops is NULL\n", __func__);
 		return -1;
@@ -247,6 +253,18 @@ int tcp_server_socket_lwip_raw_init(struct tcp_server_socket_lwip_raw *r,
 		return -1;
 	}
 	tcp_accept(tcp_conn_pcb, tcp_conn_accept);
+	return 0;
+}
+
+int tcp_server_socket_lwip_raw_fini(struct tcp_server_socket_lwip_raw *r)
+{
+	if (!tcp_conn_pcb) {
+		dfu_err("%s: no socket\n", __func__);
+		return -1;
+	}
+	tcp_arg(tcp_conn_pcb, NULL);
+	tcp_abort(tcp_conn_pcb);
+	tcp_conn_pcb = NULL;
 	return 0;
 }
 
@@ -293,6 +311,24 @@ int tcp_server_socket_lwip_raw_close(struct tcp_conn_data *es)
 	return 0;
 }
 
+/* Like close, but should be synchronous */
+int tcp_server_socket_lwip_raw_abort(struct tcp_conn_data *es)
+{
+	struct tcp_server_socket_lwip_raw *r = es->raw_socket;
+	struct tcp_pcb *tpcb = es->pcb;
+
+	tcp_abort(tpcb);
+	es->must_close = 0;
+	tcp_arg(tpcb, NULL);
+	tcp_sent(tpcb, NULL);
+	tcp_recv(tpcb, NULL);
+	tcp_err(tpcb, NULL);
+	tcp_poll(tpcb, NULL, 0);
+	tcp_conn_free(es);
+	if (r->ops->closed)
+		r->ops->closed(r);
+	return 0;
+}
 
 #endif /* LWIP_TCP */
 

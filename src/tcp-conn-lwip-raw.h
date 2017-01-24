@@ -40,4 +40,8 @@ int tcp_server_socket_lwip_raw_send(struct tcp_conn_data *,
 
 int tcp_server_socket_lwip_raw_close(struct tcp_conn_data *);
 
+int tcp_server_socket_lwip_raw_abort(struct tcp_conn_data *);
+
+int tcp_server_socket_lwip_raw_fini(struct tcp_server_socket_lwip_raw *);
+
 #endif /* __TCP_CONN_LWIP_RAW_H__ */
