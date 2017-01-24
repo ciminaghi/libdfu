@@ -61,6 +61,11 @@ extern struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 				 const void *target_pars,
 				 const struct dfu_host_ops *hops);
 
+/*
+ * Finalize and free all dfu data (dfu itself, target, interface, ...),
+ * except for the binary file
+ */
+extern int dfu_fini(struct dfu_data *);
 
 extern struct dfu_binary_file *
 dfu_binary_file_start_rx(struct dfu_file_rx_method *method,

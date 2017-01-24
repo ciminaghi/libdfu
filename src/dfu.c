@@ -63,6 +63,39 @@ error:
 	return NULL;
 }
 
+int dfu_fini(struct dfu_data *dfu)
+{
+	int ret = 0, i;
+
+	if (!dfu)
+		return -1;
+	/*
+	 * Cancel all timeouts
+	 */
+	for (i = 0; i < ARRAY_SIZE(timeouts); i++)
+		if (timeouts[i])
+			timeouts[i] = NULL;
+	/* Finalize everything */
+	if (dfu->interface && dfu->interface->ops->fini) {
+		ret = dfu->interface->ops->fini(dfu->interface);
+		if (ret < 0)
+			return ret;
+	}
+	if (dfu->target && dfu->target->ops->fini) {
+		ret = dfu->target->ops->fini(dfu->target);
+		if (ret < 0)
+			return ret;
+	}
+	if (dfu->host && dfu->host->ops->fini) {
+		ret = dfu->host->ops->fini(dfu->host);
+		if (ret < 0)
+			return ret;
+	}
+	/* Reset data structure */
+	dfu->busy = dfu->error = 0;
+	return ret;
+}
+
 static int _insert_timeout(struct dfu_data *dfu, struct dfu_timeout *to)
 {
 	int i, j;
@@ -193,6 +226,9 @@ int dfu_idle(struct dfu_data *dfu)
 	unsigned long now;
 	int next_timeout, stat;
 
+	if (!dfu || !dfu->busy)
+		/* Uninitialized data structure, cannot call dfu_idle */
+		return DFU_ERROR;
 	if (dfu_error(dfu))
 		/* An asynchronous error occurred, tell the user */
 		return DFU_ERROR;

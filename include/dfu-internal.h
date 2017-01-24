@@ -54,6 +54,8 @@ struct dfu_interface_ops {
 	int (*poll_idle)(struct dfu_interface *);
 	/* Invoked on programming done */
 	void (*done)(struct dfu_interface *);
+	/* Finalization method */
+	int (*fini)(struct dfu_interface *);
 };
 
 struct dfu_target_ops {
@@ -78,6 +80,8 @@ struct dfu_target_ops {
 	int (*on_idle)(struct dfu_target *);
 	/* Optional: returns mandatory size for write chunk (flash page size) */
 	int (*get_write_chunk_size)(struct dfu_target *);
+	/* Finalization method */
+	int (*fini)(struct dfu_target *);
 };
 
 #ifndef CONFIG_MAX_CHUNKS
@@ -306,6 +310,7 @@ struct dfu_host_ops {
 	int (*set_interface_event)(struct dfu_host *, void *);
 	int (*set_binary_file_event)(struct dfu_host *, void *);
 	unsigned long (*get_current_time)(struct dfu_host *);
+	int (*fini)(struct dfu_host *);
 };
 
 struct dfu_format_ops {
