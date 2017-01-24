@@ -86,3 +86,14 @@ int linux_serial_read(struct dfu_interface *iface, char *buf,
 	return read(priv->fd, buf, size);
 }
 
+int linux_serial_fini(struct dfu_interface *iface)
+{
+	struct linux_serial_data *priv = iface->priv;
+
+	if (close(priv->fd) < 0) {
+		dfu_err("%s: error closing interface (%s)\n", __func__,
+			strerror(errno));
+		return -1;
+	}
+	return 0;
+}

@@ -60,4 +60,5 @@ const struct dfu_interface_ops linux_serial_stm32_interface_ops = {
 	.write = linux_serial_write,
 	.read = linux_serial_read,
 	.target_reset = linux_serial_stm32_target_reset,
+	.fini = linux_serial_fini,
 };

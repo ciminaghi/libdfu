@@ -17,6 +17,7 @@ extern int linux_serial_write(struct dfu_interface *iface,
 			      const char *buf, unsigned long size);
 extern int linux_serial_read(struct dfu_interface *iface, char *buf,
 			     unsigned long size);
+extern int linux_serial_fini(struct dfu_interface *iface);
 
 #endif /* __LINUX_SERIAL_H__ */
 
