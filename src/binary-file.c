@@ -45,8 +45,11 @@ static int _bf_init(struct dfu_binary_file *bf, char *b, char *db,
 		bf->decoded_size = (db_size / cs) * cs;
 	}
 	bf->write_chunks_head = bf->write_chunks_tail = 0;
+	memset(bf->write_chunks, 0, sizeof(bf->write_chunks));
 	bf->written = 0;
 	bf->really_written = 0;
+	bf->rx_done = 0;
+	bf->flushing = 0;
 	bf->format_data = NULL;
 	bf->format_ops = NULL;
 	bf->rx_method = NULL;
@@ -55,6 +58,8 @@ static int _bf_init(struct dfu_binary_file *bf, char *b, char *db,
 	bf->dfu = dfu;
 	if (dfu)
 		dfu->bf = bf;
+	bf->format_data = NULL;
+	bf->priv = NULL;
 	return 0;
 }
 
