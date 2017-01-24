@@ -99,8 +99,6 @@ extern int dfu_binary_file_get_tot_appended(struct dfu_binary_file *);
 
 extern void *dfu_binary_file_get_priv(struct dfu_binary_file *);
 
-extern int dfu_binary_file_reset(struct dfu_binary_file *);
-
 extern int dfu_set_binary_file_event(struct dfu_data *, void *event_data);
 
 extern int dfu_set_interface_event(struct dfu_data *, void *event_data);

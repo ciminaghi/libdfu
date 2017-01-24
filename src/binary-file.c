@@ -17,19 +17,6 @@ static char bf_decoded_buf[CONFIG_DECODED_BINARY_FILE_BUFSIZE];
 
 static struct dfu_binary_file bfile;
 
-static void _bf_reset(struct dfu_binary_file *bf)
-{
-	bf->head = bf->tail = 0;
-	bf->decoded_chunk_size = 0;
-	bf->written = bf->really_written;
-	bf->rx_done = 0;
-	bf->flushing = 0;
-	bf->tot_appended = 0;
-	bf->decoded_head = bf->decoded_tail = bf->write_tail = 0;
-	bf->write_chunk_size = 0;
-	bf->write_chunks_head = bf->write_chunks_tail = 0;
-}
-
 static int _bf_init(struct dfu_binary_file *bf, char *b, char *db,
 		    int db_size, struct dfu_data *dfu)
 {
@@ -332,14 +319,6 @@ dfu_new_binary_file(const void *buf,
 	bfile.ops = ops;
 	bfile.priv = priv;
 	return &bfile;
-}
-
-int dfu_binary_file_reset(struct dfu_binary_file *bf)
-{
-	if (!bf)
-		return -1;
-	_bf_reset(bf);
-	return 0;
 }
 
 struct dfu_binary_file *
