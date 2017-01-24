@@ -80,3 +80,13 @@ int esp8266_serial_poll_idle(struct dfu_interface *iface)
 	ret = get_rx_fifo_cnt(base);
 	return ret ? DFU_INTERFACE_EVENT : 0;
 }
+
+int esp8266_serial_fini(struct dfu_interface *iface)
+{
+	int available = get_rx_fifo_cnt(base), i;
+
+	/* Just empty the UART fifo */
+	for (i = 0; i < available; i++)
+		readl(base + UART_FIFO);
+	return 0;
+}

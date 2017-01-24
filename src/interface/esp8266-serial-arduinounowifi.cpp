@@ -59,4 +59,5 @@ esp8266_serial_arduino_unowifi_interface_ops = {
 	.target_run = NULL,
 	.poll_idle = esp8266_serial_poll_idle,
 	.done = esp8266_serial_arduino_unowifi_done,
+	.fini = esp8266_serial_fini,
 };

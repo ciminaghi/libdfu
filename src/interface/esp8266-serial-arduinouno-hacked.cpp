@@ -45,4 +45,6 @@ esp8266_serial_arduinouno_hacked_interface_ops = {
 	.target_reset = esp8266_serial_arduinouno_hacked_target_reset,
 	.target_run = NULL,
 	.poll_idle = esp8266_serial_poll_idle,
+	.done = NULL,
+	.fini = esp8266_serial_fini,
 };
