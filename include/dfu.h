@@ -31,6 +31,7 @@ struct dfu_host_ops;
 struct dfu_file_rx_method_ops {
 	int (*init)(struct dfu_binary_file *, void *arg);
 	void (*done)(struct dfu_binary_file *, int status);
+	int (*fini)(struct dfu_binary_file *);
 };
 
 struct dfu_file_rx_method {
@@ -98,6 +99,8 @@ extern int dfu_binary_file_written(struct dfu_binary_file *);
 extern int dfu_binary_file_get_tot_appended(struct dfu_binary_file *);
 
 extern void *dfu_binary_file_get_priv(struct dfu_binary_file *);
+
+extern int dfu_binary_file_fini(struct dfu_binary_file *);
 
 extern int dfu_set_binary_file_event(struct dfu_data *, void *event_data);
 

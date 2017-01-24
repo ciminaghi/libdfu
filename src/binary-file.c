@@ -20,7 +20,7 @@ static struct dfu_binary_file bfile;
 static int _bf_init(struct dfu_binary_file *bf, char *b, char *db,
 		    int db_size, struct dfu_data *dfu)
 {
-	struct dfu_target *tgt = dfu->target;
+	struct dfu_target *tgt = dfu ? dfu->target : NULL;
 	int cs;
 
 	bf->buf = b;
@@ -29,7 +29,7 @@ static int _bf_init(struct dfu_binary_file *bf, char *b, char *db,
 	bf->decoded_head = bf->decoded_tail = bf->write_tail = 0;
 	bf->decoded_size = db_size;
 	bf->write_chunk_size = db_size;
-	if (tgt->ops->get_write_chunk_size) {
+	if (tgt && tgt->ops->get_write_chunk_size) {
 		/*
 		 * If target asks for a fixed chunk size, actual decoded
 		 * buffer size must be an integer multiple of chunk
@@ -53,13 +53,34 @@ static int _bf_init(struct dfu_binary_file *bf, char *b, char *db,
 	bf->max_size = sizeof(bf_buf);
 	bf->tot_appended = 0;
 	bf->dfu = dfu;
-	dfu->bf = bf;
+	if (dfu)
+		dfu->bf = bf;
 	return 0;
 }
 
 static void _bf_fini(struct dfu_binary_file *bf, struct dfu_data *dfu)
 {
 	_bf_init(bf, NULL, NULL, 0, dfu);
+}
+
+int dfu_binary_file_fini(struct dfu_binary_file *bf)
+{
+	int ret = 0;
+
+	if (!bf)
+		return -1;
+	if (bf->rx_method && bf->rx_method->ops->fini) {
+		ret = bf->rx_method->ops->fini(bf);
+		if (ret < 0)
+			return ret;
+	}
+	if (bf->format_ops && bf->format_ops->fini) {
+		ret = bf->rx_method->ops->fini(bf);
+		if (ret < 0)
+			return ret;
+	}
+	_bf_fini(bf, NULL);
+	return 0;
 }
 
 static int _bf_find_format(struct dfu_binary_file *bf)

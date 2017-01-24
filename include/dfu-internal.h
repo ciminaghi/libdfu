@@ -321,6 +321,8 @@ struct dfu_format_ops {
 	 * decoded buffer.
 	 */
 	int (*decode_chunk)(struct dfu_binary_file *, phys_addr_t *addr);
+	/* Finalization method */
+	int (*fini)(struct dfu_binary_file *);
 };
 
 #define declare_file_rx_method(n,o)				\
@@ -456,5 +458,7 @@ extern void dfu_binary_file_chunk_done(struct dfu_binary_file *,
 				       phys_addr_t chunk_addr, int status);
 
 extern int dfu_binary_file_on_idle(struct dfu_binary_file *bf);
+
+extern int dfu_binary_file_fini(struct dfu_binary_file *bf);
 
 #endif /* __DFU_INTERNAL_H__ */
