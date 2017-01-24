@@ -63,4 +63,9 @@ end:
 	return tot;
 }
 
-declare_dfu_format(binary, binary_probe, binary_decode_chunk);
+int binary_fini(struct dfu_binary_file *bf)
+{
+	return 0;
+}
+
+declare_dfu_format(binary, binary_probe, binary_decode_chunk, binary_fini);

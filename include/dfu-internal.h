@@ -346,20 +346,22 @@ extern const struct dfu_format_ops registered_formats_start[],
  * arduino/build_src_tar script do the rest.
  */
 #ifndef ARDUINO
-#define declare_dfu_format(n,p,d)					\
+#define declare_dfu_format(n,p,d,f)					\
     static const struct							\
     dfu_format_ops format_ ## n						\
     __attribute__((section(".binary-formats"), used)) = {		\
 	.probe = p,							\
 	.decode_chunk = d,						\
+	.fini = f,							\
     };
 #else
-#define declare_dfu_format(n,p,d)					\
+#define declare_dfu_format(n,p,d,f)					\
     int (* n ## _probe_ptr)(struct dfu_binary_file *) = p;		\
     int (* n ## _decode_chunk_ptr)(struct dfu_binary_file *bf,		\
 				   void *out_buf,			\
 				   unsigned long out_sz,		\
-				   phys_addr_t *addr) = d
+				   phys_addr_t *addr) = d;		\
+    int (* n ## _fini_ptr)(struct dfu_binary_file *) = f
 #endif
 
 struct dfu_interface {
