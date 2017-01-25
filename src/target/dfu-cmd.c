@@ -142,6 +142,13 @@ static int _do_cmdbuf(struct dfu_target *target,
 		}
 	}
 
+	if (buf->flags & START_CHECKSUM) {
+		if (descr->checksum_reset)
+			descr->checksum_reset(descr);
+		else
+			memset(descr->checksum_ptr, 0, descr->checksum_size);
+	}
+
 	switch (buf->dir) {
 	case OUT:
 		dfu_dbg("%s OUT\n", __func__);
