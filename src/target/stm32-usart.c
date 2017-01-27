@@ -8,6 +8,7 @@
 #include "dfu.h"
 #include "dfu-internal.h"
 #include "dfu-cmd.h"
+#include "stm32-device.h"
 
 #define ACK 0x79
 
@@ -147,6 +148,10 @@ int stm32_usart_init(struct dfu_target *target,
 	target->interface = interface;
 	memset(&priv, 0, sizeof(priv));
 	target->priv = &priv;
+	if (!target->pars) {
+		dfu_err("%s: no parameters received\n", __func__);
+		return -1;
+	}
 	dfu_log("STM32-USART target initialized\n");
 	return 0;
 }
@@ -158,6 +163,7 @@ int stm32_usart_probe(struct dfu_target *target)
 	struct stm32_get_cmd_reply r1;
 	struct stm32_gid_cmd_reply r2;
 	struct stm32_usart_data *priv = target->priv;
+	const struct stm32_device_data *pars = target->pars;
 
 	dfu_log("Probing stm32 target\n");
 	stat = get_cmd(target, &r1);
@@ -179,6 +185,11 @@ int stm32_usart_probe(struct dfu_target *target)
 	if (stat < 0)
 		return -1;
 	dfu_log("Product id = 0x%02x 0x%02x\n", r2.pid[0], r2.pid[1]);
+	if (r2.pid[0] != pars->part_id[0] ||
+	    r2.pid[1] != pars->part_id[1]) {
+		dfu_err("Unexpected part id\n");
+		return -1;
+	}
 	dfu_log("stm32 target probed\n");
 	return 0;
 }
