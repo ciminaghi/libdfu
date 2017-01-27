@@ -49,6 +49,9 @@ static int esp8266_serial_star8_open(struct dfu_interface *iface,
 				     const char *path, const void *pars)
 {
 	static int first = 0;
+	static const struct dfu_serial_pars _pars = {
+		.parity = PARITY_EVEN,
+	};
 
 	if (!first) {
 		dfu_log("Redirecting console to uart1\n");
@@ -58,7 +61,7 @@ static int esp8266_serial_star8_open(struct dfu_interface *iface,
 		PIN_FUNC_SELECT(PERIPHS_IO_MUX_GPIO5_U, FUNC_GPIO5);
 		first = 1;
 	}
-	return esp8266_serial_open(iface, path, pars);
+	return esp8266_serial_open(iface, path, pars ? pars : &_pars);
 }
 
 
