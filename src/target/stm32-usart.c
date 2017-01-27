@@ -455,6 +455,97 @@ static int stm32_usart_get_write_chunk_size(struct dfu_target *target)
 	return 256;
 }
 
+static int stm32_usart_read_memory(struct dfu_target *target, void *buf,
+				   phys_addr_t _addr, unsigned long sz)
+{
+	static const uint8_t cmdb[] = { 0x11, 0xee, };
+	static uint8_t ack, checksum;
+	static uint32_t addr;
+	static uint8_t nbytes;
+	static struct dfu_cmdbuf cmds[] = {
+		[0] = {
+			.dir = OUT,
+			.buf = {
+				.out = cmdb,
+			},
+			.len = sizeof(cmdb),
+		},
+		[1] = {
+			.dir = IN,
+			.buf = {
+				.in = &ack,
+			},
+			.len = sizeof(ack),
+			.timeout = 200,
+			.completed = _check_ack,
+		},
+		[2] = {
+			.dir = OUT,
+			.buf = {
+				.out = &addr,
+			},
+			.flags = START_CHECKSUM|SEND_CHECKSUM,
+			.len = sizeof(addr),
+		},
+		[3] = {
+			.dir = IN,
+			.buf = {
+				.in = &ack,
+			},
+			.len = sizeof(ack),
+			.timeout = 100,
+			.completed = _check_ack,
+		},
+		[4] = {
+			.dir = OUT,
+			.buf = {
+				.out = &nbytes,
+			},
+			.len = sizeof(nbytes),
+		},
+		[5] = {
+			.dir = IN,
+			.buf = {
+				.in = &ack,
+			},
+			.len = sizeof(ack),
+			.timeout = 100,
+			.completed = _check_ack,
+		},
+		[6] = {
+			.dir = IN,
+			.timeout = 500,
+		},
+	};
+	static struct dfu_cmddescr descr0 = {
+		.cmdbufs = cmds,
+		.ncmdbufs = ARRAY_SIZE(cmds),
+		.checksum_ptr = &checksum,
+		.checksum_size = sizeof(checksum),
+		.checksum_update = checksum_update,
+	};
+	struct stm32_usart_data *priv = target->priv;
+
+
+	if (sz > 256) {
+		dfu_err("%s: trying to read more than 256 bytes\n", __func__);
+		return -1;
+	}
+	if (_addr & 0x3) {
+		dfu_err("%s: trying to read from unaligned address\n",
+			__func__);
+		return -1;
+	}
+	addr = _addr;
+	cmds[6].buf.in = buf;
+	cmds[6].len = sz - 1;
+	
+	descr0.state = &priv->cmd_state;
+	descr0.timeout = &priv->cmd_timeout;
+	priv->curr_descr = &descr0;
+	return dfu_cmd_do_sync(target, &descr0);
+}
+
 struct dfu_target_ops stm32_dfu_target_ops = {
 	.init = stm32_usart_init,
 	.probe  = stm32_usart_probe,
@@ -465,4 +556,5 @@ struct dfu_target_ops stm32_dfu_target_ops = {
 	.on_interface_event = stm32_usart_on_interface_event,
 	.on_idle = stm32_usart_on_idle,
 	.get_write_chunk_size = stm32_usart_get_write_chunk_size,
+	.read_memory = stm32_usart_read_memory,
 };
