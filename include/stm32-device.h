@@ -36,6 +36,9 @@ struct stm32_device_data {
 	int (*device_probe)(struct dfu_target *);
 };
 
+extern int stm32_usart_read_memory(struct dfu_target *target, void *buf,
+				   phys_addr_t _addr, unsigned long sz);
+
 #ifdef __cplusplus
 }
 #endif

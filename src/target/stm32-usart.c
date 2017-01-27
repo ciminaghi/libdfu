@@ -455,8 +455,8 @@ static int stm32_usart_get_write_chunk_size(struct dfu_target *target)
 	return 256;
 }
 
-static int stm32_usart_read_memory(struct dfu_target *target, void *buf,
-				   phys_addr_t _addr, unsigned long sz)
+int stm32_usart_read_memory(struct dfu_target *target, void *buf,
+			    phys_addr_t _addr, unsigned long sz)
 {
 	static const uint8_t cmdb[] = { 0x11, 0xee, };
 	static uint8_t ack, checksum;
