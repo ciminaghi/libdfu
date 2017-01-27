@@ -80,6 +80,9 @@ struct dfu_target_ops {
 	int (*on_idle)(struct dfu_target *);
 	/* Optional: returns mandatory size for write chunk (flash page size) */
 	int (*get_write_chunk_size)(struct dfu_target *);
+	/* Read memory area */
+	int (*read_memory)(struct dfu_target *, void *buf, phys_addr_t addr,
+			   unsigned long sz);
 	/* Finalization method */
 	int (*fini)(struct dfu_target *);
 };
