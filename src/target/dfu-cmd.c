@@ -110,8 +110,22 @@ static inline void debug_print_out(const struct dfu_cmdbuf *buf)
 		dfu_log_noprefix("0x%02x ", ptr[i]);
 	dfu_log_noprefix("\n");
 }
+
+static inline void debug_print_checksum(const void *_ptr, int size)
+{
+	int i;
+	const char *ptr = _ptr;
+	dfu_dbg("CHK ---> ");
+	for (i = 0; i < size; i++)
+		dfu_log_noprefix("0x%02x ", ptr[i]);
+	dfu_log_noprefix("\n");
+}
 #else
 static inline void debug_print_out(const struct dfu_cmdbuf *buf)
+{
+}
+
+static inline void debug_print_checksum(const void *ptr, int size)
 {
 }
 #endif
@@ -165,9 +179,12 @@ static int _do_cmdbuf(struct dfu_target *target,
 				__func__);
 			return _cmd_end(target, descr, -1);
 		}
-		if (buf->flags & SEND_CHECKSUM)
+		if (buf->flags & SEND_CHECKSUM) {
+			debug_print_checksum(descr->checksum_ptr,
+					     descr->checksum_size);
 			stat = _do_send(interface, descr->checksum_ptr,
 					descr->checksum_size);
+		}
 		if (stat < 0) {
 			dfu_err("%s: error sending checksum\n",
 				__func__);
