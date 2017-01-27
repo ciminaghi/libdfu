@@ -12,9 +12,36 @@
 #define FUNC_U0RXD 0
 #endif
 
+#define PARITY_MASK (BIT(0)|BIT(1))
+
 static int baud = DEFAULT_BAUD;
 static unsigned long base = REG_UART_BASE(0);
 static int rx_fifo_threshold = 0;
+
+static int setup_pars(const struct dfu_serial_pars *pars)
+{
+	uint32_t v, tmp;
+
+	/* Only parity is supported at the moment */
+	switch(pars->parity) {
+	case PARITY_NONE:
+		return 0;
+	case PARITY_EVEN:
+		v = BIT(1);
+		break;
+	case PARITY_ODD:
+		v = BIT(1)|BIT(0);
+		break;
+	default:
+		dfu_err("esp8266-serial %s: invalid parity %u\n", __func__,
+			pars->parity);
+		return -1;
+	}
+	tmp = readl(base + UART_CONF0);
+	tmp &= ~PARITY_MASK;
+	writel(tmp | v, base + UART_CONF0);
+	return 0;
+}
 
 /*
  * FIXME: currently ignores path and works with serial0 only
@@ -40,6 +67,8 @@ int esp8266_serial_open(struct dfu_interface *iface,
 	v &= ~0x7f;
 	v |= (rx_fifo_threshold & 0x7f);
 	writel(v, base + UART_CONF1);
+	if (pars)
+		return setup_pars(pars);
 	return 0;
 }
 
