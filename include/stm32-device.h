@@ -33,6 +33,7 @@ struct stm32_device_data {
 	unsigned long *sectors_bitmask_ptr;
 	uint8_t part_id[2];
 	enum boot_mode boot_mode;
+	int (*device_probe)(struct dfu_target *);
 };
 
 #ifdef __cplusplus
