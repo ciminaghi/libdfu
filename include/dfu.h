@@ -156,6 +156,17 @@ struct rx_method_http_lwip_data {
 	struct netif *netif;
 };
 
+
+/*
+ * Only parity is supported at the moment
+ */
+struct dfu_serial_pars {
+#define PARITY_NONE 0
+#define PARITY_EVEN 1
+#define PARITY_ODD  2
+	uint8_t parity;
+};
+
 #ifdef __cplusplus
 }
 #endif
