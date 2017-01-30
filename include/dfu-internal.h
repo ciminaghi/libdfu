@@ -85,6 +85,13 @@ struct dfu_target_ops {
 			   unsigned long sz);
 	/* Finalization method */
 	int (*fini)(struct dfu_target *);
+	/*
+	 * Returns !0 if an erase operation must be performed to write @l
+	 * bytes starting from @addr. If an erase must be performed, the
+	 * operation is immediately started.
+	 */
+	int (*must_erase)(struct dfu_target *, phys_addr_t addr,
+			  unsigned long l);
 };
 
 #ifndef CONFIG_MAX_CHUNKS

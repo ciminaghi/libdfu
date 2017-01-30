@@ -224,6 +224,12 @@ static int _bf_do_write(struct dfu_binary_file *bf)
 		/* Nothing to write */
 		return 0;
 
+	if (tops->must_erase && tops->must_erase(tgt, wc->addr, wc->len)) {
+		wc->write_pending = 0;
+		/* Must erase sector */
+		return 0;
+	}
+
 	dfu_dbg("%s: writing chunk %d @0x%08x, size = %lu\n",
 		__func__, wc - bf->write_chunks, wc->addr, wc->len);
 	stat = tops->chunk_available(tgt,
