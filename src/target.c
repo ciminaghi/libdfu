@@ -28,5 +28,5 @@ int dfu_target_erase_all(struct dfu_data *dfu)
 {
 	if (dfu->target->ops->erase_all)
 		return dfu->target->ops->erase_all(dfu->target);
-	return -1;
+	return 0;
 }
