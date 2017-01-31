@@ -362,11 +362,15 @@ int ihex_decode_chunk(struct dfu_binary_file *bf, uint32_t *addr)
 
 			index = ld.data_start_index;
 			/* get new address */
-			stat = _decode_hex_dword(bf, &index, &a);
+			stat = ld.record_type == IHEX_EXT_LINEAR_ADDRESS ?
+				_decode_hex_word(bf, &index, &a) :
+				_decode_hex_dword(bf, &index, &a);
 			if (stat <= 0)  {
 				dfu_err("IHEX: not enough bytes for addr\n");
 				return stat;
 			}
+			if (ld.record_type == IHEX_EXT_LINEAR_ADDRESS)
+				a <<= 16;
 			bf->tail = index;
 			/* verify checksum */
 			stat = _check_line(bf, &ld);
