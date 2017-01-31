@@ -18,6 +18,7 @@ src/interface/esp8266-spi-arduinouno-hacked.cpp
 src/interface/esp8266-spi.h
 src/target/dfu-cmd.c
 src/target/stk500-device-atmega328p.c
+src/target/stm32-device-f469.c
 src/target/stk500.c
 src/target/avrisp.c
 src/target/stm32-usart.c
