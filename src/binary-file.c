@@ -116,12 +116,15 @@ static int bf_enqueue_for_writing(struct dfu_binary_file *bf, int len,
 				  phys_addr_t addr)
 {
 	struct dfu_write_chunk *wc;
+	/* Ignore chunk alignment */
+	int ign_al = bf->dfu->target->ops->ignore_chunk_alignment &&
+		bf->dfu->target->ops->ignore_chunk_alignment(bf->dfu->target);
 
 	dfu_dbg("%s: len = %d, addr = 0x%08x\n", __func__, len,
 		(unsigned int)addr);
 	do {
 		wc = NULL;
-		if (bf_wc_count(bf)) {
+		if (!ign_al && bf_wc_count(bf)) {
 			/*
 			 * Check whether last write chunk before head is
 			 * pending
@@ -182,8 +185,15 @@ static int bf_enqueue_for_writing(struct dfu_binary_file *bf, int len,
 		/* New chunk */
 		wc->start = bf->write_tail;
 		wc->len = min(len, bf->write_chunk_size);
+		if (ign_al)
+			/*
+			 * In case alignment is ignored, we're not guaranteed
+			 * against a write chunk wrapping over, so let's limit
+			 * length to the end of the decoded buffer
+			 */
+			wc->len = min(wc->len, bf->decoded_size - wc->start);
 		wc->addr = addr;
-		if (bf->write_chunk_size &&
+		if (bf->write_chunk_size && !ign_al &&
 		    (wc->addr & (bf->write_chunk_size - 1))) {
 			/* This cannot happen, it is an error */
 			dfu_err("%s %d: UNALIGNED wc ADDR\n",
@@ -191,7 +201,12 @@ static int bf_enqueue_for_writing(struct dfu_binary_file *bf, int len,
 			dfu_err("len = %d, write_chunk_size = %d, addr = 0x%08x\n", len, bf->write_chunk_size, (unsigned int)addr);
 			return -1;
 		}
-		wc->pending = wc->len < bf->write_chunk_size;
+		/*
+		 * We can't have pending chunks in case alignment is ignored.
+		 * In such case write_chunk_size is just a maximum chunk size,
+		 * we can write less
+		 */
+		wc->pending = !ign_al && (wc->len < bf->write_chunk_size);
 		dfu_dbg("%s: new chunk: start = %d, len = %d, addr = 0x%08x, pending = %d\n", __func__, wc->start, wc->len, (unsigned int)wc->addr,
 			wc->pending);
 		len -= wc->len;
