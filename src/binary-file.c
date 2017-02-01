@@ -154,7 +154,8 @@ static int bf_enqueue_for_writing(struct dfu_binary_file *bf, int len,
 				dfu_dbg("%s: new length = %d\n", __func__,
 					wc->len);
 				if (wc->len == bf->write_chunk_size) {
-					dfu_dbg("%s: resetting pending flag\n");
+					dfu_dbg("%s: resetting pending flag\n",
+						__func__);
 					wc->pending = 0;
 				}
 				bf->write_tail = (bf->write_tail + len) &
@@ -245,8 +246,9 @@ static int _bf_do_write(struct dfu_binary_file *bf)
 		return 0;
 	}
 
-	dfu_dbg("%s: writing chunk %d @0x%08x, size = %lu\n",
-		__func__, wc - bf->write_chunks, wc->addr, wc->len);
+	dfu_dbg("%s: writing chunk %d @0x%08x, size = %d\n",
+		__func__, (int)(wc - bf->write_chunks), (unsigned)wc->addr,
+		wc->len);
 	stat = tops->chunk_available(tgt,
 				     wc->addr,
 				     &((char *)bf->decoded_buf)[wc->start],
