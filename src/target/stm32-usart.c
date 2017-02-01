@@ -748,6 +748,24 @@ static int stm32_usart_must_erase(struct dfu_target *target, phys_addr_t addr,
 	return 1;
 }
 
+static int stm32_usart_fini(struct dfu_target *target)
+{
+	const struct stm32_device_data *pars = target->pars;
+	const struct stm32_memory_area *areas = pars->areas[pars->boot_mode];
+	int nareas = pars->nareas[pars->boot_mode], i, n;
+
+	for (i = 0; i < nareas; i++) {
+		if (!areas[i].sectors_bitmask_ptr || !areas[i].nsectors)
+			continue;
+		n = areas[i].nsectors / (sizeof(unsigned long) << 3);
+		if (areas[i].nsectors % (sizeof(unsigned long) << 3))
+			n++;
+		memset(areas[i].sectors_bitmask_ptr, 0,
+		       n * sizeof(unsigned long));
+	}
+	return 0;
+}
+
 struct dfu_target_ops stm32_dfu_target_ops = {
 	.init = stm32_usart_init,
 	.probe  = stm32_usart_probe,
@@ -760,4 +778,5 @@ struct dfu_target_ops stm32_dfu_target_ops = {
 	.ignore_chunk_alignment = stm32_usart_ignore_chunk_alignment,
 	.read_memory = stm32_usart_read_memory,
 	.must_erase = stm32_usart_must_erase,
+	.fini = stm32_usart_fini,
 };
