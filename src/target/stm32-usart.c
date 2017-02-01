@@ -606,6 +606,11 @@ static int stm32_usart_get_write_chunk_size(struct dfu_target *target)
 	return 256;
 }
 
+static int stm32_usart_ignore_chunk_alignment(struct dfu_target *target)
+{
+	return 1;
+}
+
 int stm32_usart_read_memory(struct dfu_target *target, void *buf,
 			    phys_addr_t _addr, unsigned long sz)
 {
@@ -752,6 +757,7 @@ struct dfu_target_ops stm32_dfu_target_ops = {
 	.on_interface_event = stm32_usart_on_interface_event,
 	.on_idle = stm32_usart_on_idle,
 	.get_write_chunk_size = stm32_usart_get_write_chunk_size,
+	.ignore_chunk_alignment = stm32_usart_ignore_chunk_alignment,
 	.read_memory = stm32_usart_read_memory,
 	.must_erase = stm32_usart_must_erase,
 };
