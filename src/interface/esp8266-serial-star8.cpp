@@ -37,9 +37,9 @@ esp8266_serial_star8_target_reset(struct dfu_interface *iface)
 {
 
 	/*
-	 * BOOT0  ----+        +--------
-	 *            |        |
-	 *            +--------+
+	 * BOOT0               +--------
+	 *                     |
+	 *        -------------+
 	 *
 	 * RST    ----+            +----
 	 *            |            |
@@ -48,10 +48,9 @@ esp8266_serial_star8_target_reset(struct dfu_interface *iface)
 	pinMode(4, OUTPUT);
 	pinMode(12, OUTPUT);
 	delay(5);
-	digitalWrite(4, 1);
+	digitalWrite(4, 0);
 	digitalWrite(12, 0);
 	delay(2);
-	digitalWrite(4, 0);
 	digitalWrite(12, 1);
 	delay(5);
 	digitalWrite(4, 1);
