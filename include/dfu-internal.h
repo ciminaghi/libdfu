@@ -114,11 +114,18 @@ struct dfu_write_chunk {
 	int write_pending;
 };
 
+struct dfu_timeout {
+	int timeout;
+	void (*cb)(struct dfu_data *, const void *);
+	const void *priv;
+};
+
 struct dfu_binary_file {
 	struct dfu_data *dfu;
 	const struct dfu_format_ops *format_ops;
 	const struct dfu_binary_file_ops *ops;
 	const struct dfu_file_rx_method *rx_method;
+	struct dfu_timeout rx_timeout;
 	void *buf;
 	void *decoded_buf;
 	int head;
@@ -458,12 +465,6 @@ static inline void dfu_target_set_entry(struct dfu_data *dfu,
 {
 	dfu->target->entry_point = addr;
 }
-
-struct dfu_timeout {
-	int timeout;
-	void (*cb)(struct dfu_data *, const void *);
-	const void *priv;
-};
 
 extern int dfu_set_timeout(struct dfu_data *dfu, struct dfu_timeout *);
 

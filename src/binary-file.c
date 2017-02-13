@@ -60,6 +60,7 @@ static int _bf_init(struct dfu_binary_file *bf, char *b, char *db,
 		dfu->bf = bf;
 	bf->format_data = NULL;
 	bf->priv = NULL;
+	dfu_cancel_timeout(&bf->rx_timeout);
 	return 0;
 }
 
@@ -219,6 +220,22 @@ static int bf_enqueue_for_writing(struct dfu_binary_file *bf, int len,
 	return 0;
 }
 
+static void _bf_rx_timeout(struct dfu_data *dfu, const void *data)
+{
+	dfu_err("BINARY FILE RX TIMEOUT\n");
+	dfu_notify_error(dfu);
+}
+
+static void _set_rx_timeout(struct dfu_binary_file *bf, int moveit)
+{
+	if (moveit)
+		dfu_cancel_timeout(&bf->rx_timeout);
+	bf->rx_timeout.timeout = 10000;
+	bf->rx_timeout.cb = _bf_rx_timeout;
+	bf->rx_timeout.priv = NULL;
+	if (dfu_set_timeout(bf->dfu, &bf->rx_timeout) < 0)
+		dfu_err("WARNING: unable to set rx timeout\n");
+}
 
 /* Send first available write chunk to target for writing */
 static int _bf_do_write(struct dfu_binary_file *bf)
@@ -249,6 +266,7 @@ static int _bf_do_write(struct dfu_binary_file *bf)
 	dfu_dbg("%s: writing chunk %d @0x%08x, size = %d\n",
 		__func__, (int)(wc - bf->write_chunks), (unsigned)wc->addr,
 		wc->len);
+	_set_rx_timeout(bf, 1);
 	stat = tops->chunk_available(tgt,
 				     wc->addr,
 				     &((char *)bf->decoded_buf)[wc->start],
@@ -273,9 +291,11 @@ static int _bf_do_flush(struct dfu_binary_file *bf)
 		/* Nothing to flush */
 		return 0;
 
-	if (!bf->format_ops)
+	if (!bf->format_ops) {
 		if (_bf_find_format(bf) < 0)
 			return -1;
+		_set_rx_timeout(bf, 0);
+	}
 	if (bf_dec_space(bf) < 2 * bf->decoded_chunk_size) {
 		dfu_dbg("no space enough in decode buffer\n");
 		return 0;
@@ -445,6 +465,7 @@ void dfu_binary_file_chunk_done(struct dfu_binary_file *bf,
 		struct dfu_interface *iface = bf->dfu->interface;
 
 		bf->really_written = 1;
+		dfu_cancel_timeout(&bf->rx_timeout);
 		if (bf->rx_method->ops->done)
 			bf->rx_method->ops->done(bf, status);
 		if (iface->ops->done)
