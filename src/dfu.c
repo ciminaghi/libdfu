@@ -137,6 +137,8 @@ static int _remove_timeout(struct dfu_timeout *to)
 	for (i = 0; i < ARRAY_SIZE(timeouts) && timeouts[i] != to; i++);
 	if (i == ARRAY_SIZE(timeouts))
 		return -1;
+	if (i < (ARRAY_SIZE(timeouts) - 1) && timeouts[i+1])
+		timeouts[i+1]->timeout += timeouts[i]->timeout;
 	/* Timeout found, shift everything left  */
 	for ( ; i < (ARRAY_SIZE(timeouts) - 1); i++)
 		timeouts[i] = timeouts[i+1];
