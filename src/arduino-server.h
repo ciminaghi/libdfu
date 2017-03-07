@@ -23,7 +23,7 @@ extern int arduino_server_send(int code, const char *msg);
 extern int arduino_server_poll(void);
 extern void arduino_server_ack(void);
 extern void arduino_server_get_data(struct arduino_server_data *);
-extern int arduino_server_init(void);
+extern int arduino_server_init(void *arg);
 extern void arduino_server_fini(void);
 
 

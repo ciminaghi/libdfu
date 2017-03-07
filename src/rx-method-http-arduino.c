@@ -89,7 +89,7 @@ static int http_arduino_rx_init(struct dfu_binary_file *bf, void *arg)
 	memset(&client_priv, 0, sizeof(client_priv));
 	client_priv.bf = bf;
 	bf->ops = &http_arduino_rx_method_ops;
-	return arduino_server_init();
+	return arduino_server_init(arg);
 }
 
 static void http_arduino_rx_done(struct dfu_binary_file *bf, int status)
