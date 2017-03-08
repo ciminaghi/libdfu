@@ -27,8 +27,6 @@ static int esp8266_serial_star8_open(struct dfu_interface *iface,
 		.parity = PARITY_EVEN,
 	};
 
-	/* Close serial port and replace low level serial driver with ours */
-	Serial.end();
 	return esp8266_serial_open(iface, path, pars ? pars : &_pars);
 }
 

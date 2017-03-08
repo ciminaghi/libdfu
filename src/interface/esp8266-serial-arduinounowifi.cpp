@@ -21,15 +21,6 @@
  * Francesco Alessi <francesco@arduino.org>
  */
 
-static int esp8266_arduino_unowifi_serial_open(struct dfu_interface *iface,
-					       const char *path,
-					       const void *pars)
-{
-	/* Close serial port and replace low level serial driver with ours */
-	Serial.end();
-	return esp8266_serial_open(iface, path, pars);
-}
-
 static int
 esp8266_serial_arduino_unowifi_target_reset(struct dfu_interface *iface)
 {
@@ -51,7 +42,7 @@ static void esp8266_serial_arduino_unowifi_done(struct dfu_interface *iface)
 
 const struct dfu_interface_ops
 esp8266_serial_arduino_unowifi_interface_ops = {
-	.open = esp8266_arduino_unowifi_serial_open,
+	.open = esp8266_serial_open,
 	.write = esp8266_serial_write,
 	.read = esp8266_serial_read,
 	.write_read = NULL,

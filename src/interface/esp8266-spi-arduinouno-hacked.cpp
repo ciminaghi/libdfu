@@ -20,7 +20,6 @@ static int esp8266_arduinouno_hacked_spi_open(struct dfu_interface *iface,
 					      const char *path,
 					      const void *pars)
 {
-	Serial.end();
 	pinMode(5, OUTPUT);
 	pinMode(SCK, INPUT);
 	digitalWrite(5, 1);
