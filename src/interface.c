@@ -3,20 +3,6 @@
 #include "dfu.h"
 #include "dfu-internal.h"
 
-/* Just one interface is enough at the moment */
-static struct dfu_interface interface;
-
-
-struct dfu_interface *dfu_interface_init(const struct dfu_interface_ops *ops)
-{
-	if (interface.ops) {
-		/* BUSY */
-		interface.ops = ops;
-		interface.priv = NULL;
-	}
-	return &interface;
-}
-
 static int _do_setup(struct dfu_interface *iface)
 {
 	int ret;

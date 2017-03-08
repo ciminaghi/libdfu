@@ -443,9 +443,6 @@ static inline int dfu_error(struct dfu_data *dfu)
 	return dfu->error;
 }
 
-extern struct dfu_interface *
-dfu_interface_init(const struct dfu_interface_ops *ops);
-
 extern int dfu_interface_open(struct dfu_interface *, const char *name,
 			      const void *params);
 extern int dfu_interface_fini(struct dfu_interface *);
