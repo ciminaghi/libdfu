@@ -443,6 +443,51 @@ dfu_interface_init(const struct dfu_interface_ops *ops);
 
 extern int dfu_interface_open(struct dfu_interface *, const char *name,
 			      const void *params);
+extern int dfu_interface_fini(struct dfu_interface *);
+extern int dfu_interface_poll_idle(struct dfu_interface *);
+extern int dfu_interface_target_reset(struct dfu_interface *);
+extern int dfu_interface_target_run(struct dfu_interface *);
+extern int dfu_interface_read(struct dfu_interface *, char *, unsigned long);
+extern int dfu_interface_write(struct dfu_interface *, const char *,
+			       unsigned long);
+extern int dfu_interface_write_read(struct dfu_interface *, const char *,
+				    char *, unsigned long);
+
+
+static inline int dfu_interface_has_fini(struct dfu_interface *iface)
+{
+	return iface->ops && iface->ops->fini;
+}
+
+static inline int dfu_interface_has_poll_idle(struct dfu_interface *iface)
+{
+	return iface->ops && iface->ops->poll_idle;
+}
+
+static inline int dfu_interface_has_target_reset(struct dfu_interface *iface)
+{
+	return iface->ops && iface->ops->target_reset;
+}
+
+static inline int dfu_interface_has_target_run(struct dfu_interface *iface)
+{
+	return iface->ops && iface->ops->target_run;
+}
+
+static inline int dfu_interface_has_write(struct dfu_interface *iface)
+{
+	return iface->ops && iface->ops->write;
+}
+
+static inline int dfu_interface_has_read(struct dfu_interface *iface)
+{
+	return iface->ops && iface->ops->read;
+}
+
+static inline int dfu_interface_has_write_read(struct dfu_interface *iface)
+{
+	return iface->ops && iface->ops->write_read;
+}
 
 extern struct dfu_target *
 dfu_target_init(const struct dfu_target_ops *ops);

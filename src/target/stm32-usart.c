@@ -558,8 +558,8 @@ static int stm32_usart_reset_and_sync(struct dfu_target *target)
 	descr0.timeout = &priv->cmd_timeout;
 	for (i = 0; i < 5; i++) {
 		/* Reset and sync: hw reset and enter bootloader */
-		if (interface->ops->target_reset)
-			stat = interface->ops->target_reset(interface);
+		if (dfu_interface_has_target_reset(interface))
+			stat = dfu_interface_target_reset(interface);
 		if (stat < 0)
 			return stat;
 		priv->curr_descr = &descr0;
@@ -577,10 +577,10 @@ int stm32_usart_run(struct dfu_target *target)
 {
 	struct dfu_interface *interface = target->interface;
 
-	if (interface->ops->target_run)
-		return interface->ops->target_run(interface);
-	if (interface->ops->target_reset)
-		return interface->ops->target_reset(interface);
+	if (dfu_interface_has_target_run(interface))
+		return dfu_interface_target_run(interface);
+	if (dfu_interface_has_target_reset(interface))
+		return dfu_interface_target_reset(interface);
 	return -1;
 }
 

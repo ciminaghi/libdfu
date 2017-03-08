@@ -15,7 +15,7 @@ static int _do_send(struct dfu_interface *interface, const void *out,
 	const char *ptr = out;
 
 	for (sent = 0; sent < len; sent += stat) {
-		stat = interface->ops->write(interface, &ptr[sent], len - sent);
+		stat = dfu_interface_write(interface, &ptr[sent], len - sent);
 		if (stat < 0)
 			return stat;
 	}
@@ -30,8 +30,7 @@ static int _do_read(struct dfu_interface *interface, void *in, unsigned int len)
 	char *ptr = in;
 
 	for (recvd = 0; recvd < len; recvd += stat) {
-		stat = interface->ops->read(interface, &ptr[recvd],
-					    len - recvd);
+		stat = dfu_interface_read(interface, &ptr[recvd], len - recvd);
 		if (stat < 0)
 			return stat;
 	}
@@ -169,9 +168,9 @@ static int _do_cmdbuf(struct dfu_target *target,
 		if (descr->checksum_update)
 			descr->checksum_update(descr, buf->buf.out, buf->len);
 		/* Flush interface first */
-		if (interface->ops->read)
-		    interface->ops->read(interface, dummy_buf,
-					 sizeof(dummy_buf));
+		if (dfu_interface_has_read(interface))
+			dfu_interface_read(interface, dummy_buf,
+					   sizeof(dummy_buf));
 		debug_print_out(buf);
 		stat = _do_send(interface, buf->buf.out, buf->len);
 		if (stat < 0) {
@@ -207,9 +206,9 @@ static int _do_cmdbuf(struct dfu_target *target,
 		    state->status == DFU_CMD_STATUS_RETRYING)
 			state->received = 0;
 		ptr = buf->buf.in;
-		stat = interface->ops->read(interface,
-					    &ptr[state->received],
-					    buf->len - state->received);
+		stat = dfu_interface_read(interface,
+					  &ptr[state->received],
+					  buf->len - state->received);
 		dfu_dbg("%s: read returns %d\n", __func__, stat);
 		if (stat > 0)
 			state->received += stat;
@@ -231,15 +230,15 @@ static int _do_cmdbuf(struct dfu_target *target,
 				__func__);
 			return _cmd_end(target, descr, -1);
 		}
-		if (!interface->ops->write_read) {
+		if (!dfu_interface_has_write_read(interface)) {
 			dfu_err("%s: write_read() not supported\n", __func__);
 			return _cmd_end(target, descr, -1);
 		}
 		debug_print_out(buf);
-		stat = interface->ops->write_read(interface,
-						  buf->buf.out,
-						  buf->buf.in,
-						  buf->len);
+		stat = dfu_interface_write_read(interface,
+						buf->buf.out,
+						buf->buf.in,
+						buf->len);
 		if (stat < 0) {
 			dfu_err("%s: interface's write_read returns error\n",
 				__func__);
@@ -260,8 +259,9 @@ int dfu_cmd_start(struct dfu_target *target, const struct dfu_cmddescr *descr)
 	int stat;
 	struct dfu_cmdstate *state = descr->state;
 
-	if (!interface || !interface->ops || !interface->ops->write ||
-	    (!interface->ops->read && !interface->ops->write_read)) {
+	if (!interface || !dfu_interface_has_write(interface) ||
+	    (!dfu_interface_has_read(interface) &&
+	     !dfu_interface_has_write_read(interface))) {
 		dfu_err("%s: cannot access interface\n", __func__);
 		return -1;
 	}
@@ -302,7 +302,7 @@ int dfu_cmd_on_interface_event(struct dfu_target *target,
 		/* Flush interface */
 		dfu_dbg("%s: flushing interface, status = %d\n", __func__,
 			descr->state->status);
-		interface->ops->read(interface, dummy_buf, sizeof(dummy_buf));
+		dfu_interface_read(interface, dummy_buf, sizeof(dummy_buf));
 	}
 	return 0;
 }

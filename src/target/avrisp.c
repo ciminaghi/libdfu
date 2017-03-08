@@ -344,8 +344,8 @@ static int avrisp_reset_and_sync(struct dfu_target *target)
 	struct dfu_interface *interface = target->interface;
 
 	for (i = 0; i < 50; i++) {
-		if (target->interface->ops->target_reset)
-			stat = interface->ops->target_reset(interface);
+		if (dfu_interface_has_target_reset(interface))
+			stat = dfu_interface_target_reset(interface);
 		if (stat < 0)
 			return stat;
 		if (_get_sync(target) >= 0) {
@@ -363,9 +363,9 @@ static int avrisp_reset_and_sync(struct dfu_target *target)
 /* Just reset target */
 static int avrisp_run(struct dfu_target *target)
 {
-	if (!target->interface->ops->target_run)
+	if (!dfu_interface_has_target_run(target->interface))
 		return -1;
-	return target->interface->ops->target_run(target->interface);
+	return dfu_interface_target_run(target->interface);
 }
 
 /* Interface event */

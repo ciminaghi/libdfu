@@ -785,8 +785,8 @@ static int stk500_reset_and_sync(struct dfu_target *target)
 {
 	int n_extp, stat = 0;
 
-	if (target->interface->ops->target_reset)
-		stat = target->interface->ops->target_reset(target->interface);
+	if (dfu_interface_has_target_reset(target->interface))
+		stat = dfu_interface_target_reset(target->interface);
 	if (stat < 0)
 		return stat;
 	if (_get_sync(target) < 0)

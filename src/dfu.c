@@ -76,8 +76,8 @@ int dfu_fini(struct dfu_data *dfu)
 		if (timeouts[i])
 			timeouts[i] = NULL;
 	/* Finalize everything */
-	if (dfu->interface && dfu->interface->ops->fini) {
-		ret = dfu->interface->ops->fini(dfu->interface);
+	if (dfu->interface && dfu_interface_has_fini(dfu->interface)) {
+		ret = dfu_interface_fini(dfu->interface);
 		if (ret < 0)
 			return ret;
 	}
@@ -182,7 +182,7 @@ static void _trigger_file_event(struct dfu_data *dfu)
 
 static void _poll_interface(struct dfu_data *dfu)
 {
-	switch(dfu->interface->ops->poll_idle(dfu->interface)) {
+	switch(dfu_interface_poll_idle(dfu->interface)) {
 	case 0:
 		/* No event */
 		break;
@@ -234,7 +234,7 @@ int dfu_idle(struct dfu_data *dfu)
 	if (dfu_error(dfu))
 		/* An asynchronous error occurred, tell the user */
 		return DFU_ERROR;
-	if (dfu->interface->ops->poll_idle)
+	if (dfu_interface_has_poll_idle(dfu->interface))
 		_poll_interface(dfu);
 	if (_bf_is_pollable(dfu->bf))
 		_poll_file(dfu);
