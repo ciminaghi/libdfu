@@ -106,10 +106,11 @@ int esp8266_serial_poll_idle(struct dfu_interface *iface)
 
 int esp8266_serial_fini(struct dfu_interface *iface)
 {
-	int available = get_rx_fifo_cnt(base), i;
+	uint32_t v;
 
-	/* Just empty the UART fifo */
-	for (i = 0; i < available; i++)
-		readl(base + UART_FIFO);
+	/* Reset FIFOs */
+	v = readl(base + UART_CONF0);
+	v |= (UART_RXFIFO_RST | UART_TXFIFO_RST);
+	writel(v, base + UART_CONF0);
 	return 0;
 }
