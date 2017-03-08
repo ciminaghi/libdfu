@@ -16,7 +16,6 @@
 
 static int baud = DEFAULT_BAUD;
 static unsigned long base = REG_UART_BASE(0);
-static int rx_fifo_threshold = 0;
 
 static int setup_pars(const struct dfu_serial_pars *pars)
 {
@@ -62,11 +61,6 @@ int esp8266_serial_open(struct dfu_interface *iface,
 	writel(v, base + UART_CONF0);
 	v &= ~(UART_RXFIFO_RST | UART_TXFIFO_RST);
 	writel(v, base + UART_CONF0);
-	/* Set rx fifo threshold */
-	v = readl(base + UART_CONF1);
-	v &= ~0x7f;
-	v |= (rx_fifo_threshold & 0x7f);
-	writel(v, base + UART_CONF1);
 	if (pars)
 		return setup_pars(pars);
 	return 0;
