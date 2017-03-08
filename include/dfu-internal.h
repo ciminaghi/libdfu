@@ -387,6 +387,9 @@ struct dfu_interface {
 	struct dfu_data *dfu;
 	const struct dfu_interface_ops *ops;
 	void *priv;
+	int setup_done;
+	const void *pars;
+	const char *path;
 };
 
 struct dfu_target {
