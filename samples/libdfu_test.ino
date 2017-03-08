@@ -19,6 +19,11 @@ struct dfu_binary_file *global_binary_file;
 const char* ssid = "SSID";
 const char* password = "PASSWORD";
 
+static int serial_start_cb(void *dummy)
+{
+	Serial.end();
+}
+
 void setup() {
   Serial1.begin(115200, SERIAL_8N1, SERIAL_TX_ONLY);
   delay(500);
@@ -27,6 +32,8 @@ void setup() {
   global_dfu = dfu_init(&esp8266_serial_arduinouno_hacked_interface_ops,
                         NULL,
                         NULL,
+			serial_start_cb,
+			NULL,
                         &stk500_dfu_target_ops,
                         &atmega328p_device_data,
                         &esp8266_dfu_host_ops);

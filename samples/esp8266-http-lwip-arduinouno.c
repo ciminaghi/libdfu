@@ -83,6 +83,9 @@ user_init(void)
 	dfu = dfu_init(&esp8266_serial_arduinouno_hacked_interface_ops,
 		       NULL,
 		       NULL,
+		       /* No interface start cb */
+		       NULL,
+		       NULL,
 		       &stk500_dfu_target_ops,
 		       &atmega328p_device_data,
 		       &esp8266_dfu_host_ops);

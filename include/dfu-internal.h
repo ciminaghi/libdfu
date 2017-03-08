@@ -390,6 +390,8 @@ struct dfu_interface {
 	int setup_done;
 	const void *pars;
 	const char *path;
+	int (*start_cb)(void *);
+	void *start_cb_data;
 };
 
 struct dfu_target {

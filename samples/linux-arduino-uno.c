@@ -108,6 +108,9 @@ int main(int argc, char *argv[])
 	dfu = dfu_init(&linux_serial_arduino_uno_interface_ops,
 		       port,
 		       NULL,
+		       /* No interface start cb */
+		       NULL,
+		       NULL,
 		       &stk500_dfu_target_ops,
 		       &atmega328p_device_data,
 		       &linux_dfu_host_ops);

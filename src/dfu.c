@@ -21,6 +21,8 @@ static struct dfu_timeout *timeouts[CONFIG_DFU_MAX_TIMEOUTS];
 struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 			  const char *interface_path,
 			  const void *interface_pars,
+			  int (*start_cb)(void *),
+			  void *start_cb_data,
 			  const struct dfu_target_ops *tops,
 			  const void *target_pars,
 			  const struct dfu_host_ops *hops)
@@ -38,6 +40,8 @@ struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 	dfu.host = &host;
 	interface.dfu = &dfu;
 	interface.ops = iops;
+	interface.start_cb = start_cb;
+	interface.start_cb_data = start_cb_data;
 	target.dfu = &dfu;
 	target.ops = tops;
 	target.pars = target_pars;

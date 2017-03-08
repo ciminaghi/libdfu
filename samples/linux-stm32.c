@@ -108,6 +108,9 @@ int main(int argc, char *argv[])
 	dfu = dfu_init(&linux_serial_stm32_interface_ops,
 		       port,
 		       NULL,
+		       /* No interface start cb */
+		       NULL,
+		       NULL,
 		       &stm32_dfu_target_ops,
 		       NULL,
 		       &linux_dfu_host_ops);

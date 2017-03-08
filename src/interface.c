@@ -19,8 +19,12 @@ struct dfu_interface *dfu_interface_init(const struct dfu_interface_ops *ops)
 
 static int _do_setup(struct dfu_interface *iface)
 {
-	int ret = iface->ops->open(iface, iface->path, iface->pars);
+	int ret;
 
+	if (iface->start_cb)
+		if (iface->start_cb(iface->start_cb_data) < 0)
+			return -1;
+	ret = iface->ops->open(iface, iface->path, iface->pars);
 	iface->setup_done = 1;
 	return ret;
 }
