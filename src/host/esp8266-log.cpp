@@ -5,6 +5,13 @@
 #include "Arduino.h"
 #include "HardwareSerial.h"
 
+static HardwareSerial log_port = Serial1;
+
+void dfu_log_set_serial(HardwareSerial& s)
+{
+  log_port = s;
+}
+
 extern "C" {
 
 /* log function, comes from Print::printf() */
@@ -25,9 +32,9 @@ int _dfu_log(const char *format, ...)
 		vsnprintf(buffer, len + 1, format, arg);
 		va_end(arg);
 	}
-	len = Serial1.write((const uint8_t*) buffer, len);
+	len = log_port.write((const uint8_t*) buffer, len);
 	if (buffer[len - 1] == '\n')
-		Serial1.write('\r');
+		log_port.write('\r');
 	if (buffer != temp) {
 		delete[] buffer;
 	}

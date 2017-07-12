@@ -20,6 +20,15 @@ esp8266_spi_arduino_unowifiv8_interface_ops;
 extern const struct dfu_host_ops esp8266_dfu_host_ops;
 extern int _dfu_log(const char *, ...);
 
+#if defined ARDUINO && defined __cplusplus
+
+class HardwareSerial;
+
+// Set serial port for logging (default is Serial1)
+extern void dfu_log_set_serial(HardwareSerial&);
+
+#endif
+
 #ifdef __cplusplus
 }
 #endif
