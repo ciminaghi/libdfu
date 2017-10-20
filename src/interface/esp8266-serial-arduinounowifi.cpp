@@ -38,6 +38,8 @@ esp8266_serial_arduino_unowifi_target_reset(struct dfu_interface *iface)
 static void esp8266_serial_arduino_unowifi_done(struct dfu_interface *iface)
 {
 	digitalWrite(4, 1);
+	delay(1000);
+	ESP.restart();
 }
 
 const struct dfu_interface_ops
