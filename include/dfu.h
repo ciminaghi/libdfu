@@ -4,8 +4,9 @@
 /*
  * libdfu main interface header
  * LGPL v2.1
- * Copyright Arduino S.r.l.
- * Author Davide Ciminaghi 2016
+ * Copyright Arduino S.r.l. 2016
+ * Copyright What’s Next GmbH 2017
+ * Author Davide Ciminaghi 2016 2017
  */
 
 #include "dfu-host.h"
@@ -19,6 +20,7 @@ struct dfu_target;
 struct dfu_host;
 struct dfu_data;
 struct dfu_binary_file;
+struct dfu_file_container;
 
 struct dfu_target_ops;
 struct dfu_interface_ops;
@@ -52,6 +54,40 @@ struct dfu_binary_file_ops {
 	 * This is invoked when an event has been detected on the file
 	 */
 	int (*on_event)(struct dfu_binary_file *);
+};
+
+/* This represents an open file */
+struct dfu_simple_file;
+
+
+struct dfu_simple_file_ops {
+	int (*close)(struct dfu_simple_file *);
+	int (*read)(struct dfu_simple_file *, char *buf, unsigned long sz);
+	int (*write)(struct dfu_simple_file *, const char *buf,
+		     unsigned long sz);
+};
+
+struct dfu_simple_file {
+	const char *path;
+	const struct dfu_simple_file_ops *ops;
+	void *priv;
+};
+
+/*
+ * File container operation: this is like a filesystem with no directories
+ *
+ * @init: initialize (@path and @data are optional)
+ * @fini: finalize
+ * @open_file: open file with given name.
+ * @remove_file: delete file with given name
+ */	
+struct dfu_file_container_ops {
+	int (*init)(struct dfu_file_container *);
+	int (*fini)(struct dfu_file_container *);
+	int (*open_file)(struct dfu_file_container *,
+			 struct dfu_simple_file *,
+			 const char *name, int create_if_not_found);
+	int (*remove_file)(struct dfu_file_container *, const char *name);
 };
 
 extern struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
@@ -120,6 +156,7 @@ extern int dfu_target_probe(struct dfu_data *dfu);
 extern int dfu_target_go(struct dfu_data *dfu);
 
 extern int dfu_target_erase_all(struct dfu_data *dfu);
+
 
 /*
  * File rx methods
