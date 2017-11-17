@@ -113,7 +113,8 @@ int main(int argc, char *argv[])
 		       NULL,
 		       &stk500_dfu_target_ops,
 		       &atmega328p_device_data,
-		       &linux_dfu_host_ops);
+		       &linux_dfu_host_ops,
+		       NULL);
 	if (!dfu) {
 		fprintf(stderr, "Error initializing libdfu\n");
 		exit(127);

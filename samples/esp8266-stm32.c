@@ -65,7 +65,7 @@ user_init()
 		       /* No interface start cb */
 		       NULL, NULL,
 		       &stm32_dfu_target_ops, NULL,
-		       &esp8266_dfu_host_ops);
+		       &esp8266_dfu_host_ops, NULL);
 
 	if (!dfu) {
 		os_printf("Error setting up dfu\n");

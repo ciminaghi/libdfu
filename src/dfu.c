@@ -10,6 +10,7 @@ static struct dfu_data dfu;
 static struct dfu_interface interface;
 static struct dfu_target target;
 static struct dfu_host host;
+static struct dfu_file_container file_container;
 
 static struct dfu_timeout *timeouts[CONFIG_DFU_MAX_TIMEOUTS];
 
@@ -25,7 +26,8 @@ struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 			  void *start_cb_data,
 			  const struct dfu_target_ops *tops,
 			  const void *target_pars,
-			  const struct dfu_host_ops *hops)
+			  const struct dfu_host_ops *hops,
+			  const struct dfu_file_container_ops *fcops)
 {
 	int stat;
 
@@ -38,6 +40,9 @@ struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 	dfu.interface = &interface;
 	dfu.target = &target;
 	dfu.host = &host;
+	dfu.fc = fcops ? &file_container : NULL;
+	if (dfu.fc)
+		dfu.fc->ops = fcops;
 	interface.dfu = &dfu;
 	interface.ops = iops;
 	interface.start_cb = start_cb;
@@ -60,6 +65,13 @@ struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 	stat = iops->open(&interface, interface_path, interface_pars);
 	if (stat < 0)
 		goto error;
+	if (fcops && fcops->init) {
+		file_container.dfu = &dfu;
+		file_container.ops = fcops;
+		stat = fcops->init(&file_container);
+		if (stat < 0)
+			goto error;
+	}
 	return &dfu;
 
 error:

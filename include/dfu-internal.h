@@ -436,6 +436,7 @@ struct dfu_data {
 	struct dfu_target *target;
 	struct dfu_host *host;
 	struct dfu_binary_file *bf;
+	struct dfu_file_container *fc;
 	int busy;
 	int error;
 };
@@ -534,5 +535,11 @@ extern void dfu_binary_file_chunk_done(struct dfu_binary_file *,
 extern int dfu_binary_file_on_idle(struct dfu_binary_file *bf);
 
 extern int dfu_binary_file_fini(struct dfu_binary_file *bf);
+
+struct dfu_file_container {
+	struct dfu_data *dfu;
+	const struct dfu_file_container_ops *ops;
+	void *priv;
+};
 
 #endif /* __DFU_INTERNAL_H__ */

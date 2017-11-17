@@ -97,7 +97,8 @@ extern struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 				 void *start_cb_data,
 				 const struct dfu_target_ops *tops,
 				 const void *target_pars,
-				 const struct dfu_host_ops *hops);
+				 const struct dfu_host_ops *hops,
+				 const struct dfu_file_container_ops *fcops);
 
 /*
  * Finalize and free all dfu data (dfu itself, target, interface, ...),

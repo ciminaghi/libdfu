@@ -88,7 +88,8 @@ user_init(void)
 		       NULL,
 		       &stk500_dfu_target_ops,
 		       &atmega328p_device_data,
-		       &esp8266_dfu_host_ops);
+		       &esp8266_dfu_host_ops,
+		       NULL);
 	if (!dfu) {
 		os_printf("Error initializing libdfu\n");
 		return;
