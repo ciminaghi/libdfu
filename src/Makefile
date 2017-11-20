@@ -28,7 +28,7 @@ endif
 
 ifeq ($(HOST),linux)
 OBJS += host/linux.o interface/linux-serial.o interface/linux-serial-stm32.o \
-interface/linux-serial-arduino-uno.o target/dummy-linux.o
+interface/linux-serial-arduino-uno.o target/dummy-linux.o file-container-posix.o
 endif
 
 ifeq ($(HOST),esp8266)

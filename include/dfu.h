@@ -90,6 +90,8 @@ struct dfu_file_container_ops {
 	int (*remove_file)(struct dfu_file_container *, const char *name);
 };
 
+extern struct dfu_file_container_ops posix_fc_ops;
+
 extern struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 				 const char *interface_path,
 				 const void *interface_pars,
