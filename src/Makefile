@@ -1,7 +1,7 @@
 include $(BASE)/common.mk
 
 OBJS := interface.o target.o binary-file.o dfu.o target/stm32-usart.o \
-target/stk500.o target/dfu-cmd.o target/avrisp.o
+target/stk500.o target/dfu-cmd.o target/avrisp.o file-container.o
 
 # Keep binary-format-bin last: it is special (last resort)
 FORMAT_OBJS := $(subst binary-format-bin.o,,$(patsubst %.c,%.o,$(wildcard binary-format-*.c))) binary-format-bin.o

@@ -542,4 +542,13 @@ struct dfu_file_container {
 	void *priv;
 };
 
+extern int dfu_file_open(struct dfu_data *dfu, const char *path,
+			 int create_if_not_found);
+extern int dfu_file_close(struct dfu_data *dfu, int);
+extern int dfu_file_read(struct dfu_data *dfu, int fd, void *buf,
+			 unsigned long sz);
+extern int dfu_file_write(struct dfu_data *dfu, int fd, const void *buf,
+			  unsigned long sz);
+extern int dfu_file_remove(struct dfu_data *dfu, const char *path);
+
 #endif /* __DFU_INTERNAL_H__ */
