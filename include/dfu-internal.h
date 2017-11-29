@@ -556,4 +556,54 @@ extern void crc32_init(uint32_t *crc);
 extern void crc32_iteration(const uint8_t *buf, uint32_t size, uint32_t *crc);
 extern void crc32_done(uint32_t *crc);
 
+
+/* nordic zip binary format functions and declarations */
+
+/*
+ *  bit 31 bit 30 bit 29
+ *      0       0      0  -> image 0, dat file
+ *      0       0      1  -> image 0, bin file
+ *      0       1      0  -> image 1, dat file
+ *      0       1      1  -> image 1, bin file
+ *      1       0      0  -> image 2, dat file
+ *      1       0      1  -> image 2, bin file
+ *      1       1      0  -> image 3, dat file
+ *      1       1      1  -> image 3, bin file
+ */
+#define NZ_FWFILE_THROW_AWAY BIT(28)
+#define NZ_FWFILE_DATA_IMAGE_SHIFT 29
+#define NZ_FWFILE_IMAGE_SHIFT 30
+#define NZ_FWFILE_DATA_IMAGE_MASK (7 << NZ_FWFILE_DATA_IMAGE_SHIFT)
+#define NZ_FWFILE_DATA_FLAG BIT(NZ_FWFILE_DATA_IMAGE_SHIFT)
+
+enum nzbf_type {
+	NZ_TYPE_COMMAND = 1,
+	NZ_TYPE_DATA = 2,
+};
+
+static inline int nzbf_is_data(uint32_t addr)
+{
+	return !!(addr & NZ_FWFILE_DATA_FLAG);
+}
+
+static inline int nzbf_is_command(uint32_t addr)
+{
+	return !(addr & NZ_FWFILE_DATA_FLAG);
+}
+
+static inline unsigned long nzbf_offset(uint32_t addr)
+{
+	return addr - (addr & NZ_FWFILE_DATA_IMAGE_MASK);
+}
+
+extern int nzbf_get_file_type_and_size(struct dfu_binary_file *bf,
+				       phys_addr_t addr,
+				       enum nzbf_type *type,
+				       unsigned int *size);
+
+/* Calculate crc on @size bytes of a file */
+extern int nzbf_calc_crc(struct dfu_binary_file *bf,
+			 phys_addr_t addr, unsigned int size,
+			 uint32_t *crc);
+
 #endif /* __DFU_INTERNAL_H__ */
