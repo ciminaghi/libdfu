@@ -29,6 +29,19 @@ unsigned long esp8266_get_current_time(struct dfu_host *host)
 	return system_get_time() / 1000;
 }
 
+/*
+ * We don't have any strchr apparently
+ */
+char *strchr(const char *s, int c)
+{
+	const char *ptr;
+
+	for (ptr = s; *ptr; ptr++)
+		if (*ptr == c)
+			return (char *)ptr;
+	return NULL;
+}
+
 const struct dfu_host_ops esp8266_dfu_host_ops = {
 	.init = esp8266_init,
 	.udelay = esp8266_udelay,
