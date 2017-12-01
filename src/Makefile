@@ -1,8 +1,8 @@
 include $(BASE)/common.mk
 
 OBJS := interface.o target.o binary-file.o dfu.o target/stm32-usart.o \
-target/stk500.o target/dfu-cmd.o target/avrisp.o file-container.o \
-crc32.o jsmn.o
+target/stk500.o target/dfu-cmd.o target/avrisp.o target/nordic-spi.o \
+file-container.o crc32.o jsmn.o
 
 CFLAGS += -DJSMN_PARENT_LINKS
 
