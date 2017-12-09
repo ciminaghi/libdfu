@@ -255,7 +255,7 @@ static int _decode_data_line(struct dfu_binary_file *bf,
 	int index, out_index, stat, ret = 0, space;
 
 	space = bf_dec_space(bf);
-	dfu_dbg("%s: space = %lu, ld->byte_count = %d\n", __func__, space,
+	dfu_dbg("%s: space = %d, ld->byte_count = %d\n", __func__, space,
 		ld->byte_count);
 	if (space < ld->byte_count)
 		/* Not enough bytes in output buffer, do nothing */
