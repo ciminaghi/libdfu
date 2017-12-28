@@ -64,7 +64,7 @@ static int _next_buf(struct dfu_target *target,
 		dfu_dbg("%s: completed cb returns %d\n", __func__, stat);
 	}
 	if (!(buf->flags & RETRY_ON_ERROR)) {
-		if (buf->timeout > 0)
+		if (buf->timeout > 0 && buf->dir != NONE)
 			dfu_cancel_timeout(descr->timeout);
 		if (stat < 0)
 			return _cmd_end(target, descr, stat);
@@ -92,7 +92,13 @@ static int _next_buf(struct dfu_target *target,
 static void _on_cmd_timeout(struct dfu_data *data, const void *priv)
 {
 	const struct dfu_cmddescr *descr = priv;
+	struct dfu_cmdstate *state = descr->state;
 
+	if (descr->cmdbufs[state->cmdbuf_index].dir == NONE) {
+		_next_buf(data->target, descr);
+		return;
+	}
+	
 	descr->state->status = DFU_CMD_STATUS_TIMEOUT;
 	if (descr->completed)
 		descr->completed(data->target, descr);
@@ -245,6 +251,17 @@ static int _do_cmdbuf(struct dfu_target *target,
 			return _cmd_end(target, descr, -1);
 		}
 		return _next_buf(target, descr);
+	case NONE:
+		/* Pure delay command */
+		dfu_dbg("%s NONE\n", __func__);
+		if (!buf->timeout) {
+			dfu_dbg("%s: no timeout\n", __func__);
+			/* Skip to next command */
+			return _next_buf(target, descr);
+		}
+		state->status = DFU_CMD_STATUS_WAITING;
+		return DO_CMDBUF_WAIT;
+		
 	default:
 		dfu_err("%s: invalid buffer dir\n", __func__);
 		return -1;

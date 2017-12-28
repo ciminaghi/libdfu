@@ -8,6 +8,8 @@ enum dfu_cmd_dir {
 	IN,
 	OUT,
 	OUT_IN,
+	/* For pure delays */
+	NONE,
 };
 
 #define START_CHECKSUM		BIT(0)
