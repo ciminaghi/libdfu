@@ -58,6 +58,7 @@ struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 			goto error;
 	}
 	if (tops->init) {
+		target.interface = &interface;
 		stat = tops->init(&target, &interface);
 		if (stat < 0)
 			goto error;
