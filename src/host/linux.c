@@ -95,8 +95,8 @@ int linux_idle(struct dfu_host *host, long next_timeout)
 		nfds = 0;
 		ptr = NULL;
 	}
-	if (!nfds && next_timeout < 0)
-		/* No timeout & no events, just return with 0 */
+	if (next_timeout < 0)
+		/* No timeout, just return with 0 */
 		return ret;
 	stat = poll(ptr, nfds, next_timeout - _get_current_time());
 	switch(stat) {
