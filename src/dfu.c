@@ -63,7 +63,7 @@ struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 		if (stat < 0)
 			goto error;
 	}
-	stat = iops->open(&interface, interface_path, interface_pars);
+	stat = dfu_interface_open(&interface, interface_path, interface_pars);
 	if (stat < 0)
 		goto error;
 	if (fcops && fcops->init) {
