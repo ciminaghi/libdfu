@@ -551,4 +551,9 @@ extern int dfu_file_write(struct dfu_data *dfu, int fd, const void *buf,
 			  unsigned long sz);
 extern int dfu_file_remove(struct dfu_data *dfu, const char *path);
 
+/* crc32 calculation */
+extern void crc32_init(uint32_t *crc);
+extern void crc32_iteration(const uint8_t *buf, uint32_t size, uint32_t *crc);
+extern void crc32_done(uint32_t *crc);
+
 #endif /* __DFU_INTERNAL_H__ */
