@@ -1,4 +1,11 @@
-                  GNU LESSER GENERAL PUBLIC LICENSE
+All the code with the exeption of the jsmn json parser is distributed under
+the LGPL license, version 2.1 (see below).
+
+For the jsmn parser, see file LICENSE.jsmn in this directory.
+
+================================================================================
+
+		GNU LESSER GENERAL PUBLIC LICENSE
                        Version 2.1, February 1999
 
  Copyright (C) 1991, 1999 Free Software Foundation, Inc.
