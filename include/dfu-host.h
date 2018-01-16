@@ -54,5 +54,41 @@ static inline uint16_t be16_to_cpu(uint32_t v)
 }
 #endif
 
+static inline uint16_t cpu_to_le16(uint16_t v)
+{
+#if BYTE_ORDER == LITTLE_ENDIAN
+	return v;
+#elif BYTE_ORDER == BIG_ENDIAN
+	return __builtin_bswap16 (v);
+#else
+#error "BYTE ORDER is NOT DEFINED !"
+#endif
+}
+
+static inline uint32_t cpu_to_le32(uint32_t v)
+{
+#if BYTE_ORDER == LITTLE_ENDIAN
+	return v;
+#elif BYTE_ORDER == BIG_ENDIAN
+	return __builtin_bswap32 (v);
+#else
+#error "BYTE ORDER is NOT DEFINED !"
+#endif
+}
+
+static inline uint32_t le32_to_cpu(uint32_t v)
+{
+	return cpu_to_le32(v);
+}
+
+static inline uint16_t le16_to_cpu(uint16_t v)
+{
+	return cpu_to_le16(v);
+}
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __DFU_HOST_H__ */
 
