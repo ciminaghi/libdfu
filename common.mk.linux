@@ -2,6 +2,7 @@
 DYNAMIC_LIB := y
 LDFLAGS := -rdynamic
 HAVE_LWIP := n
+HAVE_PRINT_TRACE := y
 
 ifeq ($(HAVE_LWIP),y)
 ifeq ($(LWIP_SRC_DIR),)

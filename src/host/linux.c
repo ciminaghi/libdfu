@@ -6,6 +6,24 @@
 #include "dfu-internal.h"
 
 
+#include <execinfo.h>
+
+void print_trace (void)
+{
+	void *array[10];
+	size_t size;
+	char **strings;
+	size_t i;
+
+	size = backtrace (array, 10);
+	strings = backtrace_symbols (array, size);
+
+	for (i = 0; i < size; i++)
+		printf ("%s\n", strings[i]);
+
+	free (strings);
+}
+
 struct linux_host_data {
 	struct linux_event_data interface_event_data;
 	struct linux_event_data file_event_data;

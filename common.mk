@@ -41,6 +41,10 @@ ifeq ($(DEBUG),y)
 CFLAGS += -g -DDEBUG
 endif
 
+ifeq ($(HAVE_PRINT_TRACE),y)
+CFLAGS += -DHAVE_PRINT_TRACE=y
+endif
+
 CFLAGS += $(EXTRA_CFLAGS)
 LDFLAGS += $(EXTRA_LDFLAGS)
 

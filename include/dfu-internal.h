@@ -31,6 +31,13 @@
         (time_after_eq(a,b) && \
          time_before_eq(a,c))
 
+#if defined HAVE_PRINT_TRACE
+extern void print_trace(void);
+#else
+static inline void print_trace(void)
+{
+}
+#endif
 
 /* 32 bits targets supported */
 typedef uint32_t phys_addr_t;
