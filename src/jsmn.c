@@ -1,3 +1,6 @@
+#include <string.h>
+#include "dfu.h"
+#include "dfu-internal.h"
 #include "jsmn.h"
 
 /**
@@ -312,3 +315,159 @@ void jsmn_init(jsmn_parser *parser) {
 	parser->toksuper = -1;
 }
 
+/*
+ * Scan token array (produced by jsmn_parse())
+ */
+static int jsmn_tokname_cmp(const char *buf, const jsmntok_t *t,
+			    const char *name)
+{
+	dfu_dbg("%s: name = %.*s, expected = %s\n", __func__,
+		t->end - t->start, buf + t->start, name);
+	return strncmp(buf + t->start, name, t->end - t->start);
+}
+
+#define MAX_JSON_LEVELS 16
+
+static const struct json_node *nodes_ptr_stack[MAX_JSON_LEVELS];
+static int nodes_ptr_stack_index;
+
+static int _push_return_ptr(const struct json_node *ptr)
+{
+	if (nodes_ptr_stack_index >= MAX_JSON_LEVELS) {
+		dfu_err("%s: doo deep !\n", __func__);
+		return -1;
+	}
+	dfu_dbg("%s index = %d, ptr = %p\n", __func__,
+		nodes_ptr_stack_index, ptr);
+	nodes_ptr_stack[nodes_ptr_stack_index++] = ptr;
+	return 0;
+}
+
+static const struct json_node *_pop_return_ptr(const struct json_node **nptr)
+{
+	if (nodes_ptr_stack_index < 0) {
+		dfu_err("%s: messed up with nodes ptr stack", __func__);
+		return NULL;
+	}
+	--nodes_ptr_stack_index;
+	*nptr = nodes_ptr_stack[nodes_ptr_stack_index];
+	dfu_dbg("%s index = %d, ptr = %p\n", __func__, nodes_ptr_stack_index,
+		*nptr);
+	return *nptr;
+}
+
+static const struct json_node *_next_node(const struct json_node **nptr)
+{
+	const struct json_node *out;
+
+	if ((*nptr)->next_tree) {
+		/* Save pointer to next element in tree for when we come back */
+		if (_push_return_ptr((*nptr) + 1) < 0)
+			return NULL;
+		if ((*nptr)->next_tree[0].type == JSMN_UNDEFINED) {
+			dfu_err("%s: INVALID TREE WITH JUST ONE NODE\n",
+				__func__);
+			return NULL;
+		}
+		out = (*nptr)->next_tree;
+		(*nptr) = (*nptr)->next_tree;
+		return out;
+	}
+	out = (*nptr) + 1;
+	if (out->type == JSMN_UNDEFINED && !(out->flags & JSON_STOP_PARSING))
+		/* This tree is finished, go back to old one */
+		do {
+			out = _pop_return_ptr(nptr);
+		} while (out && out->type == JSMN_UNDEFINED &&
+			 !(out->flags & JSON_STOP_PARSING));
+	if (!(out->flags & JSON_STOP_PARSING))
+		*nptr = out;
+	return out;
+}
+
+#ifdef DEBUG
+static const char *toktype_str[] = {
+	"UNDEFINED",
+	"OBJECT",
+	"ARRAY",
+	"STRING",
+	"PRIMITIVE",
+};
+
+static void dump_token(const char *buf, const jsmntok_t *t)
+{
+dfu_log("TOKEN: type %s, start = %d, end = %d, size = %d, parent = %d\n",
+		toktype_str[t->type], t->start, t->end, t->size, t->parent);
+	if (t->type == JSMN_STRING || t->type == JSMN_PRIMITIVE)
+		dfu_log("\tVALUE = %.*s\n", t->end - t->start, buf + t->start);
+}
+#else
+static inline void dump_token(const char *buf, const jsmntok_t *t)
+{
+}
+#endif
+
+const jsmntok_t *jsmn_search_token(const char *buf,
+				   const jsmntok_t *tokens, int ntokens,
+				   const char *name)
+{
+	int i;
+	const jsmntok_t *t;
+
+	for (t = tokens, i = 0; i < ntokens; t++, i++) {
+		dump_token(buf, t);
+		if (t->type != JSMN_STRING && t->type != JSMN_PRIMITIVE)
+			continue;
+		if (!jsmn_tokname_cmp(buf, t, name))
+			return t;
+	}
+	return NULL;
+}
+
+int jsmn_scan_tokens(const char *buf,
+		     const jsmntok_t *t,
+		     int ntokens,
+		     const struct json_node **nptr,
+		     void *priv_cb)
+{
+	int i, j, stat;
+#ifdef DEBUG
+	static int lev = 0;
+#endif
+
+	dfu_dbg("%s lev %d\n", __func__, lev++);
+	if ((*nptr)->flags & JSON_STOP_PARSING)
+		return 0;
+	dump_token(buf, t);
+	if ((*nptr)->type != t->type) {
+		dfu_err("%s: unexpected node type\n", __func__);
+		return -1;
+	}
+	if (t->type == JSMN_STRING && (*nptr)->expected)
+		if (jsmn_tokname_cmp(buf, t, (*nptr)->expected) &&
+		    !((*nptr)->flags & JSON_NON_MANDATORY_NODE)) {
+			dfu_err("Invalid expected value\n");
+			return -1;
+		}
+	if ((*nptr)->cb)
+		if ((*nptr)->cb(*nptr, t, buf, priv_cb) < 0) {
+			dfu_dbg("%s %d\n", __func__, __LINE__);
+			return -1;
+		}
+
+	for (i = 0, j = 0; i < t->size; i++) {
+		if (!_next_node(nptr))
+			return ((*nptr)->flags & JSON_STOP_PARSING) ? 0 : -1;
+		stat = jsmn_scan_tokens(buf, t + j + 1,
+					ntokens - j,
+					nptr,
+					priv_cb);
+		if (stat <= 0) {
+			dfu_dbg("%s %d\n", __func__, __LINE__);
+			return stat;
+		}
+		j += stat;
+	}
+	dfu_dbg("%s %d returns %d\n", __func__, lev--, j + 1);
+	return j + 1;
+}

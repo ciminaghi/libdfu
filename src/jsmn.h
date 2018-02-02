@@ -69,6 +69,36 @@ void jsmn_init(jsmn_parser *parser);
 int jsmn_parse(jsmn_parser *parser, const char *js, size_t len,
 		jsmntok_t *tokens, unsigned int num_tokens);
 
+/*
+ * Callback parser based on jsmn, Davide Ciminaghi <ciminaghi@gnudd.com> 2018
+ */
+struct json_node {
+	jsmntype_t type;
+	/* Expected string value */
+	const char *expected;
+	/*
+	 * Optional callback invoked when entering node
+	 */
+	int (*cb)(const struct json_node *, const jsmntok_t *, const char *buf,
+		  void *priv);
+	/*
+	 * Tree for parsing children
+	 */
+	const struct json_node *next_tree;
+#define JSON_NON_MANDATORY_NODE BIT(0)
+#define JSON_STOP_PARSING BIT(1)
+	int flags;
+};
+
+const jsmntok_t *jsmn_search_token(const char *buf,
+				   const jsmntok_t *tokens, int ntokens,
+				   const char *name);
+
+int jsmn_scan_tokens(const char *buf,
+		     const jsmntok_t *tokens, int ntokens,
+		     const struct json_node **ptr,
+		     void *priv_cb);
+
 #ifdef __cplusplus
 }
 #endif
