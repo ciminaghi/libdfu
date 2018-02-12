@@ -69,6 +69,8 @@ int linux_idle(struct dfu_host *host, long next_timeout)
 	int stat, ret = 0, nfds;
 	struct linux_host_data *data = host->priv;
 	struct pollfd *ptr;
+	unsigned int delta;
+	int no_actual_timeout;
 	struct pollfd pfd[2] = {
 		{
 			.fd = data->interface_event_data.fd,
@@ -98,10 +100,17 @@ int linux_idle(struct dfu_host *host, long next_timeout)
 	if (next_timeout < 0)
 		/* No timeout, just return with 0 */
 		return ret;
-	stat = poll(ptr, nfds, next_timeout - _get_current_time());
+	/*
+	 * Target could have some event for us which is not a timeout ....
+	 * wake up after 100ms anyway
+	 * FIXME: mmmm this should be done better
+	 */
+	delta = min(next_timeout - _get_current_time(), 100);
+	no_actual_timeout = delta == 100;
+	stat = poll(ptr, nfds, delta);
 	switch(stat) {
 	case 0:
-		return DFU_TIMEOUT;
+		return no_actual_timeout ? 0 : DFU_TIMEOUT;
 	case -1:
 		if (errno == EINTR)
 			/* Interrupted */
