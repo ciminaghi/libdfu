@@ -109,10 +109,13 @@ static void _on_cmd_timeout(struct dfu_data *data, const void *priv)
 static inline void debug_print_out(const struct dfu_cmdbuf *buf)
 {
 	int i;
-	const char *ptr = buf->buf.out;
+	const unsigned char *ptr = buf->buf.out;
 	dfu_dbg("---> ");
-	for (i = 0; i < buf->len; i++)
-		dfu_log_noprefix("0x%02x ", ptr[i]);
+	for (i = 0; i < buf->len; i++) {
+		dfu_log_noprefix("%02X ", ptr[i]);
+		if (!i % 16)
+			dfu_log_noprefix("\n");
+	}
 	dfu_log_noprefix("\n");
 }
 
