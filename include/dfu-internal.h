@@ -39,6 +39,24 @@ static inline void print_trace(void)
 }
 #endif
 
+#ifndef offsetof
+#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
+#endif
+
+#ifdef HAVE_SPIFFS
+# ifdef HOST_esp8266
+typedef int *intptr_t;
+#endif
+# ifndef HOST_esp8266
+typedef signed int s32_t;
+typedef unsigned int u32_t;
+# endif
+typedef signed short s16_t;
+typedef unsigned short u16_t;
+typedef signed char s8_t;
+typedef unsigned char u8_t;
+#endif
+
 /* 32 bits targets supported */
 typedef uint32_t phys_addr_t;
 

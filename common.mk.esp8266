@@ -12,6 +12,7 @@ CROSS_COMPILE := xtensa-lx106-elf-
 LD_SCRIPT	= eagle.app.v6.ld
 LIBS		= gcc hal pp phy net80211 lwip wpa main crypto dfu
 HAVE_LWIP	:= y
+HAVE_SPIFFS	:= y
 
 SDK_LIBDIR	:= $(addprefix $(SDK_BASE)/,$(SDK_LIBDIR))
 SDK_INCDIR	:= $(addprefix -I$(SDK_BASE)/,$(SDK_INCDIR))

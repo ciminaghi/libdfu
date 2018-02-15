@@ -49,6 +49,13 @@ CFLAGS += -DHAVE_LWIP
 OBJS += picohttpparser.o $(HTTP_URLS_OBJ) $(HTMLS) tcp-conn-lwip-raw.o
 endif
 
+ifeq ($(HAVE_SPIFFS),y)
+OBJS += spiffs/spiffs_cache.o spiffs/spiffs_check.o spiffs/spiffs_gc.o \
+spiffs/spiffs_hydrogen.o spiffs/spiffs_nucleus.o
+
+CFLAGS += -I$(BASE)/src/spiffs -DHAVE_SPIFFS=1
+endif
+
 OBJS += $(FORMAT_OBJ) $(RX_METHOD_OBJ) $(STK500_DEVICES_OBJS) \
 $(STM32_DEVICES_OBJS)
 

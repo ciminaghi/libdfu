@@ -35,6 +35,10 @@ SAMPLES_SSID and SAMPLE_PASSWORD are respectively the SSID and the password
 of the wifi network the esp8266 shall connect to (these are only used by
 sample programs).
 
+spiffs (spi flash file system) is being integrated for saving files locally
+before writing them to the target. This is needed by the nordic-zip binary
+format. spiffs was taken here: git@github.com:pellepl/spiffs.git. See
+spiffs/LICENSE for relevant license.
 
 This is currently work in progress and completely experimental.
 
