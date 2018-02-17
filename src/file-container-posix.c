@@ -49,7 +49,8 @@ static struct dfu_simple_file_ops posix_simple_file_ops = {
 static int posix_fc_open(struct dfu_file_container *fc,
 			 struct dfu_simple_file *f,
 			 const char *name,
-			 int create_if_not_found)
+			 int create_if_not_found,
+			 unsigned long max_size_ignored)
 {
 	int flags = O_RDWR | (create_if_not_found ? O_CREAT : 0);
 	struct posix_simple_file_data *data = malloc(sizeof(*data));

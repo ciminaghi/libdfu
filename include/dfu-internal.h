@@ -542,8 +542,9 @@ struct dfu_file_container {
 	void *priv;
 };
 
+/* max_size is ignored when create_if_not_found is zero */
 extern int dfu_file_open(struct dfu_data *dfu, const char *path,
-			 int create_if_not_found);
+			 int create_if_not_found, unsigned long max_size);
 extern int dfu_file_close(struct dfu_data *dfu, int);
 extern int dfu_file_read(struct dfu_data *dfu, int fd, void *buf,
 			 unsigned long sz);

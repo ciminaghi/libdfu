@@ -30,7 +30,7 @@ static void __free_file(struct dfu_simple_file *f)
 }
 
 int dfu_file_open(struct dfu_data *dfu, const char *path,
-		  int create_if_not_found)
+		  int create_if_not_found, unsigned long max_size)
 {
 	struct dfu_simple_file *f;
 	int ret;
@@ -40,7 +40,8 @@ int dfu_file_open(struct dfu_data *dfu, const char *path,
 	f = __find_free_file_slot(path);
 	if (!f)
 		return -1;
-	ret = dfu->fc->ops->open_file(dfu->fc, f, path, create_if_not_found);
+	ret = dfu->fc->ops->open_file(dfu->fc, f, path, create_if_not_found,
+				      max_size);
 	if (ret < 0) {
 		__free_file(f);
 		return ret;

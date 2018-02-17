@@ -408,7 +408,7 @@ static int _decode_local_header(struct dfu_binary_file *bf, int start)
 	}
 	priv->curr_rf = rf;
 	priv->state = STORING_FILE;
-	rf->fd = dfu_file_open(dfu, rf->name, 1);
+	rf->fd = dfu_file_open(dfu, rf->name, 1, rf->size);
 	if (rf->fd < 0) {
 		dfu_err("%s: could not open file %s\n", __func__,
 			rf->name);
@@ -521,7 +521,7 @@ static int _send_file_chunk(struct dfu_binary_file *bf, uint32_t *addr)
 	if (!rf->done) {
 		/* First chunk, close and reopen to reset file offset */
 		dfu_file_close(bf->dfu, rf->fd);
-		rf->fd = dfu_file_open(bf->dfu, rf->name, 0);
+		rf->fd = dfu_file_open(bf->dfu, rf->name, 0, 0);
 		if (rf->fd < 0) {
 			dfu_err("%s: cannot reopen file %s\n",
 				__func__, rf->name);
@@ -1038,7 +1038,7 @@ int nzbf_calc_crc(struct dfu_binary_file *bf, phys_addr_t addr,
 	fi = &priv->images[image_index];
 	rf = (t == NZ_TYPE_COMMAND) ? fi->dat_file : fi->bin_file;
 	crc32_init(out);
-	fd = dfu_file_open(bf->dfu, rf->name, 0);
+	fd = dfu_file_open(bf->dfu, rf->name, 0, 0);
 	if (fd < 0) {
 		dfu_err("%s: could not open file %s\n", __func__, rf->name);
 		return fd;

@@ -86,7 +86,8 @@ struct dfu_file_container_ops {
 	int (*fini)(struct dfu_file_container *);
 	int (*open_file)(struct dfu_file_container *,
 			 struct dfu_simple_file *,
-			 const char *name, int create_if_not_found);
+			 const char *name, int create_if_not_found,
+			 unsigned long max_size);
 	int (*remove_file)(struct dfu_file_container *, const char *name);
 };
 
