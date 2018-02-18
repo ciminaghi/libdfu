@@ -94,6 +94,7 @@ struct dfu_file_container_ops {
 };
 
 extern struct dfu_file_container_ops posix_fc_ops;
+extern struct dfu_file_container_ops spi_flash_fc_ops;
 
 extern struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 				 const char *interface_path,
