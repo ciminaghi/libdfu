@@ -40,10 +40,18 @@ static int posix_simple_file_write(struct dfu_simple_file *f, const char *buf,
 	return write(priv->fd, buf, sz);
 }
 
+static int posix_simple_file_seek(struct dfu_simple_file *f, unsigned long ptr)
+{
+	struct posix_simple_file_data *priv = f->priv;
+
+	return lseek(priv->fd, SEEK_SET, ptr);
+}
+
 static struct dfu_simple_file_ops posix_simple_file_ops = {
 	.close = posix_simple_file_close,
 	.read = posix_simple_file_read,
 	.write = posix_simple_file_write,
+	.seek = posix_simple_file_seek,
 };
 
 static int posix_fc_open(struct dfu_file_container *fc,

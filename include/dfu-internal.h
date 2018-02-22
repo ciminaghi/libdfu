@@ -550,6 +550,7 @@ extern int dfu_file_read(struct dfu_data *dfu, int fd, void *buf,
 			 unsigned long sz);
 extern int dfu_file_write(struct dfu_data *dfu, int fd, const void *buf,
 			  unsigned long sz);
+extern int dfu_file_seek(struct dfu_data *dfu, int fd, unsigned long ptr);
 extern int dfu_file_remove(struct dfu_data *dfu, const char *path);
 
 /* crc32 calculation */

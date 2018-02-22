@@ -65,6 +65,7 @@ struct dfu_simple_file_ops {
 	int (*read)(struct dfu_simple_file *, char *buf, unsigned long sz);
 	int (*write)(struct dfu_simple_file *, const char *buf,
 		     unsigned long sz);
+	int (*seek)(struct dfu_simple_file *, unsigned long fileptr);
 };
 
 struct dfu_simple_file {

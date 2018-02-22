@@ -98,6 +98,22 @@ int dfu_file_write(struct dfu_data *dfu, int fd, const void *buf,
 	return ret;
 }
 
+int dfu_file_seek(struct dfu_data *dfu, int fd, unsigned long fileptr)
+{
+	struct dfu_simple_file *f;
+	int ret = 0;
+
+	if (fd < 0 || fd >= MAX_DFU_FILES)
+		return -1;
+	f = &files[fd];
+	if (f->ops->seek)
+		ret = f->ops->seek(f, fileptr);
+	if (ret < 0)
+		return ret;
+	f->fileptr = fileptr;
+	return ret;
+}
+
 int dfu_file_remove(struct dfu_data *dfu, const char *path)
 {
 	if (!dfu->fc || !dfu->fc->ops->remove_file)
