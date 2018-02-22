@@ -70,6 +70,7 @@ struct dfu_simple_file_ops {
 struct dfu_simple_file {
 	const char *path;
 	const struct dfu_simple_file_ops *ops;
+	unsigned long fileptr;
 	void *priv;
 };
 

@@ -46,6 +46,7 @@ int dfu_file_open(struct dfu_data *dfu, const char *path,
 		__free_file(f);
 		return ret;
 	}
+	f->fileptr = 0;
 	return f - files;
 }
 
@@ -65,26 +66,36 @@ int dfu_file_close(struct dfu_data *dfu, int fd)
 int dfu_file_read(struct dfu_data *dfu, int fd, void *buf, unsigned long sz)
 {
 	struct dfu_simple_file *f;
+	int ret;
 
 	if (fd < 0 || fd >= MAX_DFU_FILES)
 		return -1;
 	f = &files[fd];
 	if (!f->ops->read)
 		return -1;
-	return f->ops->read(f, buf, sz);
+	ret = f->ops->read(f, buf, sz);
+	if (ret < 0)
+		return ret;
+	f->fileptr += ret;
+	return ret;
 }
 
 int dfu_file_write(struct dfu_data *dfu, int fd, const void *buf,
 		   unsigned long sz)
 {
 	struct dfu_simple_file *f;
+	int ret;
 
 	if (fd < 0 || fd >= MAX_DFU_FILES)
 		return -1;
 	f = &files[fd];
 	if (!f->ops->read)
 		return -1;
-	return f->ops->write(f, buf, sz);
+	ret = f->ops->write(f, buf, sz);
+	if (ret < 0)
+		return ret;
+	f->fileptr += ret;
+	return ret;
 }
 
 int dfu_file_remove(struct dfu_data *dfu, const char *path)
