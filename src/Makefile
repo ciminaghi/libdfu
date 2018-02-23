@@ -42,6 +42,7 @@ interface/esp8266-serial-star8.o \
 interface/esp8266-serial-arduinouno-hacked.o \
 interface/esp8266-spi.o \
 interface/esp8266-spi-arduinouno-hacked.o \
+interface/esp8266-spi-arduinoprimo.o \
 file-container-esp8266.o
 endif
 
