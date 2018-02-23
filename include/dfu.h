@@ -96,6 +96,13 @@ struct dfu_file_container_ops {
 extern struct dfu_file_container_ops posix_fc_ops;
 extern struct dfu_file_container_ops spi_flash_fc_ops;
 
+/* Placed here to know the size of it */
+struct spi_flash_sector {
+	struct spi_flash_sector *prev;
+	struct spi_flash_sector *next;
+};
+
+
 extern struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 				 const char *interface_path,
 				 const void *interface_pars,
