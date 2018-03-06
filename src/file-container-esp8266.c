@@ -260,7 +260,7 @@ static int _spi_flash_file_wrrd(struct dfu_simple_file *f, const char *wrbuf,
 		return -1;
 
 	first_sector = f->fileptr / sectdatasize;
-	dfu_dbg("%s, first_sector = %u, sectdatasize = %d\n", __func__,
+	dfu_dbg("%s, first_sector = %u, sectdatasize = %lu\n", __func__,
 		first_sector, sectdatasize);
 
 	/*
@@ -296,7 +296,8 @@ static int _spi_flash_file_wrrd(struct dfu_simple_file *f, const char *wrbuf,
 			offset_in_sector;
 		dfu_dbg("%s: data_addr = %x\n", __func__, data_addr);
 		_rdwrsz = min(_sz - done, sectdatasize - offset_in_sector);
-		dfu_dbg("%s: done = %u, _rdwrsz\n", __func__, done, _rdwrsz);
+		dfu_dbg("%s: done = %lu, _rdwrsz = %lu\n", __func__, done,
+			_rdwrsz);
 		/* FIXME: ALIGN BUFFER TO DOUBLE WORD ADDRESS ? */
 		if (rdbuf) {
 			if (spi_flash_read(data_addr, (uint32 *)(&rdbuf[done]),
@@ -328,8 +329,8 @@ static int spi_flash_file_read(struct dfu_simple_file *f, char *buf,
 	struct spi_flash_file_data *_f = f->priv;
 	unsigned long _sz;
 
-	dfu_dbg("%s, path = %s, fileptr = %u, written = %u\n", __func__,
-		f->fileptr, _f->written);
+	dfu_dbg("%s, path = %s, fileptr = %lu, written = %lu\n", __func__,
+		f->path, f->fileptr, _f->written);
 
 	/* _sz is actual size which can be read */
 	_sz = min(sz, _f->written - f->fileptr);
@@ -346,8 +347,8 @@ static int spi_flash_file_write(struct dfu_simple_file *f,
 {
 	struct spi_flash_file_data *_f = f->priv;
 
-	dfu_dbg("%s, path = %s, fileptr = %u, written = %u\n", __func__,
-		f->fileptr, _f->written);
+	dfu_dbg("%s, path = %s, fileptr = %lu, written = %lu\n", __func__,
+		f->path, f->fileptr, _f->written);
 	if (f->fileptr < _f->written) {
 		dfu_err("trying to overwrite file\n");
 		return -1;

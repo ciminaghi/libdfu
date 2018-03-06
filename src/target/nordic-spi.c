@@ -364,7 +364,7 @@ static int _check_select_obj_reply(const struct dfu_cmddescr *descr,
 	dfu_dbg("offset = %u\n", sod->offset);
 	memcpy(&v, &ptr[11], sizeof(v));
 	sod->crc = le32_to_cpu(v);
-	dfu_dbg("crc = %u\n", sod->crc);
+	dfu_dbg("crc = 0x%08x\n", (unsigned int)sod->crc);
 	return 0;
 }
 
@@ -541,7 +541,8 @@ static int _check_calc_crc_reply(const struct dfu_cmddescr *descr,
 	memcpy(&data.object_final_offset, &ptr[3], sizeof(uint32_t));
 	memcpy(&data.object_crc_from_target, &ptr[7], sizeof(uint32_t));
 	dfu_dbg("object_final_offset = %u, object_crc_from_target = 0x%08x\n",
-		data.object_final_offset, data.object_crc_from_target);
+		(unsigned)data.object_final_offset,
+		(unsigned)data.object_crc_from_target);
 	return ret;
 }
 
@@ -760,7 +761,7 @@ static int _start_sending_file(struct dfu_target *target,
 	if (ret < 0)
 		return ret;
 	dfu_dbg("%s: addr = 0x%08x, type = %d, sz = %lu, total file size = %u\n",
-		__func__, address, sod->type, sz, total_file_size);
+		__func__, (unsigned)address, sod->type, sz, total_file_size);
 
 	ret = _select_obj(target);
 	if (ret < 0) {

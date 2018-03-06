@@ -494,7 +494,7 @@ static uint32_t _state_to_address(enum nzstate state, int image_index)
 {
 	uint32_t out = state == SENDING_COMMAND ? 0 : NZ_FWFILE_DATA_FLAG;
 
-	dfu_dbg("out = 0x%08x\n", out);
+	dfu_dbg("out = 0x%08x\n", (unsigned int)out);
 	out += (image_index << NZ_FWFILE_IMAGE_SHIFT);
 	return out;
 }
@@ -537,7 +537,7 @@ static int _send_file_chunk(struct dfu_binary_file *bf, uint32_t *addr)
 	bf->decoded_head = _go_on(bf, bf->decoded_head, sz);
 	*addr = _state_to_address(priv->state, priv->send_image_index) +
 		rf->done;
-	dfu_dbg("%s: address = 0x%08x\n", __func__, *addr);
+	dfu_dbg("%s: address = 0x%08x\n", __func__, (unsigned int)*addr);
 	/* Update number of sent bytes */
 	rf->done += sz;
 	if (rf->done >= rf->size) {
@@ -1017,7 +1017,7 @@ int nzbf_get_file_type_and_size(struct dfu_binary_file *bf,
 		NZ_TYPE_COMMAND;
 	rf = (*t == NZ_TYPE_COMMAND) ? fi->dat_file : fi->bin_file;
 	*size = rf->size;
-	dfu_dbg("addr = 0x%08x, size = %u\n", addr, *size);
+	dfu_dbg("addr = 0x%08x, size = %u\n", (unsigned)addr, *size);
 	return 0;
 }
 
