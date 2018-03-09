@@ -905,19 +905,26 @@ static int nordic_spi_target_erase_all(struct dfu_target *target)
 }
 
 /*
- * Reset and sync target: we do nothing here
+ * Reset and sync target
  */
 static int nordic_spi_reset_and_sync(struct dfu_target *target)
 {
-	return 0;
+	dfu_dbg("%s entered\n", __func__);
+	if (!dfu_interface_has_target_reset(target->interface)) {
+		dfu_err("PLEASE ADD A TARGET RESET FOR THIS INTERFACE\n");
+		return -1;
+	}
+	return dfu_interface_target_reset(target->interface);
 }
 
-/* Let target run */
-
-/* Just reset target */
+/* Let the target run */
 static int nordic_spi_run(struct dfu_target *target)
 {
-	return 0;
+	if (!dfu_interface_has_target_run(target->interface)) {
+		dfu_err("PLEASE ADD A TARGET RUN FOR THIS INTERFACE\n");
+		return -1;
+	}
+	return dfu_interface_target_run(target->interface);
 }
 
 /* Interface event */
