@@ -98,6 +98,8 @@ esp8266_spi_arduinoprimo_target_run(struct dfu_interface *iface)
 
 /*
  * Activate cs, do a write-read and deactivate cs
+ * Proper write-read doesn't actually work on esp8266 hspi (but mysteriously
+ * works with avrisp), so let's just __read__ and ignore the output buffer
  */
 static int esp8266_spi_arduinoprimo_write_read(struct dfu_interface *iface,
 					       const char *out_buf,
@@ -108,7 +110,7 @@ static int esp8266_spi_arduinoprimo_write_read(struct dfu_interface *iface,
 
 	_cs_activate();
 	os_delay_us(10);
-	ret = esp8266_spi_write_read(iface, out_buf, in_buf, size);
+	ret = esp8266_spi_read(iface, in_buf, size);
 	_cs_deactivate();
 	return ret;
 }
