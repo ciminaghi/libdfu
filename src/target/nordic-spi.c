@@ -16,6 +16,8 @@
 #include "dfu-cmd.h"
 #include "dfu-nordic-spi.h"
 
+/* Dummy operation, we just get the reply to our previous request */
+#define NRF_DFU_OP_DUMMY	0x00
 #define NRF_DFU_OP_CREATE	0x01
 #define NRF_DFU_OP_SET_PRN	0x02
 #define NRF_DFU_OP_CALC_CHK	0x03
@@ -146,7 +148,7 @@ static int nordic_spi_probe(struct dfu_target *target)
 		NRF_DFU_OP_GET_MTU
 	};
 	static const uint8_t get_mtu_reply_outbuf[4] =
-		{NRF_DFU_OP_GET_MTU, 0xff, 0xff, 0xff};
+		{ NRF_DFU_OP_DUMMY, 0, 0, 0 };
 	static uint8_t get_mtu_reply[4];
 	static const struct dfu_cmdbuf cmdbufs0[] = {
 		/* Sent PRN to 256 */
@@ -573,7 +575,7 @@ static int _calc_crc(struct dfu_target *target, enum nordic_spi_send_state s)
 		NRF_DFU_OP_CALC_CHK,
 	};
 	static const uint8_t dummy_calc_crc_cmd[11] = {
-		[0 ... 10] = 0xff,
+		[0 ... 10] = 0,
 	};
 	static uint8_t calc_crc_reply[11];
 	static const struct dfu_cmdbuf cmdbufs0[] = {
@@ -676,9 +678,7 @@ static int _exec_obj(struct dfu_target *target, enum nordic_spi_send_state s)
 		NRF_DFU_OP_EXEC,
 	};
 	static const uint8_t dummy_exec_obj_cmd[3] = {
-		0xff,
-		0xff,
-		0xff,
+		NRF_DFU_OP_DUMMY, 0, 0,
 	};
 	static uint8_t exec_obj_reply[3];
 	static const struct dfu_cmdbuf cmdbufs0[] = {
