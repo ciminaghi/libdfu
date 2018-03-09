@@ -82,17 +82,19 @@ int esp8266_spi_open(struct dfu_interface *iface,
 	return 0;
 }
 
-static int _putc(char c, char *in)
+static int _putc(const char *c, char *in)
 {
 	uint32_t v;
 
-	while (_busy());
-	spi_write(c, SPI_W(0));
-	v = spi_read(SPI_CMD);
-	v |= SPI_BUSY;
-	spi_write(v, SPI_CMD);
+	if (c) {
+		while (_busy());
+		spi_write(*c, SPI_W(0));
+		_start();
+	}
 	if (!in)
-		return 1;
+		return c ? 1 : 0;
+	if (!c)
+		_start();
 	while (_busy());
 	v = (uint8_t)spi_read(SPI_W(0));
 	*in = v;
@@ -108,7 +110,8 @@ static int _write_read(struct dfu_interface *iface,
 	unsigned long i;
 
 	for (i = 0; i < size; i++)
-		if (_putc(out_buf[i], in_buf ? &in_buf[i] : NULL) < 0)
+		if (_putc(out_buf ? &out_buf[i] : NULL,
+			  in_buf ? &in_buf[i] : NULL) < 0)
 			return -1;
 	return size;
 }
@@ -128,6 +131,15 @@ int esp8266_spi_write_read(struct dfu_interface *iface,
 	/* Enable MOSI AND MISO */
 	spi_write(SPI_USER_MISO | SPI_USER_MOSI | SPI_CK_I_EDGE, SPI_USER);
 	return _write_read(iface, out_buf, in_buf, size);
+}
+
+int esp8266_spi_read(struct dfu_interface *iface,
+		     char *in_buf,
+		     unsigned long size)
+{
+	/* Enable MISO only */
+	spi_write(SPI_USER_MISO | SPI_CK_I_EDGE, SPI_USER);
+	return _write_read(iface, NULL, in_buf, size);
 }
 
 int esp8266_spi_poll_idle(struct dfu_interface *iface)
