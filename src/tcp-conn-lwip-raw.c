@@ -227,7 +227,7 @@ int tcp_server_socket_lwip_raw_init(struct tcp_server_socket_lwip_raw *r,
 {
 	err_t err;
 
-	if (!tcp_conn_pcb) {
+	if (tcp_conn_pcb) {
 		dfu_err("%s: socket busy\n", __func__);
 		return -1;
 	}
