@@ -164,7 +164,7 @@ static int nordic_spi_probe(struct dfu_target *target)
 			.dir = NONE,
 			.buf = {},
 			.len = 0,
-			.timeout = 1500,
+			.timeout = 150,
 		},
 		{
 			.dir = OUT_IN,
@@ -178,7 +178,7 @@ static int nordic_spi_probe(struct dfu_target *target)
 			.dir = NONE,
 			.buf = {},
 			.len = 0,
-			.timeout = 200,
+			.timeout = 150,
 		},
 		{
 			.dir = OUT_IN,
