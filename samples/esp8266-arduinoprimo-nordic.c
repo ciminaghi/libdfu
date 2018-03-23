@@ -26,9 +26,6 @@ int flash_first_sector = 0x3c;
 
 int sectsize = SPI_FLASH_SEC_SIZE;
 
-struct spi_flash_sector sectors_start[128];
-struct spi_flash_sector sectors_end[0];
-
 /*
  * mmmmh, don't like this, but I don't know how to pass pointers to
  * user's event handlers
