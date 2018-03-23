@@ -96,6 +96,19 @@ esp8266_spi_arduinoprimo_target_run(struct dfu_interface *iface)
 	return 0;
 }
 
+static int esp8266_spi_arduinoprimo_write(struct dfu_interface *iface,
+					  const char *out_buf,
+					  unsigned long size)
+{
+	int ret;
+
+	_cs_activate();
+	os_delay_us(10);
+	ret = esp8266_spi_write(iface, out_buf, size);
+	_cs_deactivate();
+	return ret;
+}
+
 /*
  * Activate cs, do a write-read and deactivate cs
  * Proper write-read doesn't actually work on esp8266 hspi (but mysteriously
@@ -118,7 +131,7 @@ static int esp8266_spi_arduinoprimo_write_read(struct dfu_interface *iface,
 const struct dfu_interface_ops
 esp8266_spi_arduinoprimo_interface_ops = {
 	.open = esp8266_spi_open,
-	.write = esp8266_spi_write,
+	.write = esp8266_spi_arduinoprimo_write,
 	.write_read = esp8266_spi_arduinoprimo_write_read,
 	.target_reset = esp8266_spi_arduinoprimo_target_reset,
 	.target_run = esp8266_spi_arduinoprimo_target_run,
