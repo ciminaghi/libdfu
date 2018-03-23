@@ -90,6 +90,7 @@ static int _putc(const char *c, char *in)
 		while (_busy());
 		spi_write(*c, SPI_W(0));
 		_start();
+		while (_busy());
 	}
 	if (!in)
 		return c ? 1 : 0;
