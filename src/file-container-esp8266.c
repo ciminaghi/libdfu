@@ -142,6 +142,371 @@ static inline int sectors_list_count(struct spi_flash_sector *l)
 	return out;
 }
 
+static inline uint32 _align_next(uint32 a)
+{
+	uint32 mask = sizeof(a) - 1;
+
+	return (a + mask) & ~mask;
+}
+
+static inline uint32 *_align_next_ptr(void *a)
+{
+	return (uint32 *)_align_next((uint32)a);
+}
+
+static inline uint32 _align_prev(uint32 a)
+{
+	uint32 mask = sizeof(a) - 1;
+
+	return a & ~mask;
+}
+
+static int _ptr_diff(void *a, void *b)
+{
+	return (char *)a - (char *)b;
+}
+
+#define TMP_BUF_SIZE 512
+
+static union {
+	/* Force alignment */
+	uint32   dw[0];
+	uint8_t  c[TMP_BUF_SIZE];
+} flash_tmpbuf;
+
+static SpiFlashOpResult _spi_flash_erase_sector(uint16 sec)
+{
+	SpiFlashOpResult ret = spi_flash_erase_sector(sec);
+
+	dfu_dbg("spi_flash_erase_sec(0x%04x) = %d\n", sec, ret);
+	return ret;
+}
+
+static SpiFlashOpResult _spi_flash_write(uint32 dst, uint32 *src, uint32 size)
+{
+	SpiFlashOpResult ret;
+
+	ret = spi_flash_write(dst, src, size);
+	dfu_dbg("spi_flash_write(0x%08x, %p, %u) = %d\n", dst, src, size, ret);
+	return ret;
+}
+
+static SpiFlashOpResult _spi_flash_read(uint32 src, uint32 *dst, uint32 size)
+{
+	SpiFlashOpResult ret;
+
+	ret = spi_flash_read(src, dst, size);
+	dfu_dbg("spi_flash_read(0x%08x, %p, %u) = %d\n", src, dst, size, ret);
+	return ret;
+}
+
+static void *_memcpy(void *dst, const void *src, unsigned int sz)
+{
+	dfu_dbg("memcpy(%p, %p, %u)\n", dst, src, sz);
+	return memcpy(dst, src, sz);
+}
+
+static int _slow_flash_read(uint32 _src, void *_dst, uint32 _sz)
+{
+	uint32 aligned_src, aligned_end, aligned_sz, sz;
+	int stat;
+
+	aligned_src = _align_prev(_src);
+	aligned_end = _align_next(_src + _sz - 1);
+	aligned_sz = min(sizeof(flash_tmpbuf), aligned_end - aligned_src);
+	stat = _spi_flash_read(aligned_src, flash_tmpbuf.dw, aligned_sz);
+	if (stat != SPI_FLASH_RESULT_OK)
+		return -1;
+	sz = min(_sz, (sizeof(flash_tmpbuf) - (_src - aligned_src)));
+	_memcpy(_dst, &flash_tmpbuf.c[_src - aligned_src], sz);
+	return sz;
+}
+
+static int _flash_read(uint32 src, void *dst, uint32 sz)
+{
+	uint32 *aligned_dst, aligned_src, aligned_sz;
+	int stat, done;
+
+	aligned_src = _align_next(src);
+	aligned_dst = _align_next_ptr(dst);
+
+	if (!(_ptr_diff(aligned_dst, dst)) && !(aligned_src - src)) {
+		uint32 v;
+
+		/*
+		 * Simplest and fastest case, both src and dst are correctly
+		 * aligned.
+		 */
+		aligned_sz = _align_prev(sz);
+		stat = _spi_flash_read(src, dst, aligned_sz);
+		if (stat != SPI_FLASH_RESULT_OK)
+			return stat;
+		if (aligned_sz == sz)
+			return SPI_FLASH_RESULT_OK;
+		/* size is unaligned, read the last dword */
+		stat = _spi_flash_read(src + aligned_sz, &v, sizeof(v));
+		if (stat != SPI_FLASH_RESULT_OK)
+			return stat;
+		_memcpy((char *)dst + aligned_sz, &v, sz - aligned_sz);
+		return SPI_FLASH_RESULT_OK;
+	}
+
+	if ((_ptr_diff(aligned_dst, dst)) == (aligned_src - src)) {
+		uint32 v, src_end = src + sz - 1, aligned_src_end;
+		unsigned int start_delta, end_delta;
+
+		/*
+		 * src and dst are not aligned, but are "equally unaligned"
+		 */
+		/*
+		 * aligned_src and aligned_dst are both 1 to 3 bytes ahead of
+		 * their unaligned counterparts.
+		 *
+		 * aligned_src/dst                 aligned_src/dst + sz - 1 - 3
+		 *      |                                |
+		 *      |                                |
+		 *  src/dst                              | src/dst + sz - 1
+		 *  |   |                                |   |
+		 * 0|   4 .............................. |   |
+		 *  1
+		 *  1
+		 *
+		 * Example 1:
+		 * src = 1, dst = 1, sz = 13 (interval 1 -> 13)
+		 * aligned_src = 4, aligned_dst = 4,
+		 * aligned_sz = align_prev(13 - (4 - 1)) = 8
+		 * aligned interval 4 -> 11
+		 * First read 4 -> 11
+		 * Second read 0 -> 4, then copy bytes 1-3 to dst
+		 * Third read 12 -> 15, then copy byte 12-13 to dst
+		 *
+		 * Example 2:
+		 * src = 1, dst = 1, sz = 15 (interval = 1 -> 15)
+		 * aligned_src = 4, aligned_dst = 4,
+		 * aligned_sz = align_prev(15 - (4 - 1)) = 12
+		 * aligned_interval = 4 -> 15
+		 * First read 4 -> 15
+		 * Second read 0 -> 4, then copy bytes 1-3 to dst
+		 */
+		start_delta = aligned_src - src;
+		aligned_sz = _align_prev(sz - start_delta);
+		aligned_src_end = aligned_src + aligned_sz - 1;
+		end_delta = src_end - aligned_src_end;
+
+		stat = _spi_flash_read(aligned_src, aligned_dst, aligned_sz);
+		if (stat != SPI_FLASH_RESULT_OK)
+			return stat;
+		/* Now read the first dword and get the needed 1 to 3 bytes */
+		stat = _spi_flash_read(aligned_src - sizeof(uint32), &v,
+				      sizeof(v));
+		if (stat != SPI_FLASH_RESULT_OK)
+			return stat;
+		_memcpy(dst, ((char *)&v) + sizeof(v) - start_delta,
+		       start_delta);
+		/*
+		 * If needed, finally read the last dword and get the needed
+		 * 3 to 1 bytes
+		 */
+		if (!end_delta)
+			return SPI_FLASH_RESULT_OK;
+		stat = _spi_flash_read(aligned_src + aligned_sz, &v, sizeof(v));
+		if (stat != SPI_FLASH_RESULT_OK)
+			return stat;
+
+		_memcpy((char *)aligned_dst + aligned_sz, ((char *)&v),
+		       end_delta);
+		return SPI_FLASH_RESULT_OK;
+	}
+
+	/*
+	 * src and dst have different alignments: use temporary buffer
+	 * based read
+	 */
+	for (done = 0; done < sz; done += stat) {
+		stat = _slow_flash_read(src + done, (char *)dst + done,
+					sz - done);
+		if (stat < 0)
+			return SPI_FLASH_RESULT_ERR;
+	}
+	return SPI_FLASH_RESULT_OK;
+}
+
+static int _slow_flash_write(uint32 _dst, void *_src, uint32 _sz)
+{
+	uint32 aligned_dst, aligned_end, aligned_sz, start_delta, end,
+		end_delta;
+	int stat;
+
+	aligned_dst = _align_next(_dst);
+	aligned_sz = min(sizeof(flash_tmpbuf), _align_prev(_sz));
+	aligned_end = aligned_dst + aligned_sz - 1;
+	start_delta = aligned_dst - _dst;
+	end = _dst + _sz - 1;
+	end_delta = aligned_sz <= (sizeof(flash_tmpbuf) - sizeof(uint32)) ?
+		end - aligned_end : 0;
+
+	if (end_delta >= sizeof(uint32)) {
+		aligned_sz += sizeof(uint32);
+		end_delta -= sizeof(uint32);
+	}
+
+	dfu_dbg("%s: _sz = %u, aligned_sz = %u, end = 0x%08x, aligned_end = 0x%08x, start_delta = %u, end_delta = %u\n", __func__, _sz, aligned_sz, end, aligned_end, start_delta, end_delta);
+
+	_memcpy(flash_tmpbuf.dw, (char *)_src + aligned_dst - _dst, aligned_sz);
+	stat = _spi_flash_write(aligned_dst, flash_tmpbuf.dw, aligned_sz);
+	if (stat != SPI_FLASH_RESULT_OK)
+		return stat;
+	if (start_delta) {
+		stat = _spi_flash_read(_align_prev(_dst), flash_tmpbuf.dw,
+				      sizeof(uint32));
+		if (stat != SPI_FLASH_RESULT_OK)
+			return stat;
+		_memcpy(&flash_tmpbuf.c[sizeof(uint32) - start_delta],
+		       _src, start_delta);
+
+		stat = _spi_flash_write(_align_prev(_dst), flash_tmpbuf.dw,
+				       sizeof(uint32));
+		if (stat != SPI_FLASH_RESULT_OK)
+			return stat;
+	}
+	if (end_delta) {
+		stat = _spi_flash_read(aligned_end, flash_tmpbuf.dw,
+				      sizeof(uint32));
+		if (stat != SPI_FLASH_RESULT_OK)
+			return stat;
+		_memcpy(flash_tmpbuf.c, (char *)_src + aligned_sz, end_delta);
+		stat = _spi_flash_write(aligned_end, flash_tmpbuf.dw,
+				       sizeof(uint32));
+		if (stat != SPI_FLASH_RESULT_OK)
+			return stat;
+	}
+	return _sz;
+}
+
+static int _flash_write(uint32 dst, void *src, uint32 sz)
+{
+	uint32 *aligned_src, aligned_dst, aligned_sz;
+	int stat, done;
+
+	aligned_dst = _align_next(dst);
+	aligned_src = _align_next_ptr(src);
+
+	dfu_dbg("src = %p, aligned_src = %p, dst = 0x%08x, aligned_dst = 0x%08x\n", src, aligned_src, dst, aligned_dst);
+
+	if (!(_ptr_diff(aligned_src, src)) && !(aligned_dst - dst)) {
+		uint32 v;
+
+		dfu_dbg("both src and dst are aligned\n");
+		/*
+		 * Simplest and fastest case, both src and dst are correctly
+		 * aligned.
+		 */
+		aligned_sz = _align_prev(sz);
+		stat = _spi_flash_write(dst, src, aligned_sz);
+		if (stat != SPI_FLASH_RESULT_OK)
+			return stat;
+		if (aligned_sz == sz)
+			return SPI_FLASH_RESULT_OK;
+		/* read the last dword, replace some bytes and write back */
+		stat = _spi_flash_read(dst + aligned_sz, &v, sizeof(v));
+		if (stat != SPI_FLASH_RESULT_OK)
+			return stat;
+
+		_memcpy(&v, (char *)src + aligned_sz, sz - aligned_sz);
+
+		return _spi_flash_write(dst + aligned_sz, &v, sizeof(v));
+	}
+
+	if ((_ptr_diff(aligned_src, src)) == (aligned_dst - dst)) {
+		uint32 v, dst_end = dst + sz - 1, aligned_dst_end;
+		unsigned int start_delta, end_delta;
+
+		/*
+		 * src and dst are not aligned, but are "equally unaligned"
+		 */
+		/*
+		 * aligned_src and aligned_dst are both 1 to 3 bytes ahead of
+		 * their unaligned counterparts.
+		 *
+		 * aligned_src/dst                 aligned_src/dst + sz - 1 - 3
+		 *      |                                |
+		 *      |                                |
+		 *  src/dst                              | src/dst + sz - 1
+		 *  |   |                                |   |
+		 * 0|   4 .............................. |   |
+		 *  1
+		 *  1
+		 *
+		 * Example 1:
+		 * src = 1, dst = 1, sz = 13 (interval 1 -> 13)
+		 * aligned_src = 4, aligned_dst = 4,
+		 * aligned_sz = align_prev(13 - (4 - 1)) = 8
+		 * aligned interval 4 -> 11
+		 * First write 4 -> 11
+		 * Read bytes 0 -> 4, replace bytes 1-3 and write back
+		 * Read bytes 12 -> 15, replace bytes 12-13 and write back
+		 *
+		 * Example 2:
+		 * src = 1, dst = 1, sz = 15 (interval = 1 -> 15)
+		 * aligned_src = 4, aligned_dst = 4,
+		 * aligned_sz = align_prev(15 - (4 - 1)) = 12
+		 * aligned_interval = 4 -> 15
+		 * First write 4 -> 15
+		 * Read bytes 0 -> 4, replace bytes 1-3 and write back
+		 */
+		dfu_dbg("src and dst equally unaligned\n");
+		start_delta = aligned_dst - dst;
+		aligned_sz = _align_prev(sz - start_delta);
+		aligned_dst_end = aligned_dst + aligned_sz - 1;
+		end_delta = dst_end - aligned_dst_end;
+
+		stat = _spi_flash_write(aligned_dst, aligned_src, aligned_sz);
+		if (stat != SPI_FLASH_RESULT_OK)
+			return stat;
+		/*
+		 * Now read the first dword, replace 1 to 3 bytes and write
+		 * back
+		 */
+		stat = _spi_flash_read(aligned_dst - sizeof(uint32), &v,
+				      sizeof(v));
+		if (stat != SPI_FLASH_RESULT_OK)
+			return stat;
+
+		_memcpy(((char *)&v) + sizeof(v) - start_delta, src,
+		       start_delta);
+		stat = _spi_flash_write(aligned_dst, &v, sizeof(v));
+		if (stat != SPI_FLASH_RESULT_OK)
+			return stat;
+		/*
+		 * If needed, finally read the last dword, replace
+		 * 3 to 1 bytes and write back
+		 */
+		if (!end_delta)
+			return SPI_FLASH_RESULT_OK;
+		stat = _spi_flash_read(aligned_dst + aligned_sz, &v, sizeof(v));
+		if (stat != SPI_FLASH_RESULT_OK)
+			return stat;
+
+		_memcpy((char *)&v, (char *)aligned_dst + aligned_sz,
+		       end_delta);
+		return SPI_FLASH_RESULT_OK;
+	}
+
+	/*
+	 * src and dst have different alignments: use temporary buffer
+	 * based write
+	 */
+	dfu_dbg("src and dst have different alignments\n");
+	for (done = 0; done < sz; done += stat) {
+		stat = _slow_flash_write(dst + done, (char *)src + done,
+					 sz - done);
+		if (stat < 0)
+			return SPI_FLASH_RESULT_ERR;
+	}
+	return SPI_FLASH_RESULT_OK;
+}
+
+
 static int _read_file_header(struct spi_flash_sector *s,
 			     union spi_flash_sector_header *out)
 {
@@ -149,7 +514,7 @@ static int _read_file_header(struct spi_flash_sector *s,
 
 	if (a == NO_SECTOR_ADDR)
 		return -1;
-	return spi_flash_read(a, out->v, sizeof(*out)) != SPI_FLASH_RESULT_OK ?
+	return _flash_read(a, out->v, sizeof(*out)) != SPI_FLASH_RESULT_OK ?
 	    -1 : 0;
 }
 
@@ -160,7 +525,7 @@ static int _write_file_header(struct spi_flash_sector *s,
 
 	if (a == NO_SECTOR_ADDR)
 		return -1;
-	return spi_flash_write(a, in->v, sizeof(*in)) != SPI_FLASH_RESULT_OK ?
+	return _flash_write(a, in->v, sizeof(*in)) != SPI_FLASH_RESULT_OK ?
 	    -1 : 0;
 }
 
@@ -188,10 +553,10 @@ static int sectors_allocate_on_flash(struct spi_flash_file_data *f,
 
 		fsi = flash_sect_ptr_to_index(s);
 
-		if (spi_flash_erase_sector(fsi) != SPI_FLASH_RESULT_OK)
+		if (_spi_flash_erase_sector(fsi) != SPI_FLASH_RESULT_OK)
 			return -1;
-		if (spi_flash_write(flash_sect_index_to_addr(fsi),
-				    h.v, sizeof(h)) != SPI_FLASH_RESULT_OK)
+		if (_flash_write(flash_sect_index_to_addr(fsi),
+				 h.v, sizeof(h)) != SPI_FLASH_RESULT_OK)
 			return -1;
 	}
 	return 0;
@@ -208,9 +573,9 @@ static int sector_deallocate_on_flash(struct spi_flash_file_data *f)
 
 	for_each_sector(s, &f->sectors) {
 		fsi = flash_sect_ptr_to_index(s);
-		if (spi_flash_write(flash_sect_index_to_addr(fsi),
-				    h.v, sizeof(h)) != SPI_FLASH_RESULT_OK)
-			return -1;
+		if (_flash_write(flash_sect_index_to_addr(fsi),
+				 h.v, sizeof(h)) != SPI_FLASH_RESULT_OK)
+		    return -1;
 	}
 	return 0;
 }
@@ -285,7 +650,7 @@ static int _spi_flash_file_wrrd(struct dfu_simple_file *f, const char *wrbuf,
 			/* read operation only */
 			hdr_addr = flash_sect_index_to_addr(fsi);
 			dfu_dbg("%s: hdr_addr = %x\n", __func__, hdr_addr);
-			if (spi_flash_read(hdr_addr, h.v, sizeof(h)) !=
+			if (_flash_read(hdr_addr, h.v, sizeof(h)) !=
 			    SPI_FLASH_RESULT_OK)
 				return -1;
 			if (h.s.data_size == NO_FLASH_SIZE)
@@ -300,11 +665,12 @@ static int _spi_flash_file_wrrd(struct dfu_simple_file *f, const char *wrbuf,
 			_rdwrsz);
 		/* FIXME: ALIGN BUFFER TO DOUBLE WORD ADDRESS ? */
 		if (rdbuf) {
-			if (spi_flash_read(data_addr, (uint32 *)(&rdbuf[done]),
-					   _rdwrsz) != SPI_FLASH_RESULT_OK)
+			if (_flash_read(data_addr, (uint32 *)(&rdbuf[done]),
+					_rdwrsz) != SPI_FLASH_RESULT_OK)
 				goto err;
 		} else {
-			if (spi_flash_write(data_addr, (uint32 *)(&wrbuf[done]),
+			dfu_dbg("src addr = %p\n", &wrbuf[done]);
+			if (_flash_write(data_addr, (uint32 *)(&wrbuf[done]),
 					    _rdwrsz) != SPI_FLASH_RESULT_OK)
 				goto err;
 		}
