@@ -137,8 +137,10 @@ static inline int sectors_list_count(struct spi_flash_sector *l)
 	struct spi_flash_sector *s;
 	int out = 0;
 
+	dfu_dbg("%s %d\n", __func__, __LINE__);
 	for_each_sector(s, l)
 		out++;
+	dfu_dbg("%s returns %d\n", __func__, out);
 	return out;
 }
 
@@ -739,10 +741,13 @@ static int spi_flash_fc_init(struct dfu_file_container *fc)
 	for (i = 0; i < ARRAY_SIZE(spifiles); i++)
 		sector_list_init(&spifiles[i].sectors);
 	fcdata.nsectors = sectors_end - sectors_start;
+	dfu_dbg("%s: nsectors = %d\n", __func__, fcdata.nsectors);
 	/* Build list of free sectors */
 	sector_list_init(&fcdata.free_head);
 	for (i = 0; i < fcdata.nsectors; i++)
 		sector_add(&fcdata.free_head, &sectors_start[i]);
+	dfu_dbg("%s: initialized free list (%d elements)\n",
+		__func__, sectors_list_count(&fcdata.free_head));
 	return 0;
 }
 
