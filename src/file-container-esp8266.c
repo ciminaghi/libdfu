@@ -821,6 +821,10 @@ static struct spi_flash_file_data *_find_file(const char *name)
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(spifiles); i++) {
+		if (sectors_list_empty(&spifiles[i].sectors)) {
+			dfu_dbg("file %d empty, skipping\n", i);
+			continue;
+		}
 		if (!_file_name_cmp(&spifiles[i], name))
 			return &spifiles[i];
 	}
