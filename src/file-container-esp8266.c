@@ -545,6 +545,7 @@ static int _file_name_cmp(struct spi_flash_file_data *f, const char *name)
 
 	if (_read_file_header(f->sectors.next, &h) < 0)
 		return -1;
+	dfu_dbg("%s: h.s.name = %s, name = %s\n", __func__, h.s.name, name);
 	return strcmp(h.s.name, name);
 }
 
@@ -820,6 +821,7 @@ static struct spi_flash_file_data *_find_file(const char *name)
 {
 	int i;
 
+	dfu_dbg("%s(%s)\n", __func__, name);
 	for (i = 0; i < ARRAY_SIZE(spifiles); i++) {
 		if (sectors_list_empty(&spifiles[i].sectors)) {
 			dfu_dbg("file %d empty, skipping\n", i);
