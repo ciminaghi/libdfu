@@ -131,7 +131,7 @@ static inline void sector_list_init(struct spi_flash_sector *sector)
  */
 static inline int sectors_list_empty(struct spi_flash_sector *sector)
 {
-	return sector->next != sector && sector->prev != sector;
+	return sector->next == sector && sector->prev == sector;
 }
 
 #define for_each_sector(s, l)						\
