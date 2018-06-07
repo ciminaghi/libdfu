@@ -73,6 +73,11 @@ static inline uint32 flash_sect_index_to_addr(unsigned int fsi)
 	return fsi * sectsize;
 }
 
+static inline uint32 flash_sect_ptr_to_addr(struct spi_flash_sector *s)
+{
+	return flash_sect_index_to_addr(flash_sect_ptr_to_index(s));
+}
+
 static inline uint32 flash_sect_index_to_data_addr(unsigned int fsi)
 {
 	return flash_sect_index_to_addr(fsi) +
@@ -512,7 +517,7 @@ static int _flash_write(uint32 dst, void *src, uint32 sz)
 static int _read_file_header(struct spi_flash_sector *s,
 			     union spi_flash_sector_header *out)
 {
-	uint32 a = flash_sect_ptr_to_index(s);
+	uint32 a = flash_sect_ptr_to_addr(s);
 
 	if (a == NO_SECTOR_ADDR)
 		return -1;
@@ -523,7 +528,7 @@ static int _read_file_header(struct spi_flash_sector *s,
 static int _write_file_header(struct spi_flash_sector *s,
 			      union spi_flash_sector_header *in)
 {
-	uint32 a = flash_sect_ptr_to_index(s);
+	uint32 a = flash_sect_ptr_to_addr(s);
 
 	if (a == NO_SECTOR_ADDR)
 		return -1;
