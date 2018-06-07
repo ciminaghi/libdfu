@@ -137,6 +137,9 @@ static inline int sectors_list_empty(struct spi_flash_sector *sector)
 #define for_each_sector(s, l)						\
 	for (s = (l)->next; (s) != l; s = s->next)
 
+#define for_each_sector_safe(s, t, l)		\
+	for (s = (l)->next, t = s->next; s != l; s = t, t = s->next)
+
 static inline int sectors_list_count(struct spi_flash_sector *l)
 {
 	struct spi_flash_sector *s;
@@ -854,7 +857,7 @@ static int spi_flash_fc_remove(struct dfu_file_container *fc,
 			       const char *name)
 {
 	struct spi_flash_file_data *_f = _find_file(name);
-	struct spi_flash_sector *s;
+	struct spi_flash_sector *s, *tmp;
 
 	if (!_f) {
 		dfu_err("%s: cannot find %s\n", __func__, name);
@@ -862,7 +865,7 @@ static int spi_flash_fc_remove(struct dfu_file_container *fc,
 	}
 	/* Set whole header to 0 to indicate free sector */
 	sector_deallocate_on_flash(_f);
-	for_each_sector(s, &_f->sectors) {
+	for_each_sector_safe(s, tmp, &_f->sectors) {
 		sector_del(s);
 		sector_add(s, &fcdata.free_head);
 		dfu_dbg("%s: sector %d freed\n", __func__,
