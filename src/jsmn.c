@@ -321,8 +321,6 @@ void jsmn_init(jsmn_parser *parser) {
 static int jsmn_tokname_cmp(const char *buf, const jsmntok_t *t,
 			    const char *name)
 {
-	dfu_dbg("%s: name = %.*s, expected = %s\n", __func__,
-		t->end - t->start, buf + t->start, name);
 	return strncmp(buf + t->start, name, t->end - t->start);
 }
 
