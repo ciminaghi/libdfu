@@ -345,7 +345,7 @@ static int _slow_flash_write(uint32 _dst, void *_src, uint32 _sz)
 {
 	uint32 aligned_dst, aligned_end, aligned_sz, start_delta, end,
 		end_delta;
-	int stat;
+	int stat, out = 0;
 
 	aligned_dst = _align_next(_dst);
 	aligned_sz = min(sizeof(flash_tmpbuf), _align_prev(_sz));
@@ -366,6 +366,7 @@ static int _slow_flash_write(uint32 _dst, void *_src, uint32 _sz)
 	stat = _spi_flash_write(aligned_dst, flash_tmpbuf.dw, aligned_sz);
 	if (stat != SPI_FLASH_RESULT_OK)
 		return stat;
+	out += aligned_sz;
 	if (start_delta) {
 		stat = _spi_flash_read(_align_prev(_dst), flash_tmpbuf.dw,
 				      sizeof(uint32));
@@ -378,6 +379,7 @@ static int _slow_flash_write(uint32 _dst, void *_src, uint32 _sz)
 				       sizeof(uint32));
 		if (stat != SPI_FLASH_RESULT_OK)
 			return stat;
+		out += sizeof(uint32);
 	}
 	if (end_delta) {
 		stat = _spi_flash_read(aligned_end, flash_tmpbuf.dw,
@@ -389,8 +391,9 @@ static int _slow_flash_write(uint32 _dst, void *_src, uint32 _sz)
 				       sizeof(uint32));
 		if (stat != SPI_FLASH_RESULT_OK)
 			return stat;
+		out += sizeof(uint32);
 	}
-	return _sz;
+	return out;
 }
 
 static int _flash_write(uint32 dst, void *src, uint32 sz)
