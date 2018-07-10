@@ -257,87 +257,90 @@ static int _aligned_flash_read(void *dst, uint32 *aligned_dst,
 	return SPI_FLASH_RESULT_OK;
 }
 
+/*
+ * src and dst are "equally unaligned" (same misalignment on src and dst)
+ *
+ * aligned_src and aligned_dst are both 1 to 3 bytes ahead of
+ * their unaligned counterparts.
+ *
+ * aligned_src/dst                 aligned_src/dst + sz - 1 - 3
+ *      |                                |
+ *      |                                |
+ *  src/dst                              | src/dst + sz - 1
+ *  |   |                                |   |
+ * 0|   4 .............................. |   |
+ *  1
+ *  1
+ *
+ * Example 1:
+ * src = 1, dst = 1, sz = 13 (interval 1 -> 13)
+ * aligned_src = 4, aligned_dst = 4,
+ * aligned_sz = align_prev(13 - (4 - 1)) = 8
+ * aligned interval 4 -> 11
+ * First read 4 -> 11
+ * Second read 0 -> 4, then copy bytes 1-3 to dst
+ * Third read 12 -> 15, then copy byte 12-13 to dst
+ *
+ * Example 2:
+ * src = 1, dst = 1, sz = 15 (interval = 1 -> 15)
+ * aligned_src = 4, aligned_dst = 4,
+ * aligned_sz = align_prev(15 - (4 - 1)) = 12
+ * aligned_interval = 4 -> 15
+ * First read 4 -> 15
+ * Second read 0 -> 4, then copy bytes 1-3 to dst
+ */
+static int _equally_unaligned_flash_read(void *dst, uint32 *aligned_dst,
+					 uint32 src, uint32 aligned_src,
+					 uint32 sz)
+{
+	uint32 v, src_end = src + sz - 1, aligned_src_end, aligned_sz;
+	unsigned int start_delta, end_delta;
+	int stat;
+
+	start_delta = aligned_src - src;
+	aligned_sz = _align_prev(sz - start_delta);
+	aligned_src_end = aligned_src + aligned_sz - 1;
+	end_delta = src_end - aligned_src_end;
+
+	stat = _spi_flash_read(aligned_src, aligned_dst, aligned_sz);
+	if (stat != SPI_FLASH_RESULT_OK)
+		return stat;
+	/* Now read the first dword and get the needed 1 to 3 bytes */
+	stat = _spi_flash_read(aligned_src - sizeof(uint32), &v, sizeof(v));
+	if (stat != SPI_FLASH_RESULT_OK)
+		return stat;
+	_memcpy(dst, ((char *)&v) + sizeof(v) - start_delta, start_delta);
+	/*
+	 * If needed, finally read the last dword and get the needed
+	 * 3 to 1 bytes
+	 */
+	if (!end_delta)
+		return SPI_FLASH_RESULT_OK;
+	stat = _spi_flash_read(aligned_src + aligned_sz, &v, sizeof(v));
+	if (stat != SPI_FLASH_RESULT_OK)
+		return stat;
+
+	_memcpy((char *)aligned_dst + aligned_sz, ((char *)&v), end_delta);
+	return SPI_FLASH_RESULT_OK;
+}
+
 static int _flash_read(uint32 src, void *dst, uint32 sz)
 {
-	uint32 *aligned_dst, aligned_src, aligned_sz;
+	uint32 *aligned_dst, aligned_src;
 	int stat, done;
 
 	aligned_src = _align_next(src);
 	aligned_dst = _align_next_ptr(dst);
-	aligned_sz = _align_prev(sz);
 
 	if (!(_ptr_diff(aligned_dst, dst)) && !(aligned_src - src))
 		return _aligned_flash_read(dst, aligned_dst,
 					   src, aligned_src,
 					   sz);
 
-	if ((_ptr_diff(aligned_dst, dst)) == (aligned_src - src)) {
-		uint32 v, src_end = src + sz - 1, aligned_src_end;
-		unsigned int start_delta, end_delta;
-
-		/*
-		 * src and dst are not aligned, but are "equally unaligned"
-		 */
-		/*
-		 * aligned_src and aligned_dst are both 1 to 3 bytes ahead of
-		 * their unaligned counterparts.
-		 *
-		 * aligned_src/dst                 aligned_src/dst + sz - 1 - 3
-		 *      |                                |
-		 *      |                                |
-		 *  src/dst                              | src/dst + sz - 1
-		 *  |   |                                |   |
-		 * 0|   4 .............................. |   |
-		 *  1
-		 *  1
-		 *
-		 * Example 1:
-		 * src = 1, dst = 1, sz = 13 (interval 1 -> 13)
-		 * aligned_src = 4, aligned_dst = 4,
-		 * aligned_sz = align_prev(13 - (4 - 1)) = 8
-		 * aligned interval 4 -> 11
-		 * First read 4 -> 11
-		 * Second read 0 -> 4, then copy bytes 1-3 to dst
-		 * Third read 12 -> 15, then copy byte 12-13 to dst
-		 *
-		 * Example 2:
-		 * src = 1, dst = 1, sz = 15 (interval = 1 -> 15)
-		 * aligned_src = 4, aligned_dst = 4,
-		 * aligned_sz = align_prev(15 - (4 - 1)) = 12
-		 * aligned_interval = 4 -> 15
-		 * First read 4 -> 15
-		 * Second read 0 -> 4, then copy bytes 1-3 to dst
-		 */
-		start_delta = aligned_src - src;
-		aligned_sz = _align_prev(sz - start_delta);
-		aligned_src_end = aligned_src + aligned_sz - 1;
-		end_delta = src_end - aligned_src_end;
-
-		stat = _spi_flash_read(aligned_src, aligned_dst, aligned_sz);
-		if (stat != SPI_FLASH_RESULT_OK)
-			return stat;
-		/* Now read the first dword and get the needed 1 to 3 bytes */
-		stat = _spi_flash_read(aligned_src - sizeof(uint32), &v,
-				      sizeof(v));
-		if (stat != SPI_FLASH_RESULT_OK)
-			return stat;
-		_memcpy(dst, ((char *)&v) + sizeof(v) - start_delta,
-		       start_delta);
-		/*
-		 * If needed, finally read the last dword and get the needed
-		 * 3 to 1 bytes
-		 */
-		if (!end_delta)
-			return SPI_FLASH_RESULT_OK;
-		stat = _spi_flash_read(aligned_src + aligned_sz, &v, sizeof(v));
-		if (stat != SPI_FLASH_RESULT_OK)
-			return stat;
-
-		_memcpy((char *)aligned_dst + aligned_sz, ((char *)&v),
-		       end_delta);
-		return SPI_FLASH_RESULT_OK;
-	}
-
+	if ((_ptr_diff(aligned_dst, dst)) == (aligned_src - src))
+		return _equally_unaligned_flash_read(dst, aligned_dst,
+						     src, aligned_src,
+						     sz);
 	/*
 	 * src and dst have different alignments: use temporary buffer
 	 * based read
