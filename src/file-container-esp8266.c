@@ -232,6 +232,31 @@ static int _slow_flash_read(uint32 _src, void *_dst, uint32 _sz)
 	return sz;
 }
 
+/*
+ * Simplest and fastest case, both src and dst are correctly
+ * aligned.
+ */
+static int _aligned_flash_read(void *dst, uint32 *aligned_dst,
+			       uint32 src, uint32 aligned_src,
+			       uint32 sz)
+{
+	int stat;
+	uint32 v, aligned_sz;
+
+	aligned_sz = _align_prev(sz);
+	stat = _spi_flash_read(src, dst, aligned_sz);
+	if (stat != SPI_FLASH_RESULT_OK)
+		return stat;
+	if (aligned_sz == sz)
+		return SPI_FLASH_RESULT_OK;
+	/* size is unaligned, read the last dword */
+	stat = _spi_flash_read(src + aligned_sz, &v, sizeof(v));
+	if (stat != SPI_FLASH_RESULT_OK)
+		return stat;
+	_memcpy((char *)dst + aligned_sz, &v, sz - aligned_sz);
+	return SPI_FLASH_RESULT_OK;
+}
+
 static int _flash_read(uint32 src, void *dst, uint32 sz)
 {
 	uint32 *aligned_dst, aligned_src, aligned_sz;
@@ -239,27 +264,12 @@ static int _flash_read(uint32 src, void *dst, uint32 sz)
 
 	aligned_src = _align_next(src);
 	aligned_dst = _align_next_ptr(dst);
+	aligned_sz = _align_prev(sz);
 
-	if (!(_ptr_diff(aligned_dst, dst)) && !(aligned_src - src)) {
-		uint32 v;
-
-		/*
-		 * Simplest and fastest case, both src and dst are correctly
-		 * aligned.
-		 */
-		aligned_sz = _align_prev(sz);
-		stat = _spi_flash_read(src, dst, aligned_sz);
-		if (stat != SPI_FLASH_RESULT_OK)
-			return stat;
-		if (aligned_sz == sz)
-			return SPI_FLASH_RESULT_OK;
-		/* size is unaligned, read the last dword */
-		stat = _spi_flash_read(src + aligned_sz, &v, sizeof(v));
-		if (stat != SPI_FLASH_RESULT_OK)
-			return stat;
-		_memcpy((char *)dst + aligned_sz, &v, sz - aligned_sz);
-		return SPI_FLASH_RESULT_OK;
-	}
+	if (!(_ptr_diff(aligned_dst, dst)) && !(aligned_src - src))
+		return _aligned_flash_read(dst, aligned_dst,
+					   src, aligned_src,
+					   sz);
 
 	if ((_ptr_diff(aligned_dst, dst)) == (aligned_src - src)) {
 		uint32 v, src_end = src + sz - 1, aligned_src_end;
