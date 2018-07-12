@@ -449,6 +449,36 @@ static int _slow_flash_write(uint32 _dst, void *_src, uint32 _sz)
 	return out;
 }
 
+static int _aligned_flash_write(uint32 dst, uint32 aligned_dst,
+				void *src, uint32 *aligned_src,
+				uint32 sz)
+{
+	uint32 v;
+	uint32 aligned_sz;
+	int stat;
+
+	dfu_dbg("both src and dst are aligned\n");
+	/*
+	 * Simplest and fastest case, both src and dst are correctly
+	 * aligned.
+	 */
+	aligned_sz = _align_prev(sz);
+	stat = _spi_flash_write(dst, src, aligned_sz);
+	if (stat != SPI_FLASH_RESULT_OK)
+		return stat;
+	if (aligned_sz == sz)
+		return SPI_FLASH_RESULT_OK;
+	/* read the last dword, replace some bytes and write back */
+	stat = _spi_flash_read(dst + aligned_sz, &v, sizeof(v));
+	if (stat != SPI_FLASH_RESULT_OK)
+		return stat;
+
+	_memcpy(&v, (char *)src + aligned_sz, sz - aligned_sz);
+
+	return _spi_flash_write(dst + aligned_sz, &v, sizeof(v));
+}
+
+
 static int _flash_write(uint32 dst, void *src, uint32 sz)
 {
 	uint32 *aligned_src, aligned_dst, aligned_sz;
@@ -459,29 +489,9 @@ static int _flash_write(uint32 dst, void *src, uint32 sz)
 
 	dfu_dbg("src = %p, aligned_src = %p, dst = 0x%08x, aligned_dst = 0x%08x\n", src, aligned_src, dst, aligned_dst);
 
-	if (!(_ptr_diff(aligned_src, src)) && !(aligned_dst - dst)) {
-		uint32 v;
-
-		dfu_dbg("both src and dst are aligned\n");
-		/*
-		 * Simplest and fastest case, both src and dst are correctly
-		 * aligned.
-		 */
-		aligned_sz = _align_prev(sz);
-		stat = _spi_flash_write(dst, src, aligned_sz);
-		if (stat != SPI_FLASH_RESULT_OK)
-			return stat;
-		if (aligned_sz == sz)
-			return SPI_FLASH_RESULT_OK;
-		/* read the last dword, replace some bytes and write back */
-		stat = _spi_flash_read(dst + aligned_sz, &v, sizeof(v));
-		if (stat != SPI_FLASH_RESULT_OK)
-			return stat;
-
-		_memcpy(&v, (char *)src + aligned_sz, sz - aligned_sz);
-
-		return _spi_flash_write(dst + aligned_sz, &v, sizeof(v));
-	}
+	if (!(_ptr_diff(aligned_src, src)) && !(aligned_dst - dst))
+		return _aligned_flash_write(dst, aligned_dst, src, aligned_src,
+					    sz);
 
 	if ((_ptr_diff(aligned_src, src)) == (aligned_dst - dst)) {
 		uint32 v, dst_end = dst + sz - 1, aligned_dst_end;
