@@ -216,6 +216,46 @@ static void *_memcpy(void *dst, const void *src, unsigned int sz)
 	return memcpy(dst, src, sz);
 }
 
+/*
+ * slow flash read: both src and dst are unaligned and have different
+ * alignments: use temporary buffer
+ *
+ * example 1:
+ *      _src = 0, _dst = 3, _sz = 14
+ *      aligned_src = 0
+ *      aligned_end = _align_next(0 + 14 - 1) = 16
+ *      aligned_sz = min(512, 16) = 16
+ *      flash_read(0, tmpbuf, 16)
+ *      sz = min(14, 512 - 0) = 14
+ *      memcpy(3, &tmpbuf[0], 14)
+ *
+ * example 2:
+ *      _src = 1, _dst = 3, _sz = 15
+ *      aligned_src = 0
+ *      aligned_end = _align_next(1 + 15 - 1) = 16
+ *      aligned_sz = min(512, 16) = 16
+ *      flash_read(0, tmpbuf, 16)
+ *      sz = min(15, (512 - (1 - 0)) = 15
+ *      memcpy(3, &tmpbuf[1], 15)
+ *
+ * example 3:
+ *      _src = 2, _dst = 3, _sz = 1302
+ *      aligned_src = 0
+ *      aligned_end = _align_next(2 + 1302 - 1) = 1303
+ *      aligned_sz = min(512, 1303) = 512
+ *      flash_read(0, tmpbuf, 512)
+ *      sz = min(13, 512 - 2) = 510
+ *      memcpy(3, &tmpbuf[2], 510)
+ *
+ * example 4:
+ *      _src = 2, _dst = 0, _sz = 1501
+ *      aligned_src = 0
+ *      aligned_end = _align_next(2 + 1501 - 1) = 1504
+ *      aligned_sz = min(512, 1504)  = 512
+ *      flash_read(0, tmpbuf, 512)
+ *      sz = min(1501, 512 - 2) = 510
+ *      memcpy(0, &tmpbuf[2], 510
+ */
 static int _slow_flash_read(uint32 _src, void *_dst, uint32 _sz)
 {
 	uint32 aligned_src, aligned_end, aligned_sz, sz;
@@ -342,7 +382,7 @@ static int _flash_read(uint32 src, void *dst, uint32 sz)
 						     src, aligned_src,
 						     sz);
 	/*
-	 * src and dst have different alignments: use temporary buffer
+	 * src and dst have different (un)alignments: use temporary buffer
 	 * based read
 	 */
 	for (done = 0; done < sz; done += stat) {
