@@ -223,8 +223,8 @@ static void *_memcpy(void *dst, const void *src, unsigned int sz)
  * example 1:
  *      _src = 0, _dst = 3, _sz = 14
  *      aligned_src = 0
- *      aligned_end = _align_next(0 + 14 - 1) = 16
- *      aligned_sz = min(512, 16) = 16
+ *      aligned_end = _align_next(0 + 14 - 1) - 1 = 15
+ *      aligned_sz = min(512, 15 + 1) = 16
  *      flash_read(0, tmpbuf, 16)
  *      sz = min(14, 512 - 0) = 14
  *      memcpy(3, &tmpbuf[0], 14)
@@ -232,8 +232,8 @@ static void *_memcpy(void *dst, const void *src, unsigned int sz)
  * example 2:
  *      _src = 1, _dst = 3, _sz = 15
  *      aligned_src = 0
- *      aligned_end = _align_next(1 + 15 - 1) = 16
- *      aligned_sz = min(512, 16) = 16
+ *      aligned_end = _align_next(1 + 15 - 1) - 1 = 15
+ *      aligned_sz = min(512, 15 + 1) = 16
  *      flash_read(0, tmpbuf, 16)
  *      sz = min(15, (512 - (1 - 0)) = 15
  *      memcpy(3, &tmpbuf[1], 15)
@@ -241,8 +241,8 @@ static void *_memcpy(void *dst, const void *src, unsigned int sz)
  * example 3:
  *      _src = 2, _dst = 3, _sz = 1302
  *      aligned_src = 0
- *      aligned_end = _align_next(2 + 1302 - 1) = 1303
- *      aligned_sz = min(512, 1303) = 512
+ *      aligned_end = _align_next(2 + 1302 - 1) - 1 = 1303
+ *      aligned_sz = min(512, 1303 + 1) = 512
  *      flash_read(0, tmpbuf, 512)
  *      sz = min(13, 512 - 2) = 510
  *      memcpy(3, &tmpbuf[2], 510)
@@ -250,8 +250,8 @@ static void *_memcpy(void *dst, const void *src, unsigned int sz)
  * example 4:
  *      _src = 2, _dst = 0, _sz = 1501
  *      aligned_src = 0
- *      aligned_end = _align_next(2 + 1501 - 1) = 1504
- *      aligned_sz = min(512, 1504)  = 512
+ *      aligned_end = _align_next(2 + 1501 - 1) - 1 = 1503
+ *      aligned_sz = min(512, 1503 + 1)  = 512
  *      flash_read(0, tmpbuf, 512)
  *      sz = min(1501, 512 - 2) = 510
  *      memcpy(0, &tmpbuf[2], 510
@@ -262,8 +262,8 @@ static int _slow_flash_read(uint32 _src, void *_dst, uint32 _sz)
 	int stat;
 
 	aligned_src = _align_prev(_src);
-	aligned_end = _align_next(_src + _sz - 1);
-	aligned_sz = min(sizeof(flash_tmpbuf), aligned_end - aligned_src);
+	aligned_end = _align_next(_src + _sz - 1) - 1;
+	aligned_sz = min(sizeof(flash_tmpbuf), aligned_end - aligned_src + 1);
 	stat = _spi_flash_read(aligned_src, flash_tmpbuf.dw, aligned_sz);
 	if (stat != SPI_FLASH_RESULT_OK)
 		return -1;
