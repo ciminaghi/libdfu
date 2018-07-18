@@ -854,7 +854,7 @@ static int _get_sectors(unsigned long max_size, const char *name,
 	int num = max_size / sectdatasize + ((max_size % sectdatasize) ? 1 : 0);
 	struct spi_flash_sector *s;
 
-	dfu_dbg("%s: num = %d\n", __func__, num);
+	dfu_dbg("%s: max_size = %lu, num = %d\n", __func__, max_size, num);
 	sector_list_init(out);
 	if (sectors_list_count(&fcdata.free_head) < num) {
 		dfu_err("%s: not enough free sectors\n", __func__);
@@ -869,6 +869,10 @@ static int _get_sectors(unsigned long max_size, const char *name,
 		dfu_dbg("%s: adding sector %d, flash index %d\n", __func__,
 			sect_ptr_to_index(s), flash_sect_ptr_to_index(s));
 	}
+	dfu_dbg("%s: SUMMARY for file %s\n", __func__, name);
+	for_each_sector(s, out)
+		dfu_dbg("\tsector %d, flash index %d\n",
+			sect_ptr_to_index(s), flash_sect_ptr_to_index(s));
 	return num;
 }
 
