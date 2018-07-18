@@ -964,7 +964,7 @@ static int spi_flash_fc_remove(struct dfu_file_container *fc,
 	sector_deallocate_on_flash(_f);
 	for_each_sector_safe(s, tmp, &_f->sectors) {
 		sector_del(s);
-		sector_add(s, &fcdata.free_head);
+		sector_add(&fcdata.free_head, s);
 		dfu_dbg("%s: sector %d freed\n", __func__,
 			sect_ptr_to_index(s));
 	}
