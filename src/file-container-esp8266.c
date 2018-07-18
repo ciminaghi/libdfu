@@ -851,7 +851,7 @@ static int _get_sectors(unsigned long max_size, const char *name,
 			struct spi_flash_sector *out)
 {
 	int i;
-	int num = max_size / sectsize + (max_size % sectsize) ? 1 : 0;
+	int num = max_size / sectdatasize + ((max_size % sectdatasize) ? 1 : 0);
 	struct spi_flash_sector *s;
 
 	dfu_dbg("%s: num = %d\n", __func__, num);
