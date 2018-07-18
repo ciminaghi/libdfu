@@ -694,7 +694,7 @@ static int _exec_obj(struct dfu_target *target, enum nordic_spi_send_state s)
 			.dir = NONE,
 			.buf = {},
 			.len = 0,
-			.timeout = 1500,
+			.timeout = 200,
 		},
 		{
 			.dir = OUT_IN,
@@ -710,7 +710,7 @@ static int _exec_obj(struct dfu_target *target, enum nordic_spi_send_state s)
 			.dir = NONE,
 			.buf = {},
 			.len = 0,
-			.timeout = 1500,
+			.timeout = 200,
 		},
 		{
 			/*
