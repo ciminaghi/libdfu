@@ -398,19 +398,38 @@ static int _slow_flash_write(uint32 _dst, void *_src, uint32 _sz)
 {
 	uint32 aligned_dst, aligned_end, aligned_sz, start_delta, end,
 		end_delta;
-	int stat, out = 0;
+	int stat;
+
+	/*
+	 * This simplifies the code below
+	 */
+	if (_sz > sizeof(flash_tmpbuf))
+		_sz = sizeof(flash_tmpbuf);
 
 	aligned_dst = _align_next(_dst);
 	aligned_sz = min(sizeof(flash_tmpbuf), _align_prev(_sz));
+	/*
+	 * Aligned destination end, src can be unaligned (since flash_tmpbuf
+	 * __is__ aligned)
+	 */
 	aligned_end = aligned_dst + aligned_sz - 1;
 	start_delta = aligned_dst - _dst;
 	end = _dst + _sz - 1;
-	end_delta = aligned_sz <= (sizeof(flash_tmpbuf) - sizeof(uint32)) ?
-		end - aligned_end : 0;
+	if (aligned_end > end) {
+		aligned_sz -= sizeof(uint32);
+		aligned_end -= sizeof(uint32);
+	}
+	/* aligned_end should always be <= end here */
+	if (aligned_end > end) {
+		dfu_err("OH OH, UNEXPECTED aligned_end value\n");
+		return -1;
+	}
+	/* end_delta refers to __destination__ */
+	end_delta = end - aligned_end;
 
 	if (end_delta >= sizeof(uint32)) {
-		aligned_sz += sizeof(uint32);
-		end_delta -= sizeof(uint32);
+		dfu_err("OH OH, UNEXPECTED end_delta value\n");
+		return -1;
 	}
 
 	dfu_dbg("%s: _sz = %u, aligned_sz = %u, end = 0x%08x, aligned_end = 0x%08x, start_delta = %u, end_delta = %u\n", __func__, _sz, aligned_sz, end, aligned_end, start_delta, end_delta);
@@ -418,35 +437,33 @@ static int _slow_flash_write(uint32 _dst, void *_src, uint32 _sz)
 	_memcpy(flash_tmpbuf.dw, (char *)_src + aligned_dst - _dst, aligned_sz);
 	stat = _spi_flash_write(aligned_dst, flash_tmpbuf.dw, aligned_sz);
 	if (stat != SPI_FLASH_RESULT_OK)
-		return stat;
-	out += aligned_sz;
+		return -1;
 	if (start_delta) {
 		stat = _spi_flash_read(_align_prev(_dst), flash_tmpbuf.dw,
 				      sizeof(uint32));
 		if (stat != SPI_FLASH_RESULT_OK)
-			return stat;
+			return -1;
 		_memcpy(&flash_tmpbuf.c[sizeof(uint32) - start_delta],
 		       _src, start_delta);
 
 		stat = _spi_flash_write(_align_prev(_dst), flash_tmpbuf.dw,
 				       sizeof(uint32));
 		if (stat != SPI_FLASH_RESULT_OK)
-			return stat;
-		out += sizeof(uint32);
+			return -1;
 	}
 	if (end_delta) {
-		stat = _spi_flash_read(aligned_end, flash_tmpbuf.dw,
+		stat = _spi_flash_read(aligned_end + 1, flash_tmpbuf.dw,
 				      sizeof(uint32));
 		if (stat != SPI_FLASH_RESULT_OK)
-			return stat;
+			return -1;
 		_memcpy(flash_tmpbuf.c, (char *)_src + aligned_sz, end_delta);
-		stat = _spi_flash_write(aligned_end, flash_tmpbuf.dw,
+		stat = _spi_flash_write(aligned_end + 1, flash_tmpbuf.dw,
 				       sizeof(uint32));
 		if (stat != SPI_FLASH_RESULT_OK)
-			return stat;
-		out += sizeof(uint32);
+			return -1;
 	}
-	return out;
+	dfu_dbg("%s returns %d\n", __func__, _sz);
+	return _sz;
 }
 
 static int _aligned_flash_write(uint32 dst, uint32 aligned_dst,
