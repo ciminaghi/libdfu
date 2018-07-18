@@ -147,7 +147,7 @@ SECTIONS
     . = ALIGN (8);
     _bss_end = ABSOLUTE(.);
     sectors_start = ABSOLUTE(.);
-    . += 1024;
+    . += 512;
     sectors_end = ABSOLUTE(.);
     _heap_start = ABSOLUTE(.);
 /*    _stack_sentry = ALIGN(0x8); */
