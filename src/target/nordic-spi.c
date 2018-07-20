@@ -274,6 +274,9 @@ static int _create_obj(struct dfu_target *target, enum nzbf_type t,
 	static uint8_t create_obj_cmd[6] = {
 		NRF_DFU_OP_CREATE,
 	};
+	static uint8_t dummy_create_obj_cmd[6] = {
+		NRF_DFU_OP_DUMMY,
+	};
 	static uint8_t create_obj_reply[6];
 	uint32_t v = cpu_to_le32(size);
 	static const struct dfu_cmdbuf cmdbufs0[] = {
@@ -284,34 +287,20 @@ static int _create_obj(struct dfu_target *target, enum nzbf_type t,
 			},
 			.len = sizeof(create_obj_cmd),
 		},
-		/* WAIT 200ms */
+		/* WAIT 700ms */
 		{
 			.dir = NONE,
 			.buf = {},
 			.len = 0,
-			.timeout = 200,
+			.timeout = 700,
 		},
 		{
 			.dir = OUT_IN,
 			.buf = {
-				.out = create_obj_cmd,
+				.out = dummy_create_obj_cmd,
 				.in = create_obj_reply,
 			},
-			.len = sizeof(create_obj_cmd),
-		},
-		{
-			.dir = NONE,
-			.buf = {},
-			.len = 0,
-			.timeout = 200,
-		},
-		{
-			.dir = OUT_IN,
-			.buf = {
-				.out = create_obj_cmd,
-				.in = create_obj_reply,
-			},
-			.len = sizeof(create_obj_cmd),
+			.len = sizeof(dummy_create_obj_cmd),
 			.completed = _check_create_obj_reply,
 		},
 	};
