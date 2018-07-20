@@ -368,14 +368,11 @@ static int _select_obj(struct dfu_target *target)
 		NRF_DFU_OP_SELECT,
 		[1 ... 14] = 0xff,
 	};
+	static uint8_t dummy_select_obj_cmd[15] = {
+		0,
+	};
 	static uint8_t select_obj_reply[15];
 	static const struct dfu_cmdbuf cmdbufs0[] = {
-		{
-			.dir = NONE,
-			.buf = {},
-			.len = 0,
-			.timeout = 1000,
-		},
 		{
 			.dir = OUT,
 			.buf = {
@@ -383,34 +380,20 @@ static int _select_obj(struct dfu_target *target)
 			},
 			.len = sizeof(select_obj_cmd),
 		},
-		/* WAIT 200ms */
+		/* WAIT 700ms */
 		{
 			.dir = NONE,
 			.buf = {},
 			.len = 0,
-			.timeout = 200,
+			.timeout = 700,
 		},
 		{
 			.dir = OUT_IN,
 			.buf = {
-				.out = select_obj_cmd,
+				.out = dummy_select_obj_cmd,
 				.in = select_obj_reply,
 			},
 			.len = sizeof(select_obj_cmd),
-		},
-		{
-			.dir = NONE,
-			.buf = {},
-			.len = 0,
-			.timeout = 200,
-		},
-		{
-			.dir = OUT_IN,
-			.buf = {
-				.out = select_obj_cmd,
-				.in = select_obj_reply,
-			},
-			.len = sizeof(select_obj_reply),
 			.completed = _check_select_obj_reply,
 		},
 	};
