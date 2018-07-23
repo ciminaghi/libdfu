@@ -8,6 +8,18 @@
 
 #define POST_FORM_DATA "multipart/form-data"
 
+/* Look for the beginning of the last line of a request */
+static const char *_find_last_line(const char *data, int data_len)
+{
+	const char *end = "\r\n--";
+	const char *tmp;
+
+	for (tmp = &data[data_len - 4]; tmp >= data; tmp--)
+		if (!memcmp(tmp, end, 4))
+			return tmp;
+	return NULL;
+}
+
 static int http_flash_upload_post(const struct http_url *u,
 				  struct http_connection *c,
 				  struct phr_header *headers, int num_headers,
@@ -41,7 +53,9 @@ static int http_flash_upload_post(const struct http_url *u,
 	 * The boundary line (and the preceding end of line) is __not__ part of
 	 * the buffer to be appended
 	 */
-	ptr = strstr(contents, "\r\n--");
+	ptr = _find_last_line(data, data_len);
+	if (!ptr)
+		dfu_err("%s: CANNOT FIND CONTENTS END !!!!\n", __func__);
 	stat = dfu_binary_file_append_buffer(c->bf,
 					     contents,
 					     ptr ? ptr - contents :
