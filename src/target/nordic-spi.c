@@ -574,12 +574,6 @@ static int _calc_crc(struct dfu_target *target, enum nordic_spi_send_state s)
 			.len = sizeof(calc_crc_reply),
 			.completed = _check_calc_crc_reply,
 		},
-		{
-			.dir = NONE,
-			.buf = {},
-			.len = 0,
-			.timeout = 100,
-		},
 	};
 	static const struct dfu_cmddescr descr0 = {
 		.cmdbufs = cmdbufs0,
