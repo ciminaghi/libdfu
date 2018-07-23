@@ -466,7 +466,7 @@ static int _send_buffer(struct dfu_target *target,
 			.dir = NONE,
 			.buf = {},
 			.len = 0,
-			.timeout = 1000,
+			.timeout = 100,
 		},
 	};
 	static const struct dfu_cmddescr descr0 = {
