@@ -705,7 +705,7 @@ static int _exec_obj(struct dfu_target *target, enum nordic_spi_send_state s)
 
 	priv->send_state = s;
 	priv->curr_descr = &descr0;
-	ret = dfu_cmd_do_sync(target, &descr0);
+	ret = dfu_cmd_start(target, &descr0);
 	if (ret < 0)
 		dfu_err("Error executing object\n");
 	return ret;
