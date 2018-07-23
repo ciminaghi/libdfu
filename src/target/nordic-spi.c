@@ -589,7 +589,7 @@ static int _calc_crc(struct dfu_target *target, enum nordic_spi_send_state s)
 
 	priv->curr_descr = &descr0;
 	priv->send_state = s;
-	ret = dfu_cmd_do_sync(target, &descr0);
+	ret = dfu_cmd_start(target, &descr0);
 	if (ret < 0)
 		dfu_err("Error in crc calculation\n");
 	return ret;
