@@ -456,7 +456,8 @@ static int _slow_flash_write(uint32 _dst, void *_src, uint32 _sz)
 				      sizeof(uint32));
 		if (stat != SPI_FLASH_RESULT_OK)
 			return -1;
-		_memcpy(flash_tmpbuf.c, (char *)_src + aligned_sz, end_delta);
+		_memcpy(flash_tmpbuf.c,
+			(char *)_src + aligned_sz + start_delta, end_delta);
 		stat = _spi_flash_write(aligned_end + 1, flash_tmpbuf.dw,
 				       sizeof(uint32));
 		if (stat != SPI_FLASH_RESULT_OK)
