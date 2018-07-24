@@ -628,7 +628,8 @@ static int _check_exec_obj_reply(const struct dfu_cmddescr *descr,
 		};
 
 	dfu_dbg("%s entered\n", __func__);
-	dfu_dbg("reply = 0x%02x 0x%02x 0x%02x\n", ptr[0], ptr[1], ptr[2]);
+	dfu_dbg("reply = 0x%02x 0x%02x 0x%02x 0x%02x\n", ptr[0], ptr[1],
+		ptr[2], ptr[3]);
 	ret = !memcmp(ptr, expected_reply, sizeof(expected_reply)) ? 0 : -1;
 	if (ret)
 		dfu_err("%s: error\n", __func__);
@@ -643,10 +644,10 @@ static int _exec_obj(struct dfu_target *target, enum nordic_spi_send_state s)
 	static uint8_t exec_obj_cmd[1] = {
 		NRF_DFU_OP_EXEC,
 	};
-	static const uint8_t dummy_exec_obj_cmd[3] = {
+	static const uint8_t dummy_exec_obj_cmd[4] = {
 		NRF_DFU_OP_DUMMY, 0, 0,
 	};
-	static uint8_t exec_obj_reply[3];
+	static uint8_t exec_obj_reply[4];
 	static const struct dfu_cmdbuf cmdbufs0[] = {
 		[0] = {
 			.dir = OUT,
