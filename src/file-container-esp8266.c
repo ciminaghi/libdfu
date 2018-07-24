@@ -434,7 +434,7 @@ static int _slow_flash_write(uint32 _dst, void *_src, uint32 _sz)
 
 	dfu_dbg("%s: _sz = %u, aligned_sz = %u, end = 0x%08x, aligned_end = 0x%08x, start_delta = %u, end_delta = %u\n", __func__, _sz, aligned_sz, end, aligned_end, start_delta, end_delta);
 
-	_memcpy(flash_tmpbuf.dw, (char *)_src + aligned_dst - _dst, aligned_sz);
+	_memcpy(flash_tmpbuf.dw, (char *)_src + start_delta, aligned_sz);
 	stat = _spi_flash_write(aligned_dst, flash_tmpbuf.dw, aligned_sz);
 	if (stat != SPI_FLASH_RESULT_OK)
 		return -1;
