@@ -659,6 +659,13 @@ static int _check_exec_obj_reply(const struct dfu_cmddescr *descr,
 	return ret;
 }
 
+#ifdef DEBUG
+#define EXEC_TO_1 200
+#define EXEC_TO_2 200
+#else
+#define EXEC_TO_1 300
+#define EXEC_TO_2 300
+#endif
 
 static int _exec_obj(struct dfu_target *target, enum nordic_spi_send_state s)
 {
@@ -679,12 +686,11 @@ static int _exec_obj(struct dfu_target *target, enum nordic_spi_send_state s)
 			},
 			.len = sizeof(exec_obj_cmd),
 		},
-		/* WAIT 200ms */
 		{
 			.dir = NONE,
 			.buf = {},
 			.len = 0,
-			.timeout = 200,
+			.timeout = EXEC_TO_1,
 		},
 		{
 			.dir = OUT_IN,
@@ -700,7 +706,7 @@ static int _exec_obj(struct dfu_target *target, enum nordic_spi_send_state s)
 			.dir = NONE,
 			.buf = {},
 			.len = 0,
-			.timeout = 200,
+			.timeout = EXEC_TO_2,
 		},
 		{
 			/*
@@ -714,6 +720,14 @@ static int _exec_obj(struct dfu_target *target, enum nordic_spi_send_state s)
 			},
 			.len = sizeof(exec_obj_cmd),
 		},
+#ifndef DEBUG
+		{
+			.dir = NONE,
+			.buf = {},
+			.len = 0,
+			.timeout = 100,
+		},
+#endif
 	};
 	static const struct dfu_cmddescr descr0 = {
 		.cmdbufs = cmdbufs0,
