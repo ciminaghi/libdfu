@@ -131,6 +131,20 @@ static int _check_mtu_reply(const struct dfu_cmddescr *descr,
 	return 0;
 }
 
+#ifdef DEBUG
+#define PROBE_TO_1 150
+#define PROBE_TO_2 150
+#define PROBE_TO_3 200
+#define PROBE_TO_4 200
+#define PROBE_TO_5 200
+#else
+#define PROBE_TO_1 200
+#define PROBE_TO_2 200
+#define PROBE_TO_3 200
+#define PROBE_TO_4 200
+#define PROBE_TO_5 200
+#endif
+
 /*
  * probe time: set PNR and get MTU
  */
@@ -159,12 +173,11 @@ static int nordic_spi_probe(struct dfu_target *target)
 			},
 			.len = sizeof(set_prn_cmd),
 		},
-		/* WAIT 200ms */
 		{
 			.dir = NONE,
 			.buf = {},
 			.len = 0,
-			.timeout = 150,
+			.timeout = PROBE_TO_1,
 		},
 		{
 			.dir = OUT_IN,
@@ -178,7 +191,7 @@ static int nordic_spi_probe(struct dfu_target *target)
 			.dir = NONE,
 			.buf = {},
 			.len = 0,
-			.timeout = 150,
+			.timeout = PROBE_TO_2,
 		},
 		{
 			.dir = OUT_IN,
@@ -189,6 +202,12 @@ static int nordic_spi_probe(struct dfu_target *target)
 			.len = sizeof(set_prn_cmd),
 			.completed = _check_prn_reply,
 		},
+		{
+			.dir = NONE,
+			.buf = {},
+			.len = 0,
+			.timeout = PROBE_TO_3,
+		},
 		/* Read advertised mtu */
 		{
 			.dir = OUT,
@@ -197,12 +216,11 @@ static int nordic_spi_probe(struct dfu_target *target)
 			},
 			.len = sizeof(get_mtu_cmd),
 		},
-		/* WAIT 200ms */
 		{
 			.dir = NONE,
 			.buf = {},
 			.len = 0,
-			.timeout = 200,
+			.timeout = PROBE_TO_4,
 		},
 		{
 			.dir = OUT_IN,
@@ -217,7 +235,7 @@ static int nordic_spi_probe(struct dfu_target *target)
 			.dir = NONE,
 			.buf = {},
 			.len = 0,
-			.timeout = 200,
+			.timeout = PROBE_TO_5,
 		},
 		{
 			.dir = OUT_IN,
