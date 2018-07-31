@@ -41,11 +41,12 @@
                 fd.append("fileToUpload", blobFile);
 
                 var xhr = new XMLHttpRequest();
+	        var host = window.location.hostname;
                 xhr.upload.addEventListener("progress", uploadProgress, false);
                 xhr.addEventListener("load", uploadComplete, false);
                 xhr.addEventListener("error", uploadFailed, false);
                 xhr.addEventListener("abort", uploadCanceled, false);
-                xhr.open("POST", "http://192.168.0.116:1080/flash_upload", false);
+                xhr.open("POST", "http://" + host + ":1080/flash_upload", false);
                 xhr.onload = function(e) {
                   alert("loaded!");
                   };
