@@ -284,6 +284,12 @@ static int _check_create_obj_reply(const struct dfu_cmddescr *descr,
 	return !memcmp(ptr, expected_reply, sizeof(expected_reply)) ? 0 : -1;
 }
 
+#ifdef DEBUG
+#define CREATE_TO_1 700
+#else
+#define CREATE_TO_1 900
+#endif
+
 static int _create_obj(struct dfu_target *target, enum nzbf_type t,
 		       unsigned int size)
 {
@@ -305,12 +311,11 @@ static int _create_obj(struct dfu_target *target, enum nzbf_type t,
 			},
 			.len = sizeof(create_obj_cmd),
 		},
-		/* WAIT 700ms */
 		{
 			.dir = NONE,
 			.buf = {},
 			.len = 0,
-			.timeout = 700,
+			.timeout = CREATE_TO_1,
 		},
 		{
 			.dir = OUT_IN,
