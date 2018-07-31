@@ -296,10 +296,8 @@ static int _bf_do_flush(struct dfu_binary_file *bf)
 			return -1;
 		_set_rx_timeout(bf, 0);
 	}
-	if (bf_dec_space(bf) < 2 * bf->decoded_chunk_size) {
-		dfu_dbg("no space enough in decode buffer\n");
+	if (bf_dec_space(bf) < 2 * bf->decoded_chunk_size)
 		return 0;
-	}
 
 	stat = bf->format_ops->decode_chunk(bf, &addr);
 	if (stat <= 0) {
