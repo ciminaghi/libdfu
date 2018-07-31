@@ -84,15 +84,10 @@ int esp8266_spi_arduinoprimo_target_reset(struct dfu_interface *iface)
 	return 0;
 }
 
-/* Just reset the target with spi cs (GPIO15) HIGH */
+/* The bootloader does a self-reset, no need to do anything */
 static int
 esp8266_spi_arduinoprimo_target_run(struct dfu_interface *iface)
 {
-	_cs_deactivate();
-	os_delay_us(1000);
-	_reset_activate();
-	os_delay_us(1000);
-	_reset_deactivate();
 	return 0;
 }
 
