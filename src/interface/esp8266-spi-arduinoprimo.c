@@ -6,7 +6,7 @@
 #include "gpio.h"
 #include "esp8266-spi.h"
 
-#define NRF52_DEBUG 1
+#undef NRF52_DEBUG
 
 /*
  * Arduino primo interface. Uses GPIO 4 for target reset, UART0 tx as a
