@@ -50,26 +50,10 @@ static inline void _do_reset(void)
 	_cs_deactivate();
 	os_delay_us(200000);
 }
-
-static inline void _do_target_run(void)
-{
-	dfu_dbg("REAL target run\n");
-	_cs_deactivate();
-	os_delay_us(1000);
-	_reset_activate();
-	os_delay_us(1000);
-	_reset_deactivate();
-}
-
 #else
 static inline void _do_reset(void)
 {
 	dfu_dbg("FAKE target reset\n");
-}
-
-static inline void _do_target_run(void)
-{
-	dfu_dbg("FAKE target run\n");
 }
 #endif
 
