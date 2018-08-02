@@ -42,11 +42,11 @@ static inline void _do_reset(void)
 {
 	dfu_dbg("REAL target reset\n");
 	_cs_activate();
-	os_delay_us(1000);
+	os_delay_us(10000);
 	_reset_activate();
-	os_delay_us(1000);
+	os_delay_us(5000);
 	_reset_deactivate();
-	os_delay_us(1000);
+	os_delay_us(200000);
 	_cs_deactivate();
 	os_delay_us(200000);
 }
