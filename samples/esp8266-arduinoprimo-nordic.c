@@ -39,21 +39,24 @@ static void ICACHE_FLASH_ATTR
 loop(os_event_t *events)
 {
 	int stat;
-	static int first = 0;
+	static int cnt, probed;
 
-	if (!first) {
-		/* Reset and probe target */
-		if (dfu_target_reset(dfu) < 0) {
-			dfu_err("Error resetting target\n");
-			goto end;
+	if (!probed) {
+		if (!(cnt++ % 10)) {
+			/* Reset target every 10 attempts */
+			if (dfu_target_reset(dfu) < 0) {
+				dfu_err("Error resetting target\n");
+				goto end;
+			}
+			dfu_log("dfu_target_reset() OK\n");
 		}
-		dfu_log("dfu_target_reset() OK\n");
+		/* And try probing it */
 		if (dfu_target_probe(dfu) < 0) {
 			dfu_err("Error probing target\n");
 			goto end;
 		}
 		dfu_log("dfu_target_probe() OK\n");
-		first = 1;
+		probed = 1;
 	end:
 		system_os_post(USER_PRIO, 0, 0 );
 		return;
