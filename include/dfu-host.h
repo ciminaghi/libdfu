@@ -50,10 +50,6 @@ static inline uint16_t be16_to_cpu(uint32_t v)
 	return cpu_to_be16(v);
 }
 
-#ifdef __cplusplus
-}
-#endif
-
 static inline uint16_t cpu_to_le16(uint16_t v)
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
