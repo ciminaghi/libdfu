@@ -36,13 +36,20 @@ static int http_arduino_on_event(struct dfu_binary_file *bf)
 		return 0;
 	}
 	if (sd.first_chunk) {
+		int att, probed = 0;
+
 		client_priv.busy = 1;
 		dfu_log("Resetting target ... ");
 		if (dfu_target_reset(bf->dfu) < 0)
 			goto error;
 		dfu_log("OK\n");
 		dfu_log("Probing target ... ");
-		if (dfu_target_probe(bf->dfu) < 0)
+		for (att = 0; att < 5 && !probed; att++)
+			if (!dfu_target_probe(bf->dfu)) {
+				probed = 1;
+				break;
+			}
+		if (!probed)
 			goto error;
 		dfu_log("OK\n");
 		dfu_log("Erasing flash ... ");
