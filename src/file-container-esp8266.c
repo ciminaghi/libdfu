@@ -7,6 +7,8 @@
 #include <dfu.h>
 #include <dfu-internal.h>
 
+#include <spi_flash.h>
+
 #define MAX_FILES 8
 
 /* Provided by linker script */
