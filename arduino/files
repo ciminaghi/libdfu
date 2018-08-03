@@ -27,6 +27,7 @@ src/target/stm32-device-f469.c
 src/target/stk500.c
 src/target/avrisp.c
 src/target/stm32-usart.c
+src/target/nordic-spi.c
 src/target.c
 src/file-container.c
 src/file-container-esp8266.c
