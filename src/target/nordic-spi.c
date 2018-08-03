@@ -905,7 +905,7 @@ static int nordic_spi_chunk_available(struct dfu_target *target,
 
 static int nordic_spi_target_erase_all(struct dfu_target *target)
 {
-	return -1;
+	return 0;
 }
 
 /*
