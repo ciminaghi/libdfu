@@ -2,6 +2,8 @@
 include/*.h
 src/arduino-server.cpp
 src/arduino-server.h
+src/jsmn.h
+src/jsmn.c
 src/binary-file.c
 src/binary-format-*.c
 src/rx-method-http-arduino.c
