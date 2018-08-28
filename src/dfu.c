@@ -108,6 +108,11 @@ int dfu_fini(struct dfu_data *dfu)
 		if (ret < 0)
 			return ret;
 	}
+	if (dfu->fc && dfu->fc->ops->fini) {
+		ret = dfu->fc->ops->fini(dfu->fc);
+		if (ret < 0)
+			return ret;
+	}
 	/* Reset data structure */
 	dfu->busy = dfu->error = 0;
 	return ret;
