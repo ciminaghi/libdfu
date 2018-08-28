@@ -850,6 +850,13 @@ static int spi_flash_fc_init(struct dfu_file_container *fc)
 	return 0;
 }
 
+static int spi_flash_fc_fini(struct dfu_file_container *fc)
+{
+	memset(sectors_start, 0,
+	       (sectors_end - sectors_start) * sizeof(sectors_start[0]));
+	return spi_flash_fc_init(fc);
+}
+
 static int _get_sectors(unsigned long max_size, const char *name,
 			struct spi_flash_sector *out)
 {
@@ -979,4 +986,5 @@ struct dfu_file_container_ops spi_flash_fc_ops = {
 	.init = spi_flash_fc_init,
 	.open_file = spi_flash_fc_open,
 	.remove_file = spi_flash_fc_remove,
+	.fini = spi_flash_fc_fini,
 };
