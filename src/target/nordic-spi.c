@@ -980,6 +980,17 @@ static int nordic_spi_get_write_chunk_size(struct dfu_target *target)
 	return 128;
 }
 
+static int nordic_spi_fini(struct dfu_target *target)
+{
+	struct nordic_spi_data *d = target->priv;
+
+	if (!d)
+		return -1;
+	memset(d, 0, sizeof(*d));
+	return 0;
+}
+
+
 struct dfu_target_ops nordic_spi_dfu_target_ops = {
 	.init = nordic_spi_init,
 	.probe  = nordic_spi_probe,
@@ -990,4 +1001,5 @@ struct dfu_target_ops nordic_spi_dfu_target_ops = {
 	.on_interface_event = nordic_spi_on_interface_event,
 	.on_idle = nordic_spi_on_idle,
 	.get_write_chunk_size = nordic_spi_get_write_chunk_size,
+	.fini = nordic_spi_fini,
 };
