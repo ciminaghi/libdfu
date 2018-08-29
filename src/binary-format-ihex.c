@@ -396,7 +396,7 @@ int ihex_decode_chunk(struct dfu_binary_file *bf, uint32_t *addr)
 	return decoded_tot;
 }
 
-static int ihex_fini(struct dfu_binary_file *bf)
+int ihex_fini(struct dfu_binary_file *bf)
 {
 	return 0;
 }

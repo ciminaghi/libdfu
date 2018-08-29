@@ -990,7 +990,7 @@ int nz_decode_chunk(struct dfu_binary_file *bf, uint32_t *addr)
 	return ret;
 }
 
-static int nz_fini(struct dfu_binary_file *bf)
+int nz_fini(struct dfu_binary_file *bf)
 {
 	struct nordic_zip_format_data *priv = bf->format_data;
 
