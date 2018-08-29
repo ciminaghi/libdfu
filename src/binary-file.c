@@ -81,7 +81,7 @@ int dfu_binary_file_fini(struct dfu_binary_file *bf)
 			return ret;
 	}
 	if (bf->format_ops && bf->format_ops->fini) {
-		ret = bf->rx_method->ops->fini(bf);
+		ret = bf->format_ops->fini(bf);
 		if (ret < 0)
 			return ret;
 	}
