@@ -31,8 +31,9 @@ add_binary_formats()
 	eval $2
 	probe=$(echo $p | cut -d ',' -f 2)
 	decode=$(echo $p | cut -d ',' -f 3)
+	fini=$(echo $p | cut -d ',' -f 4)
 	echo -e "\t{" >> $BINARY_FORMATS_TABLE
-	echo -e "\t\t$probe,$decode" >> $BINARY_FORMATS_TABLE
+	echo -e "\t\t$probe,$decode,$fini" >> $BINARY_FORMATS_TABLE
 	echo -e "\t}," >> $BINARY_FORMATS_TABLE
     done
 
@@ -49,10 +50,12 @@ gen_binary_formats_file() {
 	n=$(echo $p | cut -d ',' -f 1)
 	probe=$(echo $p | cut -d ',' -f 2)
 	decode=$(echo $p | cut -d ',' -f 3)
+	fini=$(echo $p | cut -d ',' -f 4)
 	echo -e \
 	     "extern int ${n}_probe(struct dfu_binary_file *);\n\t
 extern int ${n}_decode_chunk(struct dfu_binary_file *bf, \
-void *out_buf, unsigned long out_sz, phys_addr_t *addr);\n" \
+void *out_buf, unsigned long out_sz, phys_addr_t *addr);\n\t \
+extern int ${n}_fini(struct dfu_binary_file *bf);\n\t" \
 	     >> $BINARY_FORMATS_TABLE
     done
 
