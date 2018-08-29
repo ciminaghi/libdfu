@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
 		       &stm32_dfu_target_ops,
 		       NULL,
 		       &linux_dfu_host_ops,
-		       NULL);
+		       NULL, NULL);
 	if (!dfu) {
 		fprintf(stderr, "Error initializing libdfu\n");
 		exit(127);

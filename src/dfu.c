@@ -27,7 +27,8 @@ struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 			  const struct dfu_target_ops *tops,
 			  const void *target_pars,
 			  const struct dfu_host_ops *hops,
-			  const struct dfu_file_container_ops *fcops)
+			  const struct dfu_file_container_ops *fcops,
+			  const void *fc_args)
 {
 	int stat;
 
@@ -69,7 +70,7 @@ struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 	if (fcops && fcops->init) {
 		file_container.dfu = &dfu;
 		file_container.ops = fcops;
-		stat = fcops->init(&file_container);
+		stat = fcops->init(&file_container, fc_args);
 		if (stat < 0)
 			goto error;
 	}

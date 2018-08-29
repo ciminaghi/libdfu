@@ -100,7 +100,7 @@ user_init(void)
 		       &nordic_spi_dfu_target_ops,
 		       NULL,
 		       &esp8266_dfu_host_ops,
-		       &spi_flash_fc_ops);
+		       &spi_flash_fc_ops, NULL);
 	if (!dfu) {
 		os_printf("Error initializing libdfu\n");
 		return;

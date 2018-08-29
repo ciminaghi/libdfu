@@ -11,16 +11,16 @@
 
 #define MAX_FILES 8
 
-/* Provided by linker script */
-extern unsigned long sectsize, flash_first_sector;
-
-/* This is in RAM, allocated by the linker */
-extern struct spi_flash_sector sectors_start[], sectors_end[];
-
 struct spiflash_container_data {
 	struct spi_flash_sector free_head;
+	/* Index of first flash sector */
+	unsigned long flash_first_sector;
 	/* Size of free sectors area */
-	int nsectors;
+	unsigned long nsectors;
+	/* Pointer to sectors descriptors list */
+	struct spi_flash_sector *sectors;
+	/* Size of sector */
+	unsigned long sectsize;
 };
 
 static struct spiflash_container_data fcdata;
@@ -52,7 +52,7 @@ union spi_flash_sector_header {
 	} s;
 };
 
-#define sectdatasize (sectsize - sizeof(union spi_flash_sector_header))
+#define sectdatasize (fcdata.sectsize - sizeof(union spi_flash_sector_header))
 
 struct spi_flash_file_data {
 	struct spi_flash_sector sectors;
@@ -62,17 +62,17 @@ struct spi_flash_file_data {
 
 static inline int sect_ptr_to_index(struct spi_flash_sector *s)
 {
-	return s - sectors_start;
+	return s - fcdata.sectors;
 }
 
 static inline int flash_sect_ptr_to_index(struct spi_flash_sector *s)
 {
-	return sect_ptr_to_index(s) + flash_first_sector;
+	return sect_ptr_to_index(s) + fcdata.flash_first_sector;
 }
 
 static inline uint32 flash_sect_index_to_addr(unsigned int fsi)
 {
-	return fsi * sectsize;
+	return fsi * fcdata.sectsize;
 }
 
 static inline uint32 flash_sect_ptr_to_addr(struct spi_flash_sector *s)
@@ -700,7 +700,7 @@ static int spi_flash_file_close(struct dfu_simple_file *f)
 		if (_read_file_header(s, &h) < 0)
 			return -1;
 		h.s.start_offset = offs;
-		h.s.data_size = min(_f->written, sectsize);
+		h.s.data_size = min(_f->written, fcdata.sectsize);
 		if (_write_file_header(s, &h) <0)
 			return -1;
 		offs += h.s.data_size;
@@ -833,18 +833,25 @@ static struct dfu_simple_file_ops spi_flash_file_ops = {
 	.write = spi_flash_file_write,
 };
 
-static int spi_flash_fc_init(struct dfu_file_container *fc)
+static int spi_flash_fc_init(struct dfu_file_container *fc,
+			     const void *_args)
 {
 	int i;
 
+	const struct dfu_fc_esp8226_args *args = _args;
 	for (i = 0; i < ARRAY_SIZE(spifiles); i++)
 		sector_list_init(&spifiles[i].sectors);
-	fcdata.nsectors = sectors_end - sectors_start;
-	dfu_dbg("%s: nsectors = %d\n", __func__, fcdata.nsectors);
+	if (args) {
+		fcdata.flash_first_sector = args->flash_first_sector;
+		fcdata.nsectors = args->nsectors;
+		fcdata.sectors = args->sectors;
+		fcdata.sectsize = args->sectsize;
+	}
+	dfu_dbg("%s: nsectors = %lu\n", __func__, fcdata.nsectors);
 	/* Build list of free sectors */
 	sector_list_init(&fcdata.free_head);
 	for (i = 0; i < fcdata.nsectors; i++)
-		sector_add(&fcdata.free_head, &sectors_start[i]);
+		sector_add(&fcdata.free_head, &fcdata.sectors[i]);
 	dfu_dbg("%s: initialized free list (%d elements)\n",
 		__func__, sectors_list_count(&fcdata.free_head));
 	return 0;
@@ -852,9 +859,10 @@ static int spi_flash_fc_init(struct dfu_file_container *fc)
 
 static int spi_flash_fc_fini(struct dfu_file_container *fc)
 {
-	memset(sectors_start, 0,
-	       (sectors_end - sectors_start) * sizeof(sectors_start[0]));
-	return spi_flash_fc_init(fc);
+	if (fcdata.sectors)
+		memset(fcdata.sectors, 0,
+		       sizeof(fcdata.sectors[0]) * fcdata.nsectors);
+	return spi_flash_fc_init(fc, NULL);
 }
 
 static int _get_sectors(unsigned long max_size, const char *name,

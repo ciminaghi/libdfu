@@ -84,7 +84,7 @@ struct dfu_simple_file {
  * @remove_file: delete file with given name
  */	
 struct dfu_file_container_ops {
-	int (*init)(struct dfu_file_container *);
+	int (*init)(struct dfu_file_container *, const void *args);
 	int (*fini)(struct dfu_file_container *);
 	int (*open_file)(struct dfu_file_container *,
 			 struct dfu_simple_file *,
@@ -102,6 +102,13 @@ struct spi_flash_sector {
 	struct spi_flash_sector *next;
 };
 
+struct dfu_fc_esp8226_args {
+	unsigned long nsectors;
+	unsigned long flash_first_sector;
+	unsigned long sectsize;
+	struct spi_flash_sector *sectors;
+};
+
 
 extern struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 				 const char *interface_path,
@@ -111,7 +118,8 @@ extern struct dfu_data *dfu_init(const struct dfu_interface_ops *iops,
 				 const struct dfu_target_ops *tops,
 				 const void *target_pars,
 				 const struct dfu_host_ops *hops,
-				 const struct dfu_file_container_ops *fcops);
+				 const struct dfu_file_container_ops *fcops,
+				 const void *fcargs);
 
 /*
  * Finalize and free all dfu data (dfu itself, target, interface, ...),
