@@ -60,6 +60,10 @@ int dfu_file_close(struct dfu_data *dfu, int fd)
 	f = &files[fd];
 	if (f->ops->close)
 		ret = f->ops->close(f);
+	if (ret < 0)
+		return ret;
+	/* Free file slot for future usage */
+	__free_file(f);
 	return ret;
 }
 
