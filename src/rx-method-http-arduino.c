@@ -26,7 +26,7 @@ static int http_arduino_poll_idle(struct dfu_binary_file *bf)
 static int http_arduino_on_event(struct dfu_binary_file *bf)
 {
 	struct arduino_server_data sd;
-	int stat, appended;
+	int appended;
 	void *ptr;
 
 	arduino_server_get_data(&sd);
@@ -58,7 +58,7 @@ static int http_arduino_on_event(struct dfu_binary_file *bf)
 		dfu_log("OK\n");
 	}
 	client_priv.busy = 0;
-	dfu_dbg("%s: appending %d bytes\n", __func__, stat);
+	dfu_dbg("%s: appending %d bytes\n", __func__, sd.chunk_len);
 	appended = dfu_binary_file_append_buffer(bf, sd.chunk_ptr,
 						 sd.chunk_len);
 	if (appended < 0) {
@@ -69,7 +69,7 @@ static int http_arduino_on_event(struct dfu_binary_file *bf)
 	if (!appended)
 		/* No space enough, do nothing */
 		return appended;
-	if (appended < stat) {
+	if (appended < sd.chunk_len) {
 		dfu_log("Error: partially appended chunk\n");
 		goto error;
 	}
