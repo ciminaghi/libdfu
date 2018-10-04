@@ -384,9 +384,7 @@ extern const struct dfu_format_ops registered_formats_start[],
 #define declare_dfu_format(n,p,d,f)					\
     int (* n ## _probe_ptr)(struct dfu_binary_file *) = p;		\
     int (* n ## _decode_chunk_ptr)(struct dfu_binary_file *bf,		\
-				   void *out_buf,			\
-				   unsigned long out_sz,		\
-				   phys_addr_t *addr) = d;		\
+				   phys_addr_t *out_buf) = d;		\
     int (* n ## _fini_ptr)(struct dfu_binary_file *) = f
 #endif
 
