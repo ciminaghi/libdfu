@@ -727,10 +727,9 @@ static const struct json_node softdevice_bootloader_nodes[] = {
 		.expected = "softdevice_bootloader",
 		.next_tree = manifest_l3_softdevice_bootloader,
 		.cb = new_image,
-		/* Back to last level */
-		.type = JSMN_UNDEFINED,
 	},
 	{
+		/* Back to last level */
 		.type = JSMN_UNDEFINED,
 	},
 };
