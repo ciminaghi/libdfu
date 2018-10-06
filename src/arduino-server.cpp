@@ -61,6 +61,7 @@ extern "C" int arduino_server_init(void *_srv)
 		server->begin();
 	}
 	finalized = 0;
+	return 0;
 }
 
 extern "C" void arduino_server_fini(void)
