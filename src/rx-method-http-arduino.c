@@ -27,7 +27,6 @@ static int http_arduino_on_event(struct dfu_binary_file *bf)
 {
 	struct arduino_server_data sd;
 	int appended;
-	void *ptr;
 
 	arduino_server_get_data(&sd);
 	if (sd.error)  {
