@@ -74,7 +74,7 @@ extern int ${n}_fini(struct dfu_binary_file *bf);\n\t" \
     echo "};" >> $BINARY_FORMATS_TABLE
 
     echo "/* Dummy symbol registered_formats_end */" >> $BINARY_FORMATS_TABLE
-    echo "const struct dfu_format_ops registered_formats_end[] = { NULL, NULL, };" \
+    echo "const struct dfu_format_ops registered_formats_end[] = { { NULL, NULL, }, };" \
 	 >> $BINARY_FORMATS_TABLE
 }
 
