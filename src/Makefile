@@ -43,6 +43,7 @@ interface/esp8266-serial-arduinouno-hacked.o \
 interface/esp8266-spi.o \
 interface/esp8266-spi-arduinouno-hacked.o \
 interface/esp8266-spi-arduinoprimo.o \
+interface/esp8266-spi-stampv13.o \
 file-container-esp8266.o
 endif
 
